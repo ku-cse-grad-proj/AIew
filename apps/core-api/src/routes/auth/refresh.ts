@@ -8,15 +8,18 @@ interface JWTPayload {
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post('/auth/refresh', async (request, reply) => {
     try {
-      // 1. 쿠키에서 리프레시 토큰을 가져와 검증합니다.
-      //    onlyCookie: true 옵션으로 쿠키만 사용하도록 강제합니다.
-      const userPayload = await request.jwtVerify<JWTPayload>({
-        onlyCookie: true,
-      })
+      // 1. 쿠키에서 리프레시 토큰 문자열을 직접 가져옵니다.
+      const refreshToken = request.cookies.refresh_token
+      if (!refreshToken) {
+        return reply.status(401).send({ message: 'No refresh token provided' })
+      }
 
-      // 2. DB에서 사용자가 여전히 유효한지 확인합니다.
+      // 2. fastify.jwt.verify()를 사용하여 토큰을 수동으로 검증합니다.
+      const decoded = fastify.jwt.verify<JWTPayload>(refreshToken)
+
+      // 3. DB에서 사용자가 여전히 유효한지 확인합니다.
       const user = await fastify.prisma.user.findUnique({
-        where: { id: userPayload.userId },
+        where: { id: decoded.userId },
       })
 
       if (!user) {
@@ -24,7 +27,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(401).send({ message: 'Unauthorized' })
       }
 
-      // 3. 새로운 Access Token을 발급합니다.
+      // 4. 새로운 Access Token을 발급합니다.
       const accessToken = await reply.jwtSign(
         { userId: user.id },
         { expiresIn: '15m' },
