@@ -1,11 +1,15 @@
 import { join } from 'node:path'
 
 import AutoLoad from '@fastify/autoload'
-import cookie from '@fastify/cookie'
-import cors from '@fastify/cors'
+import Cookie from '@fastify/cookie'
+import Cors from '@fastify/cors'
+import swagger from '@fastify/swagger'
+import swaggerUi from '@fastify/swagger-ui'
 import Fastify from 'fastify'
 
 import { app as AppPlugin } from './app'
+import SwaggerOption from './configs/swaggerOption'
+import SwaggerUiOption from './configs/swaggerUiOption'
 
 const start = async () => {
   const app = Fastify({
@@ -19,11 +23,15 @@ const start = async () => {
   // Register the main application plugin
   await app.register(AppPlugin)
 
+  await app.register(swagger, SwaggerOption)
+
+  await app.register(swaggerUi, SwaggerUiOption)
+
   // Register cookie plugin
-  await app.register(cookie)
+  await app.register(Cookie)
 
   // Register CORS plugin
-  await app.register(cors, {
+  await app.register(Cors, {
     origin: 'http://localhost:4000',
     credentials: true, // Allow cookies to be sent
   })

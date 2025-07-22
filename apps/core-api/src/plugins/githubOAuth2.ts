@@ -1,8 +1,14 @@
 import { SignPayloadType } from '@fastify/jwt'
 import oauthPlugin, { OAuth2Namespace } from '@fastify/oauth2'
 import axios from 'axios'
-import { FastifyPluginAsync } from 'fastify'
+import {
+  FastifyPluginAsync,
+  RouteHandlerMethod,
+  RouteShorthandOptions,
+} from 'fastify'
 import fp from 'fastify-plugin'
+
+import { Tag } from '../configs/swaggerOption'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -39,7 +45,48 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
     callbackUri: 'http://localhost:3000/oauth2/github/callback',
   })
 
-  fastify.get('/oauth2/github/callback', async (req, reply) => {
+  const path: string = '/oauth2/github/callback'
+  const opts: RouteShorthandOptions = {
+    schema: {
+      tags: [Tag.Oauth],
+      summary: '깃허브 OAuth2.0 콜백',
+      description:
+        'OAuth 2.0으로 Provider의 access token을 받아옴<br/>' +
+        '이를 Provider의 api 서버에 보내 사용자의 이메일과 이름 받아옴<br/>' +
+        'email, name, provider로 새로운 사용자를 생성하고<br/>' +
+        '이 때 sqlite가 자동생성한 id로 JWT 생성<br/>' +
+        'jwt의 `accessToken`은 프론트/auth/callback 의 쿼리로, `refreshToken`은 쿠키에 담아 리턴',
+      response: {
+        '302': {
+          description:
+            '인증 성공 시 프론트엔드 콜백 URL로 리디렉션됩니다. accessToken이 쿼리 파라미터에 포함됩니다.',
+          headers: {
+            Location: {
+              description: '리디렉션될 프론트엔드 URL',
+              type: 'string',
+              format: 'uri',
+              example:
+                'http://localhost:4000/auth/callback?accessToken=eyJhbGciOiJI...',
+            },
+          },
+        },
+        '4XX': {
+          description:
+            '**로그인 실패시**<br>' +
+            '`http:localhost:4000/login-failed` 로 redirect',
+          headers: {
+            Location: {
+              description: '리디렉션될 프론트엔드 URL',
+              type: 'string',
+              format: 'uri',
+              example: 'http://localhost:4000/login-failed',
+            },
+          },
+        },
+      },
+    },
+  }
+  const handler: RouteHandlerMethod = async (req, reply) => {
     try {
       const { token } =
         await fastify.githubOAuth2.getAccessTokenFromAuthorizationCodeFlow(req)
@@ -107,7 +154,9 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
       fastify.log.error(error)
       reply.status(500).send({ message: 'GitHub login failed' })
     }
-  })
+  }
+
+  fastify.get(path, opts, handler)
 }
 
 export default fp(githubOAuth2Plugin)
