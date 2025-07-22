@@ -30,6 +30,7 @@ const jwtPlugin: FastifyPluginAsync = async (fastify) => {
       try {
         await request.jwtVerify()
       } catch (err) {
+        fastify.log.error(err)
         reply.send(err)
       }
     },
