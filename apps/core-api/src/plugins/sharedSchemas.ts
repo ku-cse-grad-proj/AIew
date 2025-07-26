@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
 
-import * as schemas from '../schemas'
+import * as schemas from '../schemas/rest'
 
 const sharedSchemasPlugin: FastifyPluginAsync = async (
   fastify,

@@ -1,4 +1,4 @@
-import SchemaId from '../utils/schemaId'
+import SchemaId from '../../utils/schemaId'
 
 import ISchema from './interface'
 
