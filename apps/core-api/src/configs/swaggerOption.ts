@@ -43,6 +43,7 @@ enum Tag {
   Interview = '🗣️ 면접',
   Report = '📜 결과 레포트',
   Unclassified = '🏷️ 나중에 태그 OR 삭제 예정',
+  Websocket = '🛰️ WebSocket (테스트 불가)',
 }
 
 export default swaggerOption
