@@ -4,40 +4,121 @@ import path from 'node:path'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 
-import { FastifyPluginAsync, RouteHandlerMethod } from 'fastify'
+import {
+  FastifyPluginAsync,
+  RouteHandlerMethod,
+  RouteShorthandOptions,
+} from 'fastify'
 import fp from 'fastify-plugin'
 
 import { Tag } from '../../configs/swaggerOption'
+import SchemaId from '../../utils/schemaId'
 
 const pump = promisify(pipeline)
 
-interface MultipartFields {
-  company: string
-  jobTitle: string
-  jobSpec: string
-  idealTalent?: string
-  coverLetterPath?: string
-  portfolioPath?: string
+// request.body에 추가될 필드들의 타입을 정의합니다.
+interface InterviewRequestBody {
+  company: { value: string }
+  jobTitle: { value: string }
+  jobSpec: { value: string }
+  idealTalent: { value: string }
 }
 
 const interviewsRoute: FastifyPluginAsync = async (fastify) => {
   const routePath = '/interviews'
 
-  const postOpts = {
+  const postOpts: RouteShorthandOptions = {
+    onRequest: [fastify.authenticate],
     schema: {
       tags: [Tag.Interview],
       summary: '새로운 AI 면접 세션 생성',
       description:
-        '사용자로부터 회사, 직무, 자기소개서, 포트폴리오, 인재상 등의 정보를 받아 새로운 면접 세션을 생성하고, 백그라운드에서 AI 질문 생성을 시작합니다.',
+        '사용자로부터 회사, 직무, 자기소개서, 포트폴리오, 인재상 등의 정보를 받아 새로운 면접 세션을 생성하고,<br>\
+        백그라운드에서 AI 질문 생성을 시작합니다.<br>\
+        자기소개서와 포트폴리오는 PDF 파일만 업로드 가능합니다.<br><br>\
+        **참고**: 실제 클라이언트가 보내야 하는 데이터 형식은 아래 테이블 참고<br>\
+        <table>\
+          <tr>\
+            <td>이름</td>\
+            <td>타입</td>\
+            <td>필수</td>\
+            <td>설명</td>\
+          </tr>\
+          <tr>\
+            <td>`company`</td>\
+            <td>string</td>\
+            <td>✅</td>\
+            <td>회사명</td>\
+          </tr>\
+          <tr>\
+            <td>`jobTitle`</td>\
+            <td>string</td>\
+            <td>✅</td>\
+            <td>직무명</td>\
+          </tr>\
+          <tr>\
+            <td>`jobSpec`</td>\
+            <td>string</td>\
+            <td>✅</td>\
+            <td>세부 직무 기술</td>\
+          </tr>\
+          <tr>\
+            <td>`coverLetter`</td>\
+            <td>file</td>\
+            <td>✅</td>\
+            <td>자기소개서 (PDF)</td>\
+          </tr>\
+          <tr>\
+            <td>`portfolio`</td>\
+            <td>file</td>\
+            <td>✅</td>\
+            <td>포트폴리오 (PDF)</td>\
+          </tr>\
+          <tr>\
+            <td>`idealTalent`</td>\
+            <td>string</td>\
+            <td>✅</td>\
+            <td>회사의 인재상</td>\
+          </tr>\
+        </table>',
+      consumes: ['multipart/form-data'],
       body: {
         type: 'object',
         properties: {
-          company: { type: 'string' },
-          jobTitle: { type: 'string' },
-          jobSpec: { type: 'string' },
-          coverLetter: { type: 'string', format: 'binary' },
-          portfolio: { type: 'string', format: 'binary' },
-          idealTalent: { type: 'string' },
+          company: {
+            type: 'object',
+            properties: {
+              value: {
+                type: 'string',
+              },
+            },
+          },
+          jobTitle: {
+            type: 'object',
+            properties: {
+              value: {
+                type: 'string',
+              },
+            },
+          },
+          jobSpec: {
+            type: 'object',
+            properties: {
+              value: {
+                type: 'string',
+              },
+            },
+          },
+          coverLetter: { isFile: true },
+          portfolio: { isFile: true },
+          idealTalent: {
+            type: 'object',
+            properties: {
+              value: {
+                type: 'string',
+              },
+            },
+          },
         },
         required: [
           'company',
@@ -59,61 +140,82 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
             },
           },
         },
+        '415': {
+          description:
+            '지원되지 않는 파일 형식입니다. PDF 파일만 업로드할 수 있습니다.',
+          $ref: `${SchemaId.Error}#`,
+        },
       },
     },
   }
 
   const postHandler: RouteHandlerMethod = async (request, reply) => {
-    const parts = request.parts()
-    const fields: Partial<MultipartFields> = {}
     const uploadDir = path.join(__dirname, '../../../uploads')
-
-    // Ensure upload directory exists
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true })
     }
 
+    let coverLetterPath: string | undefined
+    let portfolioPath: string | undefined
+
     try {
-      for await (const part of parts) {
-        if (part.type === 'file') {
-          const uniqueFilename = `${randomUUID()}-${part.filename}`
-          const filePath = path.join(uploadDir, uniqueFilename)
-          await pump(part.file, fs.createWriteStream(filePath))
-          if (part.fieldname === 'coverLetter') {
-            fields.coverLetterPath = filePath
-          } else if (part.fieldname === 'portfolio') {
-            fields.portfolioPath = filePath
+      const files = request.files()
+      for await (const part of files) {
+        if (part.mimetype !== 'application/pdf') {
+          throw {
+            statusCode: 415,
+            message: `Unsupported Media Type: '${part.filename}'. Only PDF files are allowed.`,
           }
-        } else {
-          // This is a field
-          fields[part.fieldname as keyof MultipartFields] = part.value as string
+        }
+
+        const uniqueFilename = `${randomUUID()}-${part.filename}`
+        const filePath = path.join(uploadDir, uniqueFilename)
+        await pump(part.file, fs.createWriteStream(filePath))
+
+        if (part.fieldname === 'coverLetter') {
+          coverLetterPath = filePath
+        } else if (part.fieldname === 'portfolio') {
+          portfolioPath = filePath
         }
       }
     } catch (error) {
       fastify.log.error(error)
-      return reply.status(500).send({ message: 'File upload failed' })
+
+      let statusCode = 500
+      let message = 'An error occurred during file processing.'
+      let errorType = 'Internal Server Error'
+
+      // unknown 타입의 에러를 안전하게 처리하기 위한 타입 가드
+      if (typeof error === 'object' && error !== null) {
+        if ('statusCode' in error && typeof error.statusCode === 'number') {
+          statusCode = error.statusCode
+        }
+        if ('message' in error && typeof error.message === 'string') {
+          message = error.message
+        }
+        if (statusCode === 415) {
+          errorType = 'Unsupported Media Type'
+        }
+      }
+
+      return reply.status(statusCode).send({
+        statusCode,
+        error: errorType,
+        message,
+      })
     }
 
-    const {
-      company,
-      jobTitle,
-      jobSpec,
-      idealTalent,
-      coverLetterPath,
-      portfolioPath,
-    } = fields
-
-    if (!company || !jobTitle || !jobSpec) {
-      return reply.status(400).send({ message: 'Missing required fields' })
-    }
+    // attachFieldsToBody 옵션 덕분에 request.body에서 필드 값을 직접 사용 가능
+    const { company, jobTitle, jobSpec, idealTalent } =
+      request.body as InterviewRequestBody
 
     const session = await fastify.prisma.interviewSession.create({
       data: {
         userId: request.user.userId,
-        company,
-        jobTitle,
-        jobSpec,
-        idealTalent,
+        company: company.value,
+        jobTitle: jobTitle.value,
+        jobSpec: jobSpec.value,
+        idealTalent: idealTalent.value,
         coverLetter: coverLetterPath,
         portfolio: portfolioPath,
       },
