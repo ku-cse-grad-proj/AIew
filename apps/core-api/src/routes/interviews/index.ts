@@ -223,7 +223,7 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
 
     const askAIForQuestions = async () => {
       /*
-       * [TODO] 프로덕션 확장성 고려
+       * TODO: 프로덕션 확장성 고려
        * 현재 구현은 core-api 서버가 단일 인스턴스일 때만 정상 동작합니다.
        * 서버가 여러 대로 확장(scale-out)될 경우, HTTP 요청을 받은 서버와
        * WebSocket 연결을 유지 중인 서버가 다를 수 있어 클라이언트에게
@@ -255,11 +255,9 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
         })
 
         // 5. 해당 세션의 WebSocket '방(room)'에 있는 클라이언트에게 알림
-        //    TODO: session.id를 방 이름으로 사용하여 특정 클라이언트에게만 보내도록 수정 필요
         fastify.io.to(session.id).emit('server:questions-ready', { questions })
       } catch (error) {
         fastify.log.error(error)
-        // TODO: session.id를 방 이름으로 사용하여 특정 클라이언트에게만 보내도록 수정 필요
         fastify.io.to(session.id).emit('server:error', {
           code: 'AI_GENERATION_FAILED',
           message: 'Failed to generate interview questions.',
