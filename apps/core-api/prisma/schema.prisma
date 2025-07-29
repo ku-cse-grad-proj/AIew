@@ -20,4 +20,24 @@ model User {
   provider  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relation to InterviewSession
+  interviewSessions InterviewSession[]
+}
+
+model InterviewSession {
+  id           String @id @default(cuid())
+  company      String
+  jobTitle     String
+  jobSpec      String
+  idealTalent  String?
+  coverLetter  String? // Path to the stored file
+  portfolio    String? // Path to the stored file
+  questions    Json?   // AI-generated questions
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relation to User
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
 }
