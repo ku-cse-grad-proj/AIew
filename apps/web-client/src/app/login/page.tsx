@@ -12,10 +12,10 @@ export default function Login() {
       >
         <span className="text-4xl text-bold font-extrabold">welcome</span>
         <div className="flex flex-col gap-5">
-          <LoginButton text="Sign in with Google">
+          <LoginButton text="Sign in with Google" link="google">
             <Google width={25} height={25} />
           </LoginButton>
-          <LoginButton text="Sign in with Github">
+          <LoginButton text="Sign in with Github" link="github">
             <Github width={25} height={25} />
           </LoginButton>
         </div>
