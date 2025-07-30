@@ -8,7 +8,7 @@ from app.utils.file_check import is_digital_pdf
 router = APIRouter()
 
 
-@router.post("/pdf-text-paring", response_model=PDFUploadResponse)
+@router.post("/pdf-text-parsing", response_model=PDFUploadResponse)
 async def parse_pdf_text(file: UploadFile = File(...)):
     file_bytes = await file.read()
 
