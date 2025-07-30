@@ -4,6 +4,7 @@ from app.models.pdf import PDFUploadResponse
 from app.services.ocr_parser import extract_text_from_image_pdf
 from app.services.pdf_parser import extract_text_from_digital_pdf
 from app.utils.file_check import is_digital_pdf
+from app.services.preprocessor import preprocess_text
 
 router = APIRouter()
 
@@ -17,4 +18,7 @@ async def parse_pdf_text(file: UploadFile = File(...)):
     else:
         extracted_text = extract_text_from_image_pdf(file_bytes)
 
-    return PDFUploadResponse(filename=file.filename, extracted_text=extracted_text)
+    preprocessed_sentences = preprocess_text(extracted_text)
+    joined_sentences = "\n".join(preprocessed_sentences)
+
+    return PDFUploadResponse(filename=file.filename, extracted_text=joined_sentences)
