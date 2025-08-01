@@ -21,7 +21,7 @@
     ],
     "apps/ai-server/**/*.py": [
       "poetry --directory apps/ai-server run ruff format",
-      "poetry --directory apps/ai-server run ruff check --fix"
+      "poetry --directory apps/ai-server run ruff check . --fix"
     ],
     "**/*.{js,jsx,json,md,yml,yaml}": [
       "prettier --write"
