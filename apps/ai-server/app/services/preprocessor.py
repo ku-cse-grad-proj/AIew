@@ -1,26 +1,42 @@
 import re
 
-def clean_text(text: str) -> str:
+def preprocess_text(text: str) -> str:
     """
-    기본적인 텍스트 전처리 함수
-    - 양쪽 공백 제거
-    - 연속 공백 하나로 축소
-    - 특수문자 일부 제거(예: 제어문자)
+    문장 병합 및 정제
+    - 문장 중간에서 끊긴 줄은 이어 붙이고, 의미 있는 개행은 유지
+    - 조사/종결어미/동사 등으로 끝나는 줄은 다음 줄과 이어 붙일 가능성 높음
     """
-    text = text.strip()
-    text = re.sub(r'\s+', ' ', text)
-    # 예: 특수문자 제거 (필요시 커스터마이징)
-    text = re.sub(r'[^\w\s,.?!]', '', text)
-    return text
+    lines = text.splitlines()
+    processed_text = ""
+    i = 0
 
-def split_into_sentences(text: str) -> list[str]:
-    """
-    문장 단위로 분리 (간단한 마침표, 느낌표, 물음표 기준)
-    """
-    sentences = re.split(r'(?<=[.?!])\s+', text)
-    return [s.strip() for s in sentences if s.strip()]
+    while i < len(lines):
+        line = lines[i].strip()
 
-def preprocess_text(text: str) -> list[str]:
-    cleaned = clean_text(text)
-    sentences = split_into_sentences(cleaned)
-    return sentences
+        # 빈 줄은 문단 구분 기호로 치환
+        if not line:
+            processed_text += "<br>"
+            i += 1
+            continue
+
+        # 다음 줄 존재 여부 확인
+        next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
+
+        # 조건1: 종결 부호로 끝나지 않음 (문장 중간)
+        cond1 = not re.search(r'[.?!…]$', line)
+
+        # 조건2: 조사/동사/전치사/부사 등 문맥상 이어질 가능성
+        cond2 = re.search(r'(은|는|이|가|을|를|고|도|지만|하며|하고|되어|한다|했다|있다|같은|되며|및|하거나|위한|에서|으로|으로서|수|때문)$', line)
+
+        # 조건3: 다음 줄이 자연스럽게 이어질 수 있는 시작어
+        cond3 = re.match(r'^[a-zA-Z가-힣0-9]', next_line) and not re.match(r'^[ㄱ-ㅎㅏ-ㅣ]', next_line)
+
+        # 이어 붙이기
+        if next_line and (cond1 or cond2 or cond3):
+            processed_text += line + " "
+            i += 1  # 다음 줄은 이어졌으므로 건너뜀
+        else:
+            processed_text += line
+            i += 1
+
+    return processed_text.strip()

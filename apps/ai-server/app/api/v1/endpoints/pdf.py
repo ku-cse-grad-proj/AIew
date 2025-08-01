@@ -19,6 +19,5 @@ async def parse_pdf_text(file: UploadFile = File(...)):
         extracted_text = extract_text_from_image_pdf(file_bytes)
 
     preprocessed_sentences = preprocess_text(extracted_text)
-    joined_sentences = "\n".join(preprocessed_sentences)
 
-    return PDFUploadResponse(filename=file.filename, extracted_text=joined_sentences)
+    return PDFUploadResponse(filename=file.filename, extracted_text=preprocessed_sentences)
