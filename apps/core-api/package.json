@@ -8,7 +8,7 @@
   },
   "scripts": {
     "prepare": "prisma generate",
-    "test": "npm run build && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register test/**/*.ts",
+    "test": "npm run build && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register $(find test -name '*.test.ts')",
     "start": "node dist/server.js",
     "build": "tsc",
     "watch:ts": "tsc -w",

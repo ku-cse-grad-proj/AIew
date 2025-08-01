@@ -1,21 +1,20 @@
 // This file contains code that we reuse between our tests.
 import * as test from 'node:test'
+import { join } from 'path'
 
-import cookie from '@fastify/cookie'
+import AutoLoad from '@fastify/autoload'
+import Cookie from '@fastify/cookie'
+import Cors from '@fastify/cors'
+import Multipart from '@fastify/multipart'
+import { ajvFilePlugin } from '@fastify/multipart'
 import Fastify from 'fastify'
-import fp from 'fastify-plugin'
 
-import App from '../src/app'
-// Import plugins
-import googleOAuth2Plugin from '../src/plugins/googleOAuth2'
+import { app as AppPlugin } from '../src/app'
+// Manually import plugins to control loading order
 import jwtPlugin from '../src/plugins/jwt'
 import prismaPlugin from '../src/plugins/prisma'
 import sensiblePlugin from '../src/plugins/sensible'
-import supportPlugin from '../src/plugins/support'
-// Import routes
-import exampleRoutes from '../src/routes/example'
-import pingRoute from '../src/routes/ping'
-import rootRoute from '../src/routes/root'
+import socketIOPlugin from '../src/plugins/socket'
 
 export type TestContext = {
   after: typeof test.after
@@ -29,23 +28,41 @@ function config() {
 
 // Automatically build and tear down our instance
 async function build(t: TestContext) {
-  const app = Fastify()
+  const app = Fastify({
+    ajv: {
+      plugins: [ajvFilePlugin],
+    },
+    logger: false, // Disable logger for cleaner test output
+  })
 
-  // Register plugins
-  await app.register(cookie)
+  // Register the main application plugin first
+  await app.register(AppPlugin)
+
+  // Register essential plugins manually in the correct order
+  await app.register(sensiblePlugin)
+  await app.register(Cookie)
+  await app.register(Multipart, {
+    attachFieldsToBody: true,
+  })
+  await app.register(Cors, {
+    origin: 'http://localhost:4000',
+    credentials: true,
+  })
+  // Register plugins with dependencies
   await app.register(prismaPlugin)
   await app.register(jwtPlugin)
-  await app.register(sensiblePlugin)
-  await app.register(supportPlugin)
-  await app.register(googleOAuth2Plugin)
+  await app.register(socketIOPlugin)
 
-  // Register the main application plugin
-  await app.register(fp(App), config())
+  // Load other plugins that don't have strict dependency order
+  await app.register(AutoLoad, {
+    dir: join(__dirname, '../src/plugins'),
+    ignorePattern: /prisma\.ts|jwt\.ts|sensible\.ts|socket\.ts/, // Ignore manually loaded plugins
+  })
 
-  // Register routes
-  await app.register(rootRoute)
-  await app.register(pingRoute)
-  await app.register(exampleRoutes, { prefix: '/example' })
+  // Load routes similar to server.ts
+  await app.register(AutoLoad, {
+    dir: join(__dirname, '../src/routes'),
+  })
 
   // Tear down our app after we are done
   t.after(() => app.close())
