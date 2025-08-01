@@ -9,10 +9,9 @@ import {
   RouteHandlerMethod,
   RouteShorthandOptions,
 } from 'fastify'
-import fp from 'fastify-plugin'
 
-import { Tag } from '../../configs/swaggerOption'
-import SchemaId from '../../utils/schemaId'
+import { Tag } from '../../../../configs/swaggerOption'
+import SchemaId from '../../../../utils/schemaId'
 
 const pump = promisify(pipeline)
 
@@ -25,7 +24,7 @@ interface InterviewRequestBody {
 }
 
 const interviewsRoute: FastifyPluginAsync = async (fastify) => {
-  const routePath = '/interviews'
+  const routePath = '/'
 
   const postOpts: RouteShorthandOptions = {
     onRequest: [fastify.authenticate],
@@ -272,4 +271,4 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
   fastify.post(routePath, postOpts, postHandler)
 }
 
-export default fp(interviewsRoute)
+export default interviewsRoute

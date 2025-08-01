@@ -31,6 +31,9 @@ interface GitHubEmailInfo {
 }
 
 const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
+  const redirectPath: string = '/api/v1/oauth2/github'
+  const callbackPath: string = `${redirectPath}/callback`
+
   fastify.register(oauthPlugin, {
     name: 'githubOAuth2',
     scope: ['read:user', 'user:email'], // GitHub는 사용자 정보와 이메일을 위해 별도의 scope가 필요합니다.
@@ -41,11 +44,10 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
       },
       auth: oauthPlugin.GITHUB_CONFIGURATION,
     },
-    startRedirectPath: '/oauth2/github',
-    callbackUri: 'http://localhost:3000/oauth2/github/callback',
+    startRedirectPath: redirectPath,
+    callbackUri: `http://localhost:3000${callbackPath}`,
   })
 
-  const path: string = '/oauth2/github/callback'
   const opts: RouteShorthandOptions = {
     schema: {
       tags: [Tag.Oauth],
@@ -156,7 +158,7 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
     }
   }
 
-  fastify.get(path, opts, handler)
+  fastify.get(callbackPath, opts, handler)
 }
 
 export default fp(githubOAuth2Plugin)

@@ -3,14 +3,13 @@ import {
   RouteHandlerMethod,
   RouteShorthandOptions,
 } from 'fastify'
-import fp from 'fastify-plugin'
 
-import { Tag } from '../../configs/swaggerOption'
-import SchemaId from '../../utils/schemaId'
+import { Tag } from '../../../../configs/swaggerOption'
+import SchemaId from '../../../../utils/schemaId'
 
 const meRoute: FastifyPluginAsync = async (fastify) => {
-  const path: string = '/api/me'
-  const opts: RouteShorthandOptions = {
+  const path: string = '/'
+  const getOpts: RouteShorthandOptions = {
     onRequest: [fastify.authenticate],
     schema: {
       tags: [Tag.User],
@@ -31,7 +30,7 @@ const meRoute: FastifyPluginAsync = async (fastify) => {
       },
     },
   }
-  const handler: RouteHandlerMethod = async (request, reply) => {
+  const getHandler: RouteHandlerMethod = async (request, reply) => {
     // Set Cache-Control header to prevent caching of this sensitive response
     reply.headers({
       'cache-control': 'no-store, max-age=0 must-revalidate',
@@ -62,7 +61,7 @@ const meRoute: FastifyPluginAsync = async (fastify) => {
     return user
   }
 
-  fastify.get(path, opts, handler)
+  fastify.get(path, getOpts, getHandler)
 }
 
-export default fp(meRoute)
+export default meRoute

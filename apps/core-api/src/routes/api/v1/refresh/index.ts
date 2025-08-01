@@ -3,17 +3,16 @@ import {
   RouteHandlerMethod,
   RouteShorthandOptions,
 } from 'fastify'
-import fp from 'fastify-plugin'
 
-import { Tag } from '../../configs/swaggerOption'
+import { Tag } from '../../../../configs/swaggerOption'
 
 interface JWTPayload {
   userId: string
 }
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
-  const path: string = '/auth/refresh'
-  const opts: RouteShorthandOptions = {
+  const routePath: string = '/'
+  const postOpts: RouteShorthandOptions = {
     schema: {
       tags: [Tag.User],
       summary: '쿠키 속 refresh_token으로 accessToken 재발급',
@@ -23,7 +22,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         '테스트하려면 프론트의 OAuth 로그인을 통해 토큰을 받은 후 실행하세요.',
     },
   }
-  const handler: RouteHandlerMethod = async (request, reply) => {
+  const postHandler: RouteHandlerMethod = async (request, reply) => {
     try {
       // 1. 쿠키에서 리프레시 토큰 문자열을 직접 가져옵니다.
       const refreshToken = request.cookies.refresh_token
@@ -58,7 +57,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }
 
-  fastify.post(path, opts, handler)
+  fastify.post(routePath, postOpts, postHandler)
 }
 
-export default fp(authRoutes)
+export default authRoutes

@@ -23,6 +23,9 @@ interface GoogleUserInfo {
 }
 
 const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
+  const redirectPath: string = '/api/v1/oauth2/google'
+  const callbackPath: string = `${redirectPath}/callback`
+
   fastify.register(oauthPlugin, {
     name: 'googleOAuth2',
     scope: ['profile', 'email'],
@@ -33,15 +36,14 @@ const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
       },
       auth: oauthPlugin.GOOGLE_CONFIGURATION,
     },
-    startRedirectPath: '/oauth2/google',
-    callbackUri: 'http://localhost:3000/oauth2/google/callback', // 127.0.0.1 에서 시도시 실패
+    startRedirectPath: redirectPath,
+    callbackUri: `http://localhost:3000${callbackPath}`, // 127.0.0.1 에서 시도시 실패
     callbackUriParams: {},
     cookie: {
       secure: false, // 개발 환경에서는 false로 설정
     },
   })
 
-  const path: string = '/oauth2/google/callback'
   const opts: RouteShorthandOptions = {
     schema: {
       tags: [Tag.Oauth],
@@ -140,7 +142,7 @@ const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
     }
   }
 
-  fastify.get(path, opts, handler)
+  fastify.get(callbackPath, opts, handler)
 }
 
 export default fp(googleOAuth2Plugin)

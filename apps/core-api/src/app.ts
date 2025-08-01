@@ -12,8 +12,8 @@ const app: FastifyPluginAsync<AppOptions> = async (fastify): Promise<void> => {
   // 플러그인으로 인해 자동 등록되는 oauth2 관련 routes 숨김처리
   fastify.addHook('onRoute', (routeOptions) => {
     if (
-      routeOptions.path === '/oauth2/google' ||
-      routeOptions.path === '/oauth2/github'
+      routeOptions.path === '/api/v1/oauth2/google' ||
+      routeOptions.path === '/api/v1/oauth2/github'
     ) {
       routeOptions.schema = {
         ...routeOptions.schema,

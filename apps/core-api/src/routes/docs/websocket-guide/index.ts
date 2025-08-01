@@ -3,13 +3,12 @@ import {
   RouteHandlerMethod,
   RouteShorthandOptions,
 } from 'fastify'
-import fp from 'fastify-plugin'
 
-import { Tag } from '../../configs/swaggerOption'
-import SchemaId from '../../utils/schemaId'
+import { Tag } from '../../../configs/swaggerOption'
+import SchemaId from '../../../utils/schemaId'
 
 const websocketDocsRoute: FastifyPluginAsync = async (fastify) => {
-  const path: string = '/docs/websocket-guides/interview'
+  const path: string = '/'
   const opts: RouteShorthandOptions = {
     schema: {
       tags: [Tag.Websocket],
@@ -50,4 +49,4 @@ const websocketDocsRoute: FastifyPluginAsync = async (fastify) => {
   fastify.post(path, opts, handler)
 }
 
-export default fp(websocketDocsRoute)
+export default websocketDocsRoute
