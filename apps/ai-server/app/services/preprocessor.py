@@ -1,5 +1,6 @@
 import re
 
+
 def preprocess_text(text: str) -> str:
     """
     문장 병합 및 정제
@@ -23,13 +24,18 @@ def preprocess_text(text: str) -> str:
         next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
 
         # 조건1: 종결 부호로 끝나지 않음 (문장 중간)
-        cond1 = not re.search(r'[.?!…]$', line)
+        cond1 = not re.search(r"[.?!…]$", line)
 
         # 조건2: 조사/동사/전치사/부사 등 문맥상 이어질 가능성
-        cond2 = re.search(r'(은|는|이|가|을|를|고|도|지만|하며|하고|되어|한다|했다|있다|같은|되며|및|하거나|위한|에서|으로|으로서|수|때문)$', line)
+        cond2 = re.search(
+            r"(은|는|이|가|을|를|고|도|지만|하며|하고|되어|한다|했다|있다|같은|되며|및|하거나|위한|에서|으로|으로서|수|때문)$",
+            line,
+        )
 
         # 조건3: 다음 줄이 자연스럽게 이어질 수 있는 시작어
-        cond3 = re.match(r'^[a-zA-Z가-힣0-9]', next_line) and not re.match(r'^[ㄱ-ㅎㅏ-ㅣ]', next_line)
+        cond3 = re.match(r"^[a-zA-Z가-힣0-9]", next_line) and not re.match(
+            r"^[ㄱ-ㅎㅏ-ㅣ]", next_line
+        )
 
         # 이어 붙이기
         if next_line and (cond1 or cond2 or cond3):
