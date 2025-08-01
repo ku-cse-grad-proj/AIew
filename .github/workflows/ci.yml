@@ -48,6 +48,11 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Migrate Database
+        run: pnpm --filter core-api exec prisma migrate deploy
+        env:
+          DATABASE_URL: 'file:./test.db'
+
       - name: Test
         run: pnpm test
         env:
