@@ -1,6 +1,5 @@
-import SchemaId from '../../utils/schemaId'
-
-import ISchema from './interface'
+import ISchema from '@/schemas/rest/interface'
+import SchemaId from '@/utils/schemaId'
 
 export const userSchema: ISchema = {
   $id: SchemaId.User,

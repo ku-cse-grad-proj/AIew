@@ -8,7 +8,7 @@ import {
 } from 'fastify'
 import fp from 'fastify-plugin'
 
-import { Tag } from '../configs/swaggerOption'
+import { Tag } from '@/configs/swaggerOption'
 
 declare module 'fastify' {
   interface FastifyInstance {
