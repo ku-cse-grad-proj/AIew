@@ -50,8 +50,8 @@ const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
       summary: '구글 OAuth2.0 콜백',
       description:
         'OAuth 2.0으로 Provider의 access token을 받아옴<br/>' +
-        '이를 Provider의 api 서버에 보내 사용자의 이메일과 이름 받아옴<br/>' +
-        'email, name, provider로 새로운 사용자를 생성하고<br/>' +
+        '이를 Provider의 api 서버에 보내 사용자의 이메일, 이름, 프로필 사진을 받아옴<br/>' +
+        'email, name, pic_url, provider로 새로운 사용자를 생성하고<br/>' +
         '이 때 sqlite가 자동생성한 id로 JWT 생성<br/>' +
         'jwt의 `accessToken`은 프론트/auth/callback 의 쿼리로, `refreshToken`은 쿠키에 담아 리턴',
       response: {
@@ -100,6 +100,8 @@ const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
         },
       )
 
+      console.log(userInfo)
+
       // DB에서 사용자 조회 또는 생성
       let user = await fastify.prisma.user.findUnique({
         where: { email: userInfo.email },
@@ -110,6 +112,7 @@ const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
           data: {
             email: userInfo.email,
             name: userInfo.name,
+            pic_url: userInfo.picture,
             provider: 'GOOGLE',
           },
         })

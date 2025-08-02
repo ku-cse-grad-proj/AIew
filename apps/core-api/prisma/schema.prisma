@@ -17,6 +17,7 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  pic_url   String   @default("https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=mail@ashallendesign.co.uk")
   provider  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

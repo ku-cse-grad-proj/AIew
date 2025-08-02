@@ -48,6 +48,7 @@ const meRoute: FastifyPluginAsync = async (fastify) => {
       select: {
         email: true,
         name: true,
+        pic_url: true,
         provider: true,
         createdAt: true,
         updatedAt: true,
