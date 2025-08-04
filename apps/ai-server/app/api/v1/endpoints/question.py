@@ -1,8 +1,9 @@
-from fastapi import APIRouter
 from typing import List
 
+from fastapi import APIRouter
+
+from app.models.question import InterviewQuestion, QuestionRequest
 from app.services.question_generator import generate_questions
-from app.models.question import QuestionRequest, InterviewQuestion
 
 router = APIRouter()
 
