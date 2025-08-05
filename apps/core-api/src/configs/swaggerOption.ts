@@ -44,6 +44,7 @@ enum Tag {
   Report = '📜 결과 레포트',
   Unclassified = '🏷️ 나중에 태그 OR 삭제 예정',
   Websocket = '🛰️ WebSocket (테스트 불가)',
+  Warning = '☢️ 테스트 전용',
 }
 
 export default swaggerOption

@@ -8,12 +8,12 @@
   },
   "scripts": {
     "prepare": "prisma generate",
-    "test": "npm run build && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register $(find test -name '*.test.ts')",
+    "test": "c8 node --test -r tsconfig-paths/register -r ts-node/register $(find test -name '*.test.ts')",
     "start": "node dist/server.js",
-    "build": "tsc",
-    "watch:ts": "tsc -w",
+    "build": "tsc && tsc-alias",
+    "watch:ts": "tsc-watch --onSuccess \"tsc-alias\"",
     "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch:ts\" \"npm:dev:start\"",
-    "dev:start": "nodemon dist/server.js"
+    "dev:start": "nodemon"
   },
   "keywords": [],
   "author": "",
@@ -44,6 +44,9 @@
     "fastify-tsconfig": "^3.0.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
+    "tsc-watch": "^7.1.1",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "~5.8.3"
   }
 }

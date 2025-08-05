@@ -8,7 +8,7 @@ import {
 } from 'fastify'
 import fp from 'fastify-plugin'
 
-import { Tag } from '../configs/swaggerOption'
+import { Tag } from '@/configs/swaggerOption'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -19,6 +19,7 @@ declare module 'fastify' {
 interface GitHubUserInfo {
   id: number
   login: string
+  avatar_url: string
   name: string
   email: string | null
 }
@@ -54,8 +55,8 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
       summary: '깃허브 OAuth2.0 콜백',
       description:
         'OAuth 2.0으로 Provider의 access token을 받아옴<br/>' +
-        '이를 Provider의 api 서버에 보내 사용자의 이메일과 이름 받아옴<br/>' +
-        'email, name, provider로 새로운 사용자를 생성하고<br/>' +
+        '이를 Provider의 api 서버에 보내 사용자의 이메일, 이름, 프로필 사진을 받아옴<br/>' +
+        'email, name, pic_url, provider로 새로운 사용자를 생성하고<br/>' +
         '이 때 sqlite가 자동생성한 id로 JWT 생성<br/>' +
         'jwt의 `accessToken`은 프론트/auth/callback 의 쿼리로, `refreshToken`은 쿠키에 담아 리턴',
       response: {
@@ -100,6 +101,8 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
         },
       )
 
+      console.log(userInfo)
+
       let userEmail = userInfo.email
       // 사용자의 주 이메일이 비공개인 경우, 이메일 목록에서 가져옵니다.
       if (!userEmail) {
@@ -127,6 +130,7 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
           data: {
             email: userEmail,
             name: userInfo.name || userInfo.login,
+            pic_url: userInfo.avatar_url,
             provider: 'GITHUB',
           },
         })

@@ -10,8 +10,8 @@ import {
   RouteShorthandOptions,
 } from 'fastify'
 
-import { Tag } from '../../../../configs/swaggerOption'
-import SchemaId from '../../../../utils/schemaId'
+import { Tag } from '@/configs/swaggerOption'
+import SchemaId from '@/utils/schemaId'
 
 const pump = promisify(pipeline)
 

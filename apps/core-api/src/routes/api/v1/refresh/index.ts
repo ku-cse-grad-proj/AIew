@@ -4,7 +4,7 @@ import {
   RouteShorthandOptions,
 } from 'fastify'
 
-import { Tag } from '../../../../configs/swaggerOption'
+import { Tag } from '@/configs/swaggerOption'
 
 interface JWTPayload {
   userId: string
