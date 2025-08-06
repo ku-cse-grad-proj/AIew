@@ -45,12 +45,15 @@ const start = async () => {
   // Autoload plugins
   await app.register(AutoLoad, {
     dir: join(__dirname, 'plugins'),
+    dirNameRoutePrefix: true,
     options: {},
   })
 
   // Autoload routes
   await app.register(AutoLoad, {
     dir: join(__dirname, 'routes'),
+    dirNameRoutePrefix: true,
+    routeParams: true,
     options: {},
   })
 
