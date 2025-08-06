@@ -1,7 +1,7 @@
 import { privateFetch } from '@/app/lib/fetch'
 
 export default async function DashboardHeader() {
-  const res = await privateFetch('http://localhost:3000/api/me')
+  const res = await privateFetch('http://localhost:3000/api/v1/me')
 
   if (!res.ok) {
     // 에러 처리 (예: 토큰 만료 등)

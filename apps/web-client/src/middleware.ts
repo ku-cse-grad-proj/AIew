@@ -5,7 +5,7 @@ export async function middleware(req: NextRequest) {
 
   //accessToken이 없으면 refresh 요청
   if (!access) {
-    const refreshRes = await fetch(`http://localhost:3000/auth/refresh`, {
+    const refreshRes = await fetch(`http://localhost:3000/api/v1/refresh`, {
       method: 'POST',
       headers: {
         Cookie: req.headers.get('cookie') ?? '',

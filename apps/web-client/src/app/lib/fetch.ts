@@ -22,7 +22,6 @@ export async function privateFetch<T>(
     headers: {
       ...init.headers,
       Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
     },
   })
   if (res.status !== 401) return res
@@ -33,7 +32,7 @@ export async function privateFetch<T>(
   }
 
   // 3) 401 → refresh 시도
-  const refreshRes = await fetch('http://localhost:3000/auth/refresh', {
+  const refreshRes = await fetch('http://localhost:3000/api/v1/refresh', {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
