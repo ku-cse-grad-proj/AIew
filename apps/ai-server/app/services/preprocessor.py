@@ -16,7 +16,7 @@ def preprocess_text(text: str) -> str:
 
         # 빈 줄은 문단 구분 기호로 치환
         if not line:
-            processed_text += "<br>"
+            processed_text += "\n"
             i += 1
             continue
 
