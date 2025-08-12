@@ -51,10 +51,10 @@ jobs:
       - name: Migrate Database
         run: pnpm --filter core-api exec prisma migrate deploy
         env:
-          DATABASE_URL: 'file:./test.db'
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Test
         run: pnpm test
         env:
-          DATABASE_URL: 'file:./test.db'
-          JWT_SECRET: 'test-secret-key-for-ci'
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
