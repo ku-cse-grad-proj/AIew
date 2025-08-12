@@ -5,6 +5,7 @@ import { useState, useRef } from 'react'
 import { io } from 'socket.io-client'
 
 import { createInterview } from './action'
+import DropzoneBox from './component/DropzoneBox'
 import { Label } from './component/Label'
 
 export default function InterviewForm() {
@@ -13,9 +14,17 @@ export default function InterviewForm() {
   const sessionIdRef = useRef<string | null>(null)
   const socketRef = useRef<ReturnType<typeof io> | null>(null)
 
+  // Dropzone containers and selected files
+  const resumeFileRef = useRef<File | null>(null)
+  const portfolioFileRef = useRef<File | null>(null)
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
+    if (resumeFileRef.current)
+      formData.append('coverLetter', resumeFileRef.current)
+    if (portfolioFileRef.current)
+      formData.append('portfolio', portfolioFileRef.current)
     try {
       const sessionId = await createInterview(formData)
       sessionIdRef.current = sessionId
@@ -112,28 +121,12 @@ export default function InterviewForm() {
       {/* 오른쪽 카드 
       자기소개서, 포트폴리오를 입력받음*/}
       <div className={`${card} gap-24`}>
-        <div className="flex-1 flex flex-col justify-between">
-          <Label text="Resume">
-            <input
-              type="file"
-              name="coverLetter"
-              className="mt-1 block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
-                     file:rounded-md file:border-0
-                     file:text-sm file:font-semibold
-                     file:bg-blue-50 file:text-blue-700
-                     hover:file:bg-blue-100 hover:shadow-md"
-            />
+        <div className="flex-1 flex flex-col gap-24 ">
+          <Label text="Resume" className="grow flex flex-col">
+            <DropzoneBox fileRef={resumeFileRef} className="flex-1" />
           </Label>
-          <Label text="Portfolio">
-            <input
-              type="file"
-              name="portfolio"
-              className="mt-1 block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4
-                     file:rounded-md file:border-0
-                     file:text-sm file:font-semibold
-                     file:bg-blue-50 file:text-blue-700
-                     hover:file:bg-blue-100 hover:shadow-md"
-            />
+          <Label text="Portfolio" className="grow flex flex-col">
+            <DropzoneBox fileRef={portfolioFileRef} className="flex-1" />
           </Label>
         </div>
         <div className="flex gap-24 h-48 flex-none">
