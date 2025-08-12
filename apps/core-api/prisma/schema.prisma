@@ -13,33 +13,68 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 질문의 종류를 나타내는 Enum
+enum QuestionType {
+  TECHNICAL
+  PERSONALITY
+  TAILORED
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  pic_url   String   @default("https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=mail@ashallendesign.co.uk")
-  provider  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String?
+  pic_url           String             @default("https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=mail@ashallendesign.co.uk")
+  provider          String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
   // Relation to InterviewSession
   interviewSessions InterviewSession[]
 }
 
 model InterviewSession {
-  id           String @id @default(cuid())
-  company      String
-  jobTitle     String
-  jobSpec      String
-  idealTalent  String?
-  coverLetter  String? // Path to the stored file
-  portfolio    String? // Path to the stored file
-  questions    Json?   // AI-generated questions
+  id                   String   @id @default(cuid())
+  company              String
+  jobTitle             String
+  jobSpec              String
+  idealTalent          String?
+  coverLetter          String? // Path to the stored file
+  portfolio            String? // Path to the stored file
   currentQuestionIndex Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  finalFeedback        String? // 모든 면접 완료 후 생성될 총평
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  // Relation to User
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  steps   InterviewStep[] // 이 세션에 속한 모든 질문/답변 목록
+}
+
+// 질문과 답변, 평가를 한 세트로 묶는 모델
+model InterviewStep {
+  id        String       @id @default(cuid())
+  type      QuestionType // 질문 유형 (기술, 인성, 맞춤)
+  question  String       // AI가 생성한 질문 내용
+  answer    String?      // 사용자의 답변 내용
+  feedback  String?      // 답변에 대한 AI의 자연어 평가
+  score     Int?         // 답변에 대한 수치화된 점수 (0-100)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // --- 관계 정의 ---
+
+  // 1. InterviewSession과의 관계 (Many-to-One)
+  interviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  interviewSessionId String
+
+  // 2. 꼬리 질문을 위한 자기 참조 관계 (One-to-Many)
+  // 이 단계로부터 파생된 꼬리 질문 단계 목록
+  tailSteps      InterviewStep[] @relation("FollowUp")
+  
+  // 이 단계가 어떤 부모 단계로부터 파생된 꼬리 질문인지 명시
+  // 이 필드가 존재하면 꼬리 질문임
+  parentStep     InterviewStep?  @relation("FollowUp", fields: [parentStepId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentStepId   String?
 }
