@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   /* --background: #ffffff; */
@@ -6,7 +6,25 @@
 }
 
 @theme {
-  --spacing: 1px; 
+  --spacing: 1px;
+
+  /* Color styles */
+  --color-box-stroke: rgba(255, 255, 255, 0.4000000059604645);
+  --color-box-fill: rgba(255, 255, 255, 0.05000000074505806);
+  --color-selected-text-color: rgba(25, 112, 163, 1);
+  --color-navy: rgba(36, 70, 109, 1);
+  --color-dark-base: rgba(153, 188, 211, 1);
+  --color-base: rgba(204, 228, 247, 1);
+  --color-bright: rgba(245, 247, 248, 1);
+  --color-dark: rgba(114, 115, 113, 1);
+  --color-black: rgba(51, 51, 51, 1);
+  --color-success: rgba(76, 175, 80, 1);
+  --color-warning: rgba(255, 152, 0, 1);
+  --color-error: rgba(244, 67, 54, 1);
+
+  /* Effect styles */
+  --selected-box: 0px 4px 20px rgba(0, 0, 0, 0.25);
+  --shadow-box: 0px 8px 24px rgba(0, 0, 0, 0.07);
 }
 
 @theme inline {
