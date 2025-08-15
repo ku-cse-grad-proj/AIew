@@ -1,6 +1,6 @@
 import json, os, re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
@@ -8,7 +8,7 @@ from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 
-from app.models.question import UserInfo, InterviewQuestion
+from app.models.question import UserInfo, InterviewQuestion, QuestionConstraints
 from app.services.memory_logger import log_main_questions
 
 load_dotenv()
@@ -68,15 +68,9 @@ def _dedupe_and_enforce(
 
 def generate_questions(
         user_info: UserInfo, 
-        constraints=None, 
-        memory: Optional[ConversationBufferMemory] = None
+        constraints: QuestionConstraints,
+        memory: ConversationBufferMemory 
 ) -> List[Dict]:
-    constraints = constraints or {}
-    avoid_ids = constraints.get("avoid_question_ids", [])
-    language = constraints.get("language", "ko")
-    timebox_total_sec = constraints.get("timebox_total_sec")
-    seed = constraints.get("seed")
-
     raw = load_prompt_template(PROMPT_PATH)
     prompt_template = PromptTemplate.from_template(raw)
     llm = ChatOpenAI(
@@ -93,11 +87,11 @@ def generate_questions(
         "core_values": user_info.core_values,
         "resume_text": user_info.resume_text,
         "portfolio_text": user_info.portfolio_text,
-        "language": language,
-        "timebox_total_sec": timebox_total_sec 
-            if timebox_total_sec is not None else "null",
-        "avoid_ids_csv": ", ".join(avoid_ids) if avoid_ids else "none",
-        "seed": seed if seed is not None else "null",
+        "language": constraints.language,
+        "timebox_total_sec": constraints.timebox_total_sec,
+        "avoid_ids_csv": ", ".join(constraints.avoid_question_ids) 
+            if constraints.avoid_question_ids else "none",
+        "seed": constraints.seed if constraints.seed is not None else "null",
     }
 
     res = chain.invoke(vars)
@@ -107,10 +101,9 @@ def generate_questions(
 
     items = parsed["main_questions"] if isinstance(parsed, dict) else parsed
     norm = _normalize_items(items)
-    final = _dedupe_and_enforce(norm, avoid_ids)
+    final = _dedupe_and_enforce(norm, constraints.avoid_question_ids)
 
     _ = [InterviewQuestion.model_validate(i) for i in final]
-    if memory is not None:
-        log_main_questions(memory, final)
+    log_main_questions(memory, final)
     
     return final

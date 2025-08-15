@@ -16,7 +16,7 @@ def generate_question(
 ):
     data = generate_questions(
         req.user_info, 
-        req.constraints.model_dump(), 
+        req.constraints, 
         memory
     )
     return data

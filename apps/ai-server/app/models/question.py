@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -13,9 +13,9 @@ class UserInfo(BaseModel):
 class QuestionConstraints(BaseModel):
     language: str = Field("ko", description="질문 출력 언어: ko")
     n: int = Field(5, ge=5, le=5, description="메인 질문 개수(고정 5)")
-    timebox_total_sec: Optional[int] = Field(None, description="면접 총 시간(초)")
+    timebox_total_sec: int = Field(None, description="면접 총 시간(초)")
     avoid_question_ids: List[str] = Field(default_factory=list, description="이미 출제된 질문 ID 목록(중복 방지)")
-    seed: Optional[int] = Field(None, description="결정적 생성용 시드(모델 지원 시)")
+    seed: int = Field(None, description="결정적 생성용 시드(모델 지원 시)")
 
 class QuestionRequest(BaseModel):
     user_info: UserInfo
