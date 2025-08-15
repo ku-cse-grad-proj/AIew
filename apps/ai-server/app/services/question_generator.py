@@ -25,7 +25,8 @@ def load_prompt_template(path: Path) -> str:
 
 def _strip_json(text: str) -> str:
     m = re.search(r"```json(.*?)```", text, re.DOTALL)
-    if m: return m.group(1).strip()
+    if m: 
+        return m.group(1).strip()
     text = text.strip()
     i, j = text.find("{"), text.rfind("}")
     return text[i:j+1] if i!=-1 and j!=-1 and j>i else text
