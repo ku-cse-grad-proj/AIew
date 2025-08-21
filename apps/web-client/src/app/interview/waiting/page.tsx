@@ -21,9 +21,7 @@ export default function WaitingPage() {
       </Card>
       <Card className="w-full h-full flex flex-col items-center justify-center relative">
         <div className="flex-1 flex flex-col items-center justify-center gap-48">
-          <div className="flex items-center justify-center">
-            <LoadingCircle />
-          </div>
+          <LoadingCircle />
           <span
             className="text-black shimmer-text"
             data-content="preparing interview..."
