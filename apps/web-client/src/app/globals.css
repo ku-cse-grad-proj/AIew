@@ -44,3 +44,40 @@ body {
   /* background: var(--background); */
   /* color: var(--foreground); */
 }
+
+/* Calmer breathing variants */
+@keyframes breath-calm {
+  0%,
+  100% {
+    transform: scale(0.98);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+@keyframes breathDelay-calm {
+  0%,
+  100% {
+    transform: scale(0.975);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.035);
+    opacity: 0.95;
+  }
+}
+.animate-breath-calm {
+  animation: breath-calm 2.8s cubic-bezier(0.22, 0, 0.15, 1) infinite;
+}
+.animate-breath-delay-calm {
+  animation: breathDelay-calm 2.8s cubic-bezier(0.22, 0, 0.15, 1) infinite;
+  animation-delay: 0.4s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-breath-calm,
+  .animate-breath-delay-calm {
+    animation: none;
+  }
+}
