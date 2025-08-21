@@ -1,15 +1,16 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useState, useRef } from 'react'
 import { io } from 'socket.io-client'
+
+import Card from '../_components/Card'
+import FooterButtons from '../_components/FooterButtons'
 
 import { createInterview } from './action'
 import DropzoneBox from './component/DropzoneBox'
 import { Label } from './component/Label'
 
 export default function InterviewForm() {
-  const router = useRouter()
   const [job, setJob] = useState('')
   const sessionIdRef = useRef<string | null>(null)
   const socketRef = useRef<ReturnType<typeof io> | null>(null)
@@ -59,14 +60,11 @@ export default function InterviewForm() {
     }
   }
 
-  const card =
-    'flex-1 h-full bg-bright rounded-[20px] shadow-box p-24 flex flex-col'
-
   return (
-    <form className="w-full h-full flex gap-24" onSubmit={handleSubmit}>
+    <form className="w-full h-full flex gap-24 m-auto" onSubmit={handleSubmit}>
       {/* 왼쪽 card
        직업, 회사명, 인재상을 입력함*/}
-      <div className={`${card} justify-between gap-24`}>
+      <Card className="flex-1 flex flex-col justify-between">
         <Label text="Job">
           <select
             name="jobCategory"
@@ -116,11 +114,11 @@ export default function InterviewForm() {
             placeholder="Describe the ideal talent"
           ></textarea>
         </Label>
-      </div>
+      </Card>
 
       {/* 오른쪽 카드 
       자기소개서, 포트폴리오를 입력받음*/}
-      <div className={`${card} gap-24`}>
+      <Card className="flex-1 flex flex-col gap-24">
         <div className="flex-1 flex flex-col gap-24 ">
           <Label text="Resume" className="grow flex flex-col">
             <DropzoneBox fileRef={resumeFileRef} className="flex-1" />
@@ -129,22 +127,8 @@ export default function InterviewForm() {
             <DropzoneBox fileRef={portfolioFileRef} className="flex-1" />
           </Label>
         </div>
-        <div className="flex gap-24 h-48 flex-none">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex-3 rounded-[10px] border border-dark text-dark hover:shadow-md hover:cursor-pointer"
-          >
-            back
-          </button>
-          <button
-            type="submit"
-            className="flex-7 rounded-[10px] bg-navy text-bright hover:shadow-xl hover:cursor-pointer"
-          >
-            create interview
-          </button>
-        </div>
-      </div>
+        <FooterButtons />
+      </Card>
     </form>
   )
 }
