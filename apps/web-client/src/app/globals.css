@@ -81,3 +81,48 @@ body {
     animation: none;
   }
 }
+
+.shimmer-text {
+  position: relative;
+}
+
+.shimmer-text::after {
+  content: attr(data-content);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(245, 247, 248, 0.9) 50%,
+    rgba(191, 191, 191, 0) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+
+  mix-blend-mode: screen;
+
+  animation: shimmer var(--shimmer-speed, 2.8s) cubic-bezier(0.22, 0, 0.15, 1)
+    infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position-x: 200%;
+  }
+  100% {
+    background-position-x: -200%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text::after {
+    animation: none;
+  }
+}

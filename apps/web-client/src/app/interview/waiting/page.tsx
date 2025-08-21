@@ -24,7 +24,10 @@ export default function WaitingPage() {
           <div className="flex items-center justify-center">
             <LoadingCircle />
           </div>
-          <span className="text-black" data-content="preparing interview...">
+          <span
+            className="text-black shimmer-text"
+            data-content="preparing interview..."
+          >
             preparing interview...
           </span>
         </div>
