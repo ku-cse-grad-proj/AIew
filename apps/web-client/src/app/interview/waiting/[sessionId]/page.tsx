@@ -1,7 +1,5 @@
-import FooterButtons from '../../_components/FooterButtons'
-
 import InfoItem from './components/InfoItem'
-import LoadingCircle from './components/LoadingCircle'
+import LoadingCard from './components/LoadingCard'
 
 import Card from '@/app/interview/_components/Card'
 
@@ -25,18 +23,7 @@ export default async function WaitingPage({
           <InfoItem label="portfolio" value="portfolio_digita.pdf" />
         </dl>
       </Card>
-      <Card className="w-full h-full flex flex-col items-center justify-center relative">
-        <div className="flex-1 flex flex-col items-center justify-center gap-48">
-          <LoadingCircle />
-          <span
-            className="text-black shimmer-text"
-            data-content="preparing interview..."
-          >
-            preparing interview...
-          </span>
-        </div>
-        <FooterButtons sessionId={sessionId} isWaiting />
-      </Card>
+      <LoadingCard sessionId={sessionId} />
     </div>
   )
 }
