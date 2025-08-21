@@ -1,5 +1,7 @@
 'use server'
 
+import { redirect } from 'next/navigation'
+
 import { privateFetch } from '@/app/lib/fetch'
 
 export async function createInterview(formData: FormData) {
@@ -11,7 +13,7 @@ export async function createInterview(formData: FormData) {
   )
   newFormData.append(
     'jobTitle',
-    JSON.stringify({ value: formData.get('jobSpec') }),
+    JSON.stringify({ value: formData.get('jobTitle') }),
   )
   newFormData.append(
     'jobSpec',
@@ -46,6 +48,7 @@ export async function createInterview(formData: FormData) {
     throw new Error('면접 생성에 실패했습니다.')
   }
 
-  const sessionId = await res.json()
-  return sessionId
+  const { sessionId } = await res.json()
+  console.log('sessionId', sessionId)
+  redirect(`/interview/waiting/${sessionId}`)
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { io } from 'socket.io-client'
 
 import Card from '../_components/Card'
 import FooterButtons from '../_components/FooterButtons'
@@ -12,8 +11,6 @@ import { Label } from './component/Label'
 
 export default function InterviewForm() {
   const [job, setJob] = useState('')
-  const sessionIdRef = useRef<string | null>(null)
-  const socketRef = useRef<ReturnType<typeof io> | null>(null)
 
   // Dropzone containers and selected files
   const resumeFileRef = useRef<File | null>(null)
@@ -27,34 +24,7 @@ export default function InterviewForm() {
     if (portfolioFileRef.current)
       formData.append('portfolio', portfolioFileRef.current)
     try {
-      const sessionId = await createInterview(formData)
-      sessionIdRef.current = sessionId
-
-      // Clean up previous socket if exists
-      if (socketRef.current) {
-        socketRef.current.disconnect()
-      }
-
-      const socket = io('http://localhost:3000', {
-        query: { sessionId },
-      })
-      socketRef.current = socket
-
-      socket.on('connect', () => {
-        console.log('Socket connected:', socket.id)
-      })
-
-      socket.on('server:questions-ready', (data) => {
-        console.log('Questions are ready:', data)
-      })
-
-      socket.emit('client:ready', () => {
-        console.log('client ready')
-      })
-
-      socket.on('disconnect', () => {
-        console.log('Socket disconnected')
-      })
+      await createInterview(formData)
     } catch (error) {
       console.error('면접 생성 실패:', error)
     }

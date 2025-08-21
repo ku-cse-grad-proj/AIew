@@ -1,11 +1,17 @@
-import FooterButtons from '../_components/FooterButtons'
+import FooterButtons from '../../_components/FooterButtons'
 
 import InfoItem from './components/InfoItem'
 import LoadingCircle from './components/LoadingCircle'
 
 import Card from '@/app/interview/_components/Card'
 
-export default function WaitingPage() {
+export default async function WaitingPage({
+  params,
+}: {
+  params: Promise<{ sessionId: string }>
+}) {
+  const { sessionId } = await params
+  console.log('WaitingPage sessionId:', sessionId)
   return (
     <div className="w-full h-full flex items-center justify-center p-24 gap-24">
       <Card className="w-full h-full flex flex-col">
@@ -29,7 +35,7 @@ export default function WaitingPage() {
             preparing interview...
           </span>
         </div>
-        <FooterButtons isWaiting />
+        <FooterButtons sessionId={sessionId} isWaiting />
       </Card>
     </div>
   )
