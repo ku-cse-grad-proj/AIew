@@ -20,6 +20,13 @@ enum QuestionType {
   TAILORED
 }
 
+// ++ 추가: 면접 세션의 진행 상태를 나타내는 Enum
+enum InterviewStatus {
+  NOT_STARTED // 생성만 되고 아직 시작 안 함
+  IN_PROGRESS // 진행 중
+  COMPLETED   // 모든 질문에 답변 완료
+}
+
 model User {
   id                String             @id @default(cuid())
   email             String             @unique
@@ -46,6 +53,10 @@ model InterviewSession {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
+  // ++ 추가: 면접 진행 상태 및 전체 시간
+  status               InterviewStatus @default(NOT_STARTED)
+  totalTimeSec         Int?            // 면접 전체 제한 시간 (초)
+
   // Relations
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId  String
@@ -58,10 +69,21 @@ model InterviewStep {
   type      QuestionType // 질문 유형 (기술, 인성, 맞춤)
   question  String       // AI가 생성한 질문 내용
   answer    String?      // 사용자의 답변 내용
-  feedback  String?      // 답변에 대한 AI의 자연어 평가
-  score     Int?         // 답변에 대한 수치화된 점수 (0-100)
+  score     Int?         // AI가 평가한 총점 (0-100)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+
+  // ++ 추가: 질문 생성 시의 메타데이터
+  rationale              String?   // 질문 선정 근거
+  criteria               String[]  // 평가 기준 키워드 목록
+  skills                 String[]  // 측정 역량 태그 목록
+  estimatedAnswerTimeSec Int?      // 예상 답변 시간 (초)
+
+  // ++ 추가: 답변 및 평가에 대한 상세 정보
+  answerDurationSec      Int?      // 실제 사용자 답변 시간 (초)
+  strengths              String[]  // AI가 평가한 강점 목록
+  improvements           String[]  // AI가 평가한 개선점 목록
+  redFlags               String[]  // AI가 발견한 위험 신호 목록
 
   // --- 관계 정의 ---
 
@@ -77,4 +99,19 @@ model InterviewStep {
   // 이 필드가 존재하면 꼬리 질문임
   parentStep     InterviewStep?  @relation("FollowUp", fields: [parentStepId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   parentStepId   String?
+
+  // ++ 추가: 세부 평가 기준 점수와의 관계
+  criterionEvaluations CriterionEvaluation[]
+}
+
+// ++ 신규 모델: 세부 평가 기준별 점수를 저장하는 모델
+model CriterionEvaluation {
+  id        String @id @default(cuid())
+  name      String // 평가 기준명 (예: 명확성, 깊이)
+  score     Int    // 1~5 정수 점수
+  reason    String // 해당 기준 점수 부여 이유
+
+  // Relations
+  interviewStep   InterviewStep @relation(fields: [interviewStepId], references: [id], onDelete: Cascade)
+  interviewStepId String
 }
