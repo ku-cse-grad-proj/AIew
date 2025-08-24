@@ -1,22 +1,15 @@
-import { randomUUID } from 'node:crypto'
-import fs from 'node:fs'
-import path from 'node:path'
-import { pipeline } from 'node:stream'
-import { promisify } from 'node:util'
-
+import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { createId } from '@paralleldrive/cuid2'
 import { QuestionType } from '@prisma/client'
 import {
   FastifyPluginAsync,
-  RouteHandlerMethod,
+  RouteHandler,
   RouteShorthandOptions,
 } from 'fastify'
 
 import { Tag } from '@/configs/swaggerOption'
 import SchemaId from '@/utils/schemaId'
 
-const pump = promisify(pipeline)
-
-// request.body에 추가될 필드들의 타입을 정의합니다.
 interface InterviewRequestBody {
   company: { value: string }
   jobTitle: { value: string }
@@ -82,53 +75,6 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
         '</tr>' +
         '</table>',
       consumes: ['multipart/form-data'],
-      body: {
-        type: 'object',
-        properties: {
-          company: {
-            type: 'object',
-            properties: {
-              value: {
-                type: 'string',
-              },
-            },
-          },
-          jobTitle: {
-            type: 'object',
-            properties: {
-              value: {
-                type: 'string',
-              },
-            },
-          },
-          jobSpec: {
-            type: 'object',
-            properties: {
-              value: {
-                type: 'string',
-              },
-            },
-          },
-          coverLetter: { isFile: true },
-          portfolio: { isFile: true },
-          idealTalent: {
-            type: 'object',
-            properties: {
-              value: {
-                type: 'string',
-              },
-            },
-          },
-        },
-        required: [
-          'company',
-          'jobTitle',
-          'jobSpec',
-          'coverLetter',
-          'portfolio',
-          'idealTalent',
-        ],
-      },
       response: {
         '201': {
           description: '성공적으로 면접 세션이 생성되었습니다.',
@@ -149,35 +95,62 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
     },
   }
 
-  const postHandler: RouteHandlerMethod = async (request, reply) => {
-    const uploadDir = path.join(__dirname, '../../../uploads')
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true })
-    }
-
-    let coverLetterPath: string | undefined
-    let portfolioPath: string | undefined
+  const postHandler: RouteHandler = async (request, reply) => {
+    fastify.log.info('Interview creation request received.')
+    const { R2_BUCKET_NAME, R2_PUBLIC_URL } = process.env
+    const body = {} as InterviewRequestBody
+    const fileUrls: { coverLetter?: string; portfolio?: string } = {}
+    const uploadPromises = []
 
     try {
-      const files = request.files()
-      for await (const part of files) {
-        if (part.mimetype !== 'application/pdf') {
-          throw {
-            statusCode: 415,
-            message: `Unsupported Media Type: '${part.filename}'. Only PDF files are allowed.`,
+      const parts = request.parts()
+      for await (const part of parts) {
+        if (part.type === 'file') {
+          fastify.log.info(
+            `Processing file: ${part.filename}, fieldname: ${part.fieldname}`,
+          )
+          if (part.mimetype !== 'application/pdf') {
+            void part.file.resume()
+            throw {
+              statusCode: 415,
+              message: `Unsupported Media Type: '${part.filename}'. Only PDF files are allowed.`,
+            }
+          }
+
+          const fileKey = `${createId()}-${part.filename}`
+          const fileBody = await part.toBuffer()
+          const uploadPromise = fastify.r2
+            .send(
+              new PutObjectCommand({
+                Bucket: R2_BUCKET_NAME,
+                Key: fileKey,
+                Body: fileBody,
+                ContentType: part.mimetype,
+              }),
+            )
+            .then(() => {
+              const publicUrl = `${R2_PUBLIC_URL}/${fileKey}`
+              fastify.log.info(
+                `Successfully uploaded ${fileKey} to ${publicUrl}`,
+              )
+              if (part.fieldname === 'coverLetter') {
+                fileUrls.coverLetter = publicUrl
+              } else if (part.fieldname === 'portfolio') {
+                fileUrls.portfolio = publicUrl
+              }
+            })
+          uploadPromises.push(uploadPromise)
+        } else {
+          // part.type === 'field'
+          if (part.value) {
+            fastify.log.info(`${part.fieldname} = ${part.value}`)
+            const key = part.fieldname as keyof InterviewRequestBody
+            body[key] = JSON.parse(part.value as string)
           }
         }
-
-        const uniqueFilename = `${randomUUID()}-${part.filename}`
-        const filePath = path.join(uploadDir, uniqueFilename)
-        await pump(part.file, fs.createWriteStream(filePath))
-
-        if (part.fieldname === 'coverLetter') {
-          coverLetterPath = filePath
-        } else if (part.fieldname === 'portfolio') {
-          portfolioPath = filePath
-        }
       }
+      await Promise.all(uploadPromises)
+      fastify.log.info('All file uploads completed.')
     } catch (error) {
       fastify.log.error(error)
 
@@ -205,26 +178,15 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    // attachFieldsToBody 옵션 덕분에 request.body에서 필드 값을 직접 사용 가능
-    const { company, jobTitle, jobSpec, idealTalent } =
-      request.body as InterviewRequestBody
-
-    console.log(
-      company.value,
-      jobTitle.value.valueOf(),
-      jobSpec.value,
-      idealTalent.value,
-    )
-
     const session = await fastify.prisma.interviewSession.create({
       data: {
         userId: request.user.userId,
-        company: company.value,
-        jobTitle: jobTitle.value,
-        jobSpec: jobSpec.value,
-        idealTalent: idealTalent.value,
-        coverLetter: coverLetterPath,
-        portfolio: portfolioPath,
+        company: body.company.value,
+        jobTitle: body.jobTitle.value,
+        jobSpec: body.jobSpec.value,
+        idealTalent: body.idealTalent.value,
+        coverLetter: fileUrls.coverLetter,
+        portfolio: fileUrls.portfolio,
       },
     })
 
