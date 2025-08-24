@@ -147,7 +147,7 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
 
       // JWT를 쿠키에 담아 프론트엔드로 리디렉션
       reply
-        .setCookie('refresh_token', refreshToken, {
+        .setCookie('refreshToken', refreshToken, {
           path: '/',
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production', // 프로덕션에서는 true로 설정

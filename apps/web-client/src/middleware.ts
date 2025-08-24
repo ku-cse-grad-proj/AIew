@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(req: NextRequest) {
   const accessToken = req.cookies.get('accessToken')?.value
-  const refreshToken = req.cookies.get('refresh_token')?.value
+  const refreshToken = req.cookies.get('refreshToken')?.value
 
   // refresh token조차 없으면 무조건 로그인 페이지로
   if (!refreshToken) {
