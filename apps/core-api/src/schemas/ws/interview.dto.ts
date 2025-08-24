@@ -18,11 +18,19 @@ export interface WebSocketMessage<T> {
  * 질문 생성이 완료되었음을 알리는 메시지
  */
 export interface QuestionsReadyPayload {
-  questions: {
-    technical: string[]
-    personality: string[]
-    tailored: string[]
-  }
+  steps: {
+    id: string
+    type: 'TECHNICAL' | 'PERSONALITY' | 'TAILORED'
+    question: string
+    // 초기 질문에는 답변, 피드백 등이 없으므로 optional
+    answer?: string | null
+    feedback?: string | null
+    score?: number | null
+    createdAt: Date
+    updatedAt: Date
+    interviewSessionId: string
+    parentStepId?: string | null
+  }[]
 }
 export type ServerQuestionsReadyMessage =
   WebSocketMessage<QuestionsReadyPayload>
@@ -74,44 +82,37 @@ export const wsServerQuestionsReadySchema = {
     payload: {
       type: 'object',
       properties: {
-        questions: {
-          type: 'object',
-          properties: {
-            technical: {
-              type: 'array',
-              items: {
+        steps: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              type: {
                 type: 'string',
-                const: [
-                  '저희 서비스에서 사용 중인 Fastify의 장단점에 대해 설명해주세요.',
-                  'HTTP와 WebSocket의 차이점을 설명하고, 어떤 상황에서 각각을 사용해야 할까요?',
-                ],
+                enum: ['TECHNICAL', 'PERSONALITY', 'TAILORED'],
               },
+              question: { type: 'string' },
+              answer: { type: ['string', 'null'] },
+              feedback: { type: ['string', 'null'] },
+              score: { type: ['integer', 'null'] },
+              createdAt: { type: 'string', format: 'date-time' },
+              updatedAt: { type: 'string', format: 'date-time' },
+              interviewSessionId: { type: 'string' },
+              parentStepId: { type: ['string', 'null'] },
             },
-            personality: {
-              type: 'array',
-              items: {
-                type: 'string',
-                const: [
-                  '가장 어려웠던 협업 경험은 무엇이며, 어떻게 해결했나요?',
-                  '스트레스를 관리하는 자신만의 방법이 있나요?',
-                ],
-              },
-            },
-            tailored: {
-              type: 'array',
-              items: {
-                type: 'string',
-                const: [
-                  '제출하신 포트폴리오의 인증 시스템에서 Refresh Token의 역할을 더 자세히 설명해주세요.',
-                  "저희 회사의 인재상인 '끊임없는 학습'을 실천했던 경험이 있다면 말씀해주세요.",
-                ],
-              },
-            },
+            required: [
+              'id',
+              'type',
+              'question',
+              'createdAt',
+              'updatedAt',
+              'interviewSessionId',
+            ],
           },
-          required: ['technical', 'personality', 'tailored'],
         },
       },
-      required: ['questions'],
+      required: ['steps'],
     },
   },
   required: ['type', 'payload'],

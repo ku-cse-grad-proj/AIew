@@ -1,6 +1,8 @@
+import ISchema from './interface'
+
 import SchemaId from '@/utils/schemaId'
 
-export const errorSchema = {
+export const errorSchema: ISchema = {
   $id: SchemaId.Error,
   type: 'object',
   properties: {

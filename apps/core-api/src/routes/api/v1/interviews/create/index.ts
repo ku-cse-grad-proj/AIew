@@ -4,6 +4,7 @@ import path from 'node:path'
 import { pipeline } from 'node:stream'
 import { promisify } from 'node:util'
 
+import { QuestionType } from '@prisma/client'
 import {
   FastifyPluginAsync,
   RouteHandlerMethod,
@@ -32,54 +33,54 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
       tags: [Tag.Interview],
       summary: '새로운 AI 면접 세션 생성',
       description:
-        '사용자로부터 회사, 직무, 자기소개서, 포트폴리오, 인재상 등의 정보를 받아 새로운 면접 세션을 생성하고,<br>\
-        백그라운드에서 AI 질문 생성을 시작합니다.<br>\
-        자기소개서와 포트폴리오는 PDF 파일만 업로드 가능합니다.<br><br>\
-        **참고**: 실제 클라이언트가 보내야 하는 데이터 형식은 아래 테이블 참고<br>\
-        <table>\
-          <tr>\
-            <td>이름</td>\
-            <td>타입</td>\
-            <td>필수</td>\
-            <td>설명</td>\
-          </tr>\
-          <tr>\
-            <td>`company`</td>\
-            <td>string</td>\
-            <td>✅</td>\
-            <td>회사명</td>\
-          </tr>\
-          <tr>\
-            <td>`jobTitle`</td>\
-            <td>string</td>\
-            <td>✅</td>\
-            <td>직무명</td>\
-          </tr>\
-          <tr>\
-            <td>`jobSpec`</td>\
-            <td>string</td>\
-            <td>✅</td>\
-            <td>세부 직무 기술</td>\
-          </tr>\
-          <tr>\
-            <td>`coverLetter`</td>\
-            <td>file</td>\
-            <td>✅</td>\
-            <td>자기소개서 (PDF)</td>\
-          </tr>\
-          <tr>\
-            <td>`portfolio`</td>\
-            <td>file</td>\
-            <td>✅</td>\
-            <td>포트폴리오 (PDF)</td>\
-          </tr>\
-          <tr>\
-            <td>`idealTalent`</td>\
-            <td>string</td>\
-            <td>✅</td>\
-            <td>회사의 인재상</td>\
-          </tr>\
-        </table>',
+        '사용자로부터 회사, 직무, 자기소개서, 포트폴리오, 인재상 등의 정보를 받아 새로운 면접 세션을 생성하고,<br>' +
+        '백그라운드에서 AI 질문 생성을 시작합니다.<br>' +
+        '자기소개서와 포트폴리오는 PDF 파일만 업로드 가능합니다.<br><br>' +
+        '**참고**: 실제 클라이언트가 보내야 하는 데이터 형식은 아래 테이블 참고<br>' +
+        '<table>' +
+        '<tr>' +
+        '<td>이름</td>' +
+        '<td>타입</td>' +
+        '<td>필수</td>' +
+        '<td>설명</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>`company`</td>' +
+        '<td>string</td>' +
+        '<td>✅</td>' +
+        '<td>회사명</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>`jobTitle`</td>' +
+        '<td>string</td>' +
+        '<td>✅</td>' +
+        '<td>직무명</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>`jobSpec`</td>' +
+        '<td>string</td>' +
+        '<td>✅</td>' +
+        '<td>세부 직무 기술</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>`coverLetter`</td>' +
+        '<td>file</td>' +
+        '<td>✅</td>' +
+        '<td>자기소개서 (PDF)</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>`portfolio`</td>' +
+        '<td>file</td>' +
+        '<td>✅</td>' +
+        '<td>포트폴리오 (PDF)</td>' +
+        '</tr>' +
+        '<tr>' +
+        '<td>`idealTalent`</td>' +
+        '<td>string</td>' +
+        '<td>✅</td>' +
+        '<td>회사의 인재상</td>' +
+        '</tr>' +
+        '</table>',
       consumes: ['multipart/form-data'],
       body: {
         type: 'object',
@@ -246,22 +247,50 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
        */
       try {
         // 3. (백그라운드 작업) AI 서버에 질문 생성 요청
-        //    현재는 임시로 HTTP 직접 호출을 시뮬레이션합니다.
-        // const questions = await aiServer.generateQuestions(...)
-        const questions = {
+        // const generatedQuestions = await aiServer.generateQuestions(...)
+        const generatedQuestions = {
           technical: ['Tell me about REST API.', 'What is WebSocket?'],
           personality: ['What are your strengths?'],
-          tailored: ['Why do you want to work at our company?'],
+          tailored: [
+            'Why do you want to work at our company?',
+            'Why do you prefer Nestjs?',
+          ],
         }
 
-        // 4. AI 서버로부터 받은 질문을 DB에 업데이트
-        await fastify.prisma.interviewSession.update({
-          where: { id: session.id },
-          data: { questions },
+        // 4. AI 서버로부터 받은 질문들을 InterviewStep 테이블에 저장할 형태로 가공
+        const stepsToCreate = [
+          ...generatedQuestions.technical.map((q) => ({
+            type: QuestionType.TECHNICAL,
+            question: q,
+            interviewSessionId: session.id,
+          })),
+          ...generatedQuestions.personality.map((q) => ({
+            type: QuestionType.PERSONALITY,
+            question: q,
+            interviewSessionId: session.id,
+          })),
+          ...generatedQuestions.tailored.map((q) => ({
+            type: QuestionType.TAILORED,
+            question: q,
+            interviewSessionId: session.id,
+          })),
+        ]
+
+        // 5. 가공된 질문들을 DB에 한 번에 저장
+        await fastify.prisma.interviewStep.createMany({
+          data: stepsToCreate,
         })
 
-        // 5. 해당 세션의 WebSocket '방(room)'에 있는 클라이언트에게 알림
-        fastify.io.to(session.id).emit('server:questions-ready', { questions })
+        // 6. 저장된 질문들을 다시 불러와서 클라이언트에게 전달
+        const createdSteps = await fastify.prisma.interviewStep.findMany({
+          where: { interviewSessionId: session.id },
+          orderBy: { createdAt: 'asc' }, // 생성된 순서대로 정렬
+        })
+
+        // 7. 해당 세션의 WebSocket '방(room)'에 있는 클라이언트에게 알림
+        fastify.io
+          .to(session.id)
+          .emit('server:questions-ready', { steps: createdSteps })
       } catch (error) {
         fastify.log.error(error)
         fastify.io.to(session.id).emit('server:error', {

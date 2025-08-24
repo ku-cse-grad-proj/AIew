@@ -42,14 +42,14 @@ const socketIOPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       // DB를 조회하여 질문이 이미 생성되었는지 확인합니다.
-      const session = await fastify.prisma.interviewSession.findUnique({
-        where: { id: sessionId },
-        select: { questions: true },
+      const steps = await fastify.prisma.interviewStep.findMany({
+        where: { interviewSessionId: sessionId },
+        orderBy: { createdAt: 'asc' },
       })
 
-      // 질문이 이미 존재한다면, 즉시 해당 클라이언트에게 전송합니다.
-      if (session?.questions) {
-        socket.emit('server:questions-ready', { questions: session.questions })
+      // 질문(steps)이 이미 존재한다면, 즉시 해당 클라이언트에게 전송합니다.
+      if (steps.length > 0) {
+        socket.emit('server:questions-ready', { steps })
       }
     } catch (error) {
       fastify.log.error(
