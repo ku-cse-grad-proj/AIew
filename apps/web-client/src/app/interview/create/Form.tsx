@@ -37,7 +37,7 @@ export default function InterviewForm() {
       <Card className="flex-1 flex flex-col justify-between">
         <Label text="Job">
           <select
-            name="jobCategory"
+            name="jobTitle"
             value={job}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               setJob(e.target.value)
