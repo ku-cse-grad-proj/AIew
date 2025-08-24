@@ -152,6 +152,7 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production', // 프로덕션에서는 true로 설정
           sameSite: 'lax', // CSRF 공격 차단 + 정상적인 요청에서는 GET 허용
+          maxAge: 7 * 24 * 60 * 60, // 초 단위
         })
         .redirect(
           `http://localhost:4000/auth/callback?accessToken=${accessToken}`,

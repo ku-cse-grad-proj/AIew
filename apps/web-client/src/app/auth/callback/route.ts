@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     cookieStore.set('accessToken', accessToken, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
+      maxAge: 15 * 60, // 초 단위
+      path: '/', // 전체 경로에서 사용 가능
     })
   }
 
