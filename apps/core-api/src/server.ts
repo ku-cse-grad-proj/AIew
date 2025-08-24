@@ -34,9 +34,7 @@ const start = async () => {
 
   // Register essential plugins
   await app.register(Cookie)
-  await app.register(Multipart, {
-    attachFieldsToBody: true,
-  })
+  await app.register(Multipart)
   await app.register(Cors, {
     origin: 'http://localhost:4000',
     credentials: true, // Allow cookies to be sent
