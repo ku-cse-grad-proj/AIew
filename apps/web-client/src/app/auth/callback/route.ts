@@ -10,6 +10,7 @@ export async function GET(request: Request) {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 15 * 60, // 초 단위
+      sameSite: 'lax',
       path: '/', // 전체 경로에서 사용 가능
     })
   }
