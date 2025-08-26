@@ -18,8 +18,8 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
       tags: [Tag.Interview],
       summary: '새로운 AI 면접 세션 생성',
       description:
-        '사용자로부터 회사, 직무, 자기소개서, 포트폴리오, 인재상 등의 정보를 받아 새로운 면접 세션을 생성하고,<br>' +
-        '백그라운드에서 AI 질문 생성을 시작합니다.<br>' +
+        '사용자로부터 면접 정보를 받아 세션을 즉시 생성하고 sessionId를 반환합니다.<br>' +
+        '파일 업로드 및 AI 질문 생성은 백그라운드에서 비동기적으로 처리되며, 완료 시 WebSocket으로 클라이언트에게 알림을 보냅니다.<br>' +
         '자기소개서와 포트폴리오는 PDF 파일만 업로드 가능합니다.<br><br>' +
         '**참고**: 실제 클라이언트가 보내야 하는 데이터 형식은 아래 테이블 참고<br>' +
         '<table>' +
@@ -79,6 +79,10 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
             },
           },
         },
+        '400': {
+          description: '필수 파일이 누락되었거나 잘못된 요청입니다.',
+          $ref: `${SchemaId.Error}#`,
+        },
         '415': {
           description:
             '지원되지 않는 파일 형식입니다. PDF 파일만 업로드할 수 있습니다.',
@@ -130,16 +134,24 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
         }
       }
 
-      const session = await interviewService.createInterviewSession(
+      // 면접 세션 초기화 및 즉시 응답
+      const session = await interviewService.initializeSession(
         request.user.userId,
+        body,
+      )
+      reply.status(201).send({ sessionId: session.id })
+
+      // 응답을 보낸 후, 백그라운드에서 무거운 작업 처리
+      // (주의: 이 방식은 서버가 종료되면 백그라운드 작업이 유실될 수 있음
+      // 프로덕션 환경에서는 별도의 Job Queue(예: BullMQ, RabbitMQ) 사용 권장)
+      void interviewService.processInterviewInBackground(
+        session.id,
         body,
         files as {
           coverLetter: { buffer: Buffer; filename: string }
           portfolio: { buffer: Buffer; filename: string }
         },
       )
-
-      return reply.status(201).send({ sessionId: session.id })
     } catch (error) {
       fastify.log.error(error)
       const statusCode =
@@ -156,7 +168,10 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
         typeof error.message === 'string'
           ? error.message
           : 'Internal Server Error'
-      return reply.status(statusCode).send({ message })
+      // reply가 이미 전송된 경우를 대비하여 체크
+      if (!reply.sent) {
+        reply.status(statusCode).send({ message })
+      }
     }
   }
 
