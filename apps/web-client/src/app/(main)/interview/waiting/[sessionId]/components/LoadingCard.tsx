@@ -1,10 +1,11 @@
 'use client'
 
+import Card from '../../../_components/Card'
+import FooterButtons from '../../../_components/FooterButtons'
+
 import LoadingCircle from './LoadingCircle'
 
 import { useInterviewSocket } from '@/app/hooks/useInterviewSocket'
-import Card from '@/app/interview/_components/Card'
-import FooterButtons from '@/app/interview/_components/FooterButtons'
 
 export default function LoadingCard({ sessionId }: { sessionId: string }) {
   const { isQuestionsReady } = useInterviewSocket(sessionId)
