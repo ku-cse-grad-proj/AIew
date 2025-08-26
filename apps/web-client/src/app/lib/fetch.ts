@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { RedirectType } from 'next/navigation'
 
 /**
  * @description 인증이 필요한 API 요청을 위한 fetch 래퍼 함수.
@@ -35,10 +36,12 @@ export async function privateFetch<T>(
     return res
   }
 
-  // 401 에러 발생 시, 서버 환경에서는 즉시 에러를 던집니다.
-  // (서버 컴포넌트에서는 미들웨어가 이미 토큰 유효성을 보장해야 합니다.)
+  // 401 에러 발생 시, 서버 환경에서는 즉시 로그인 페이지로 리디렉션합니다.
   if (isServer) {
-    throw new Error('Unauthenticated (server-side)')
+    // 서버 환경에서는 Next.js의 redirect 유틸을 사용해 즉시 로그인 페이지로 보냅니다.
+    // (주의: 이 코드는 서버 컴포넌트/액션 컨텍스트에서만 동작합니다.)
+    const { redirect } = await import('next/navigation')
+    redirect('/login', RedirectType.replace)
   }
 
   // 클라이언트: 1회만 refresh 시도
