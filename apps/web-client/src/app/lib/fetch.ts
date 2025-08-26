@@ -1,50 +1,60 @@
 import { cookies } from 'next/headers'
 
+/**
+ * @description 인증이 필요한 API 요청을 위한 fetch 래퍼 함수.
+ * 모든 요청에 자동으로 인증 쿠키를 포함시키고, 토큰 만료 시 재발급을 시도합니다.
+ */
 export async function privateFetch<T>(
   input: RequestInfo,
   init: RequestInit = {},
+  _retry = false,
 ): Promise<Response> {
   const isServer = typeof window === 'undefined'
+  const finalInit: RequestInit = { ...init }
 
-  let accessToken
   if (isServer) {
-    accessToken = (await cookies()).get('accessToken')?.value
+    // 서버 환경일 경우, 'next/headers'에서 쿠키를 가져와 수동으로 헤더에 추가합니다.
+    const cookieStore = await cookies()
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((cookie) => `${cookie.name}=${cookie.value}`)
+      .join('; ')
+
+    finalInit.headers = {
+      ...finalInit.headers,
+      Cookie: cookieHeader,
+    }
   } else {
-    accessToken = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('accessToken='))
-      ?.split('=')[1]
+    // 클라이언트 환경일 경우, 브라우저가 쿠키를 자동으로 포함하도록 설정합니다.
+    finalInit.credentials = 'include'
   }
 
-  // 2) 실제 호출
-  const res = await fetch(input, {
-    ...init,
-    headers: {
-      ...init.headers,
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
-  if (res.status !== 401) return res
+  // 최종적으로 구성된 init 객체로 API를 호출합니다.
+  const res = await fetch(input, finalInit)
+  if (res.status !== 401) {
+    return res
+  }
 
-  //서버일 경우 error 처리
+  // 401 에러 발생 시, 서버 환경에서는 즉시 에러를 던집니다.
+  // (서버 컴포넌트에서는 미들웨어가 이미 토큰 유효성을 보장해야 합니다.)
   if (isServer) {
-    throw new Error('Unauthenticated')
+    throw new Error('Unauthenticated (server-side)')
   }
 
-  // 3) 401 → refresh 시도
-  const refreshRes = await fetch('http://localhost:3000/api/v1/refresh', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  })
-  // 4) refresh 성공 시 쿠키 설정
-  if (!isServer && refreshRes.ok) {
-    document.cookie = `accessToken=${await refreshRes.json().then((data) => data.accessToken)}; path=/; samesite=lax`
-  }
-  if (!refreshRes.ok) {
-    window.location.href = '/login'
+  // 클라이언트: 1회만 refresh 시도
+  // res == ok이지만 쿠키 설정을 실패할 경우 무한루프에 빠질 수 있음
+  if (!_retry && !String(input).includes('/api/v1/refresh')) {
+    const rr = await fetch('/api/v1/refresh', {
+      method: 'POST',
+      credentials: 'include',
+    })
+    if (rr.ok) {
+      return privateFetch<T>(input, init, true) // 한 번만 재시도
+    }
   }
 
-  // 5) 원 요청 재귀 재시도
-  return privateFetch<T>(input, init)
+  // 재발급 실패 시, 로그인 페이지로 리디렉션합니다.
+  window.location.href = '/login'
+  // 리디렉션 후에는 더 이상 진행되지 않도록 빈 응답을 반환합니다.
+  return new Response(null, { status: 302 })
 }
