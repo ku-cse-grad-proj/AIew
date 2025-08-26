@@ -34,7 +34,17 @@ const start = async () => {
 
   // Register essential plugins
   await app.register(Cookie)
-  await app.register(Multipart)
+  await app.register(Multipart, {
+    limits: {
+      fieldNameSize: 100, // 필드명 크기 (bytes)
+      fieldSize: 1024 * 10, // 필드값 크기 (10KB)
+      fields: 4, // 텍스트 필드 수
+      fileSize: 10 * 1024 * 1024, // 개별 파일 크기 (10MB)
+      files: 2, // 파일 수
+      headerPairs: 2000, // 헤더 쌍 수
+      parts: 6, // 전체 파트(필드+파일) 수
+    },
+  })
   await app.register(Cors, {
     origin: 'http://localhost:4000',
     credentials: true, // Allow cookies to be sent
