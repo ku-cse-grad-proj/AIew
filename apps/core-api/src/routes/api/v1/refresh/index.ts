@@ -16,7 +16,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   const postOpts: RouteShorthandOptions = {
     schema: {
       tags: [Tag.User],
-      summary: '쿠키 속 refresh_token으로 accessToken 재발급',
+      summary: '쿠키 속 refreshToken으로 accessToken 재발급',
       description:
         'HttpOnly, Secure 쿠키로 전달된 Refresh Token을 검증하여 새로운 Access Token을 발급합니다.<br/><br/>' +
         '**❗중요**: 이 API는 `HttpOnly` 쿠키를 사용하므로 Swagger UI의 "Try it out" 기능으로 직접 테스트할 수 없습니다.<br/>' +
@@ -36,7 +36,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
   const postHandler: RouteHandlerMethod = async (request, reply) => {
     try {
       // 1. 쿠키에서 리프레시 토큰 문자열을 직접 가져옵니다.
-      const refreshToken = request.cookies.refresh_token
+      const refreshToken = request.cookies.refreshToken
       if (!refreshToken) {
         return reply.status(401).send({ message: 'No refresh token provided' })
       }
@@ -50,7 +50,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       })
 
       if (!user) {
-        reply.clearCookie('refresh_token')
+        reply.clearCookie('refreshToken')
         return reply.status(401).send({ message: 'Unauthorized' })
       }
 
