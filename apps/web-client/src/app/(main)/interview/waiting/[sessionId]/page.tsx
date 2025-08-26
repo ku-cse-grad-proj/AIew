@@ -1,7 +1,7 @@
+import Card from '../../_components/Card'
+
 import InfoItem from './components/InfoItem'
 import LoadingCard from './components/LoadingCard'
-
-import Card from '@/app/interview/_components/Card'
 
 export default async function WaitingPage({
   params,
