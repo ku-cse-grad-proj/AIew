@@ -22,6 +22,10 @@ declare module '@fastify/jwt' {
 const jwtPlugin: FastifyPluginAsync = async (fastify) => {
   fastify.register(jwt, {
     secret: process.env.JWT_SECRET as string,
+    cookie: {
+      cookieName: 'accessToken', // request.jwtVerify()는 반드시 액세스토큰을 찾음
+      signed: false, // JWT에서 이미 서명되어있음
+    },
   })
 
   fastify.decorate(
