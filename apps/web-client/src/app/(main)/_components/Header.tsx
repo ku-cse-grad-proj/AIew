@@ -5,7 +5,7 @@ import { privateFetch } from '@/app/lib/fetch'
 export default async function MainHeader() {
   const res = await privateFetch(process.env.NEXT_PUBLIC_API_BASE + '/me')
   const me = res.ok ? await res.json() : null
-  const src = me?.pic_url ?? 'test.svg'
+  const src = me?.pic_url ?? 'profile.svg'
 
   return (
     <header className="w-full max-w-1248 mx-auto h-96 grid grid-cols-3 items-center p-24">
