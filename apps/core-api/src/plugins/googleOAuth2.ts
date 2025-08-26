@@ -49,22 +49,18 @@ const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
       tags: [Tag.Oauth],
       summary: '구글 OAuth2.0 콜백',
       description:
-        'OAuth 2.0으로 Provider의 access token을 받아옴<br/>' +
-        '이를 Provider의 api 서버에 보내 사용자의 이메일, 이름, 프로필 사진을 받아옴<br/>' +
-        'email, name, pic_url, provider로 새로운 사용자를 생성하고<br/>' +
-        '이 때 sqlite가 자동생성한 id로 JWT 생성<br/>' +
-        'jwt의 `accessToken`은 프론트/auth/callback 의 쿼리로, `refreshToken`은 쿠키에 담아 리턴',
+        '구글 인증 성공 후, 서버에서 사용자 정보를 처리하고 인증 토큰(accessToken, refreshToken)을 HttpOnly 쿠키에 설정합니다.<br/>' +
+        '성공 시 프론트엔드의 콜백 URL로 리디렉션됩니다.',
       response: {
         '302': {
           description:
-            '인증 성공 시 프론트엔드 콜백 URL로 리디렉션됩니다. accessToken이 쿼리 파라미터에 포함됩니다.',
+            '인증 성공 시 프론트엔드 콜백 URL로 리디렉션됩니다. 모든 토큰은 안전한 HttpOnly 쿠키에 담겨 응답됩니다.',
           headers: {
             Location: {
               description: '리디렉션될 프론트엔드 URL',
               type: 'string',
               format: 'uri',
-              example:
-                'http://localhost:4000/auth/callback?accessToken=eyJhbGciOiJI...',
+              example: 'http://localhost:4000/auth/callback',
             },
           },
         },
@@ -127,17 +123,23 @@ const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
         expiresIn: '7d',
       })
 
-      // JWT를 쿠키에 담아 프론트엔드로 리디렉션
+      // JWT를 HttpOnly 쿠키에 담아 프론트엔드로 리디렉션
       reply
-        .setCookie('refresh_token', refreshToken, {
+        .setCookie('accessToken', accessToken, {
           path: '/',
-          httpOnly: true,
+          httpOnly: true, // 클라이언트 측 js가 확인할 수 없게됨
           secure: process.env.NODE_ENV === 'production', // 프로덕션에서는 true로 설정
           sameSite: 'lax', // CSRF 공격 차단 + 정상적인 요청에서는 GET 허용
+          maxAge: 15 * 60, // 15분 (초 단위)
         })
-        .redirect(
-          `http://localhost:4000/auth/callback?accessToken=${accessToken}`,
-        ) // AccessToken은 쿼리로 전달
+        .setCookie('refreshToken', refreshToken, {
+          path: '/',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 7 * 24 * 60 * 60, // 7일
+        })
+        .redirect('http://localhost:4000/auth/callback')
     } catch (error) {
       fastify.log.error(error)
       // 실패 시 에러 메시지와 함께 프론트엔드로 리디렉션할 수도 있습니다.
