@@ -7,6 +7,7 @@ import Multipart from '@fastify/multipart'
 import { ajvFilePlugin } from '@fastify/multipart'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Fastify from 'fastify'
 
 import { app as AppPlugin } from './app'
@@ -23,7 +24,7 @@ const start = async () => {
         target: '@fastify/one-line-logger',
       },
     },
-  })
+  }).withTypeProvider<TypeBoxTypeProvider>()
 
   // Register the main application plugin
   await app.register(AppPlugin)
