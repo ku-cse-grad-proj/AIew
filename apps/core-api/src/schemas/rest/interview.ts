@@ -20,6 +20,11 @@ export const interviewSchema: ISchema = {
       description: '직무명',
       example: 'Software Engineer',
     },
+    jobSpec: {
+      type: 'string',
+      description: '세부 직무',
+      example: 'Backend Developer',
+    },
     currentQuestionIndex: {
       type: 'number',
       description: '현재 진행 중인 질문의 인덱스 (0부터 시작)',
