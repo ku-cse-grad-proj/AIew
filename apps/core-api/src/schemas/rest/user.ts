@@ -1,23 +1,29 @@
-import ISchema from '@/schemas/rest/interface'
+import { Type } from '@sinclair/typebox'
+
 import SchemaId from '@/utils/schemaId'
 
-export const userSchema: ISchema = {
-  $id: SchemaId.User,
-  type: 'object',
-  properties: {
-    email: {
-      type: 'string',
+export const userSchema = Type.Object(
+  {
+    email: Type.String({
       format: 'email',
       example: 'skgudwls@konkuk.ac.kr',
-    },
-    name: { type: 'string', example: '나형진' },
-    pic_url: {
-      type: 'string',
+    }),
+    name: Type.String({ example: '나형진' }),
+    pic_url: Type.String({
       example:
         'https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=mail@ashallendesign.co.uk',
-    },
-    provider: { type: 'string', enum: ['GOOGLE', 'GITHUB'], example: 'GITHUB' },
-    createdAt: { type: 'string', format: 'date-time', example: 1752635039582 },
-    updatedAt: { type: 'string', format: 'date-time', example: 1752635039582 },
+    }),
+    provider: Type.Union([Type.Literal('GOOGLE'), Type.Literal('GITHUB')], {
+      example: 'GITHUB',
+    }),
+    createdAt: Type.String({
+      format: 'date-time',
+      example: '2025-08-27T12:34:56Z',
+    }),
+    updatedAt: Type.String({
+      format: 'date-time',
+      example: '2025-08-27T12:34:56Z',
+    }),
   },
-}
+  { $id: SchemaId.User },
+)
