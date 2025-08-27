@@ -20,7 +20,7 @@ const controller: FastifyPluginAsyncTypebox = async (
     }),
   })
 
-  const Res200 = Type.Object({
+  const Res201 = Type.Object({
     client_secret: Type.Object({
       value: Type.String(),
     }),
@@ -58,7 +58,7 @@ const controller: FastifyPluginAsyncTypebox = async (
       }
 
       // 소유권이 확인되면 토큰 발급 진행
-      const response = await axios.post<Static<typeof Res200>>(
+      const response = await axios.post<Static<typeof Res201>>(
         'https://api.openai.com/v1/realtime/sessions',
         {
           model: 'gpt-4o-mini-transcribe',
@@ -71,7 +71,7 @@ const controller: FastifyPluginAsyncTypebox = async (
           },
         },
       )
-      return reply.status(200).send(response.data)
+      return reply.status(201).send(response.data)
     } catch (error) {
       server.log.error(error, 'Failed to get token from OpenAI.')
       if (axios.isAxiosError(error) && error.response) {
@@ -102,7 +102,7 @@ const controller: FastifyPluginAsyncTypebox = async (
         '**해당 면접 세션을 생성한 사용자만 토큰을 발급받을 수 있습니다.**',
       params: Params,
       response: {
-        200: Res200,
+        201: Res201,
         '403': ResErr,
         '404': ResErr,
         '5xx': ResErr,
