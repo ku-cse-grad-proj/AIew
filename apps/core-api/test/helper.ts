@@ -7,6 +7,7 @@ import Cookie from '@fastify/cookie'
 import Cors from '@fastify/cors'
 import Multipart from '@fastify/multipart'
 import { ajvFilePlugin } from '@fastify/multipart'
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Fastify from 'fastify'
 
 import { app as AppPlugin } from '../src/app'
@@ -33,7 +34,7 @@ async function build(t: TestContext) {
       plugins: [ajvFilePlugin],
     },
     logger: false, // Disable logger for cleaner test output
-  })
+  }).withTypeProvider<TypeBoxTypeProvider>()
 
   // Register the main application plugin first
   await app.register(AppPlugin)

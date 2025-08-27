@@ -22,19 +22,19 @@ test('GET /api/v1/me should return user info with valid token', async (t) => {
     data: {
       email: `test-user-${Date.now()}@example.com`,
       name: 'Test User',
-      provider: 'TEST',
+      provider: 'GITHUB',
     },
   })
 
   // 2. Generate a token for the user
   const token = await app.jwt.sign({ userId: testUser.id })
 
-  // 3. Make the request with the token
+  // 3. Make the request with the token in a cookie
   const res = await app.inject({
     method: 'GET',
     url: '/api/v1/me',
-    headers: {
-      Authorization: `Bearer ${token}`,
+    cookies: {
+      accessToken: token,
     },
   })
 
