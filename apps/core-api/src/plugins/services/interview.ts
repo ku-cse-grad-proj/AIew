@@ -207,6 +207,7 @@ export default fp(
     fastify.decorate('interviewService', interviewService)
   },
   {
+    name: 'interviewService',
     dependencies: ['aiClientService'],
   },
 )

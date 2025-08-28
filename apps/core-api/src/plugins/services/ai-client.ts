@@ -74,10 +74,15 @@ export class AiClientService {
   }
 }
 
-export default fp(async (fastify) => {
-  const aiClientService = new AiClientService()
-  fastify.decorate('aiClientService', aiClientService)
-})
+export default fp(
+  async (fastify) => {
+    const aiClientService = new AiClientService()
+    fastify.decorate('aiClientService', aiClientService)
+  },
+  {
+    name: 'aiClientService',
+  },
+)
 
 declare module 'fastify' {
   interface FastifyInstance {
