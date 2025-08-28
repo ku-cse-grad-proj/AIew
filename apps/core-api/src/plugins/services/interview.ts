@@ -2,8 +2,9 @@ import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { createId } from '@paralleldrive/cuid2'
 import { QuestionType } from '@prisma/client'
 import { FastifyInstance } from 'fastify'
+import fp from 'fastify-plugin'
 
-import { AiClientService } from './aiClient.service'
+import { AiClientService } from './ai-client'
 
 import {
   AiInterviewQuestion,
@@ -18,10 +19,14 @@ interface FilePayload {
 }
 
 export class InterviewService {
+  // 의존성 주입을 위해 fastify 인스턴스와 aiClientService를 멤버로 가짐
+  private fastify: FastifyInstance
   private aiClient: AiClientService
 
-  constructor(private fastify: FastifyInstance) {
-    this.aiClient = new AiClientService()
+  constructor(fastifyInstance: FastifyInstance) {
+    this.fastify = fastifyInstance
+    // new로 생성하는 대신, decorate된 aiClientService를 사용
+    this.aiClient = this.fastify.aiClientService
   }
 
   /**
@@ -44,7 +49,6 @@ export class InterviewService {
         jobTitle: interviewData.jobTitle.value,
         jobSpec: interviewData.jobSpec.value,
         idealTalent: interviewData.idealTalent.value,
-        // 파일 URL은 백그라운드 작업에서 업데이트됩니다.
       },
     })
 
@@ -69,8 +73,6 @@ export class InterviewService {
     try {
       log.info(`[${sessionId}] Starting background processing...`)
 
-      // 1. R2에 파일 업로드 및 URL 생성 (병렬 처리)
-      log.info(`[${sessionId}] Uploading files to R2...`)
       const uploadPromises = Object.entries(files).map(async ([key, file]) => {
         const fileKey = `${sessionId}-${key}-${file.filename}`
         await r2.send(
@@ -96,7 +98,6 @@ export class InterviewService {
       )
       log.info(`[${sessionId}] Files uploaded successfully.`)
 
-      // 2. DB에 파일 URL 업데이트
       await prisma.interviewSession.update({
         where: { id: sessionId },
         data: {
@@ -105,7 +106,6 @@ export class InterviewService {
         },
       })
 
-      // 3. PDF 파싱 (병렬 처리)
       log.info(`[${sessionId}] Parsing PDFs...`)
       const [coverLetterParsed, portfolioParsed] = await Promise.all([
         this.aiClient.parsePdf(
@@ -121,8 +121,6 @@ export class InterviewService {
       ])
       log.info(`[${sessionId}] PDFs parsed successfully.`)
 
-      // 4. 질문 생성 요청
-      log.info(`[${sessionId}] Generating questions...`)
       const questionRequestData = {
         user_info: {
           resume_text: coverLetterParsed.extracted_text,
@@ -138,11 +136,9 @@ export class InterviewService {
       )
       log.info(`[${sessionId}] Questions generated successfully.`)
 
-      // 5. 생성된 질문들을 DB에 저장하고 클라이언트에게 알림
       await this.saveQuestionsAndNotifyClient(sessionId, generatedQuestions)
     } catch (error) {
       log.error(`[${sessionId}] Error during background processing: ${error}`)
-      // 에러 발생 시 클라이언트에게도 알림
       this.fastify.io.to(sessionId).emit('server:error', {
         code: 'INTERVIEW_SETUP_FAILED',
         message: 'Failed to set up the interview. Please try again.',
@@ -158,7 +154,6 @@ export class InterviewService {
     try {
       log.info(`[${sessionId}] Formatting and saving questions to DB...`)
 
-      // AI 서버의 질문 카테고리를 Prisma의 Enum 타입으로 매핑
       const typeMapping: Record<AiQuestionCategory, QuestionType> = {
         [AiQuestionCategory.TECHNICAL]: QuestionType.TECHNICAL,
         [AiQuestionCategory.BEHAVIORAL]: QuestionType.PERSONALITY,
@@ -199,3 +194,20 @@ export class InterviewService {
     }
   }
 }
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    interviewService: InterviewService
+  }
+}
+
+export default fp(
+  async (fastify) => {
+    const interviewService = new InterviewService(fastify)
+    fastify.decorate('interviewService', interviewService)
+  },
+  {
+    name: 'interviewService',
+    dependencies: ['aiClientService'],
+  },
+)

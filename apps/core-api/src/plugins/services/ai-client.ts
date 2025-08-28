@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios'
+import fp from 'fastify-plugin'
 
 import { QuestionGenerateResponse } from '@/types/ai.types'
 
@@ -70,5 +71,21 @@ export class AiClientService {
       },
     )
     return response.data
+  }
+}
+
+export default fp(
+  async (fastify) => {
+    const aiClientService = new AiClientService()
+    fastify.decorate('aiClientService', aiClientService)
+  },
+  {
+    name: 'aiClientService',
+  },
+)
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    aiClientService: AiClientService
   }
 }
