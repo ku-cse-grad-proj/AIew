@@ -18,13 +18,13 @@ export default function MainLink({
 
   const basicStyle =
     'w-120 h-42 font-32 leading-42 flex items-center justify-center'
-  const activeStyle = 'text-bright bg-navy rounded-full'
+  const activeStyle = 'text-neutral-inverse bg-primary rounded-full'
 
   return (
     <Link
       href={href}
       aria-current={isActive ? 'page' : undefined}
-      className={`${basicStyle} ${isActive ? activeStyle : 'text-dark'}`}
+      className={`${basicStyle} ${isActive ? activeStyle : 'text-neutral-subtext'}`}
       onMouseEnter={() => {
         //호버될 경우에만 prefetch한다
         router.prefetch(href)

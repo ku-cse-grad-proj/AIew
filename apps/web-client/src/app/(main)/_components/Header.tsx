@@ -9,7 +9,7 @@ export default async function MainHeader() {
 
   return (
     <header className="w-full max-w-1248 mx-auto h-96 grid grid-cols-3 items-center p-24">
-      <span className="justify-self-start text-navy text-4xl font-bold">
+      <span className="justify-self-start text-primary text-4xl font-bold">
         AIew
       </span>
       <Nav className="justify-self-center" />
