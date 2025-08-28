@@ -5,7 +5,6 @@ import {
 } from 'fastify'
 
 import { Tag } from '@/configs/swaggerOption'
-import { InterviewService } from '@/services/interview.service'
 import { InterviewRequestBody } from '@/types/interview.types'
 import SchemaId from '@/utils/schemaId'
 
@@ -93,7 +92,7 @@ const interviewsRoute: FastifyPluginAsync = async (fastify) => {
   }
 
   const postHandler: RouteHandler = async (request, reply) => {
-    const interviewService = new InterviewService(fastify)
+    const { interviewService } = fastify
     const body = {} as InterviewRequestBody
     const files: {
       coverLetter?: { buffer: Buffer; filename: string }
