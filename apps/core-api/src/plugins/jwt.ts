@@ -1,5 +1,5 @@
 import jwt from '@fastify/jwt'
-import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 
 interface JWTPayload {
@@ -19,26 +19,29 @@ declare module '@fastify/jwt' {
   }
 }
 
-const jwtPlugin: FastifyPluginAsync = async (fastify) => {
-  fastify.register(jwt, {
-    secret: process.env.JWT_SECRET as string,
-    cookie: {
-      cookieName: 'accessToken', // request.jwtVerify()는 반드시 액세스토큰을 찾음
-      signed: false, // JWT에서 이미 서명되어있음
-    },
-  })
+export default fp(
+  async (fastify) => {
+    fastify.register(jwt, {
+      secret: process.env.JWT_SECRET as string,
+      cookie: {
+        cookieName: 'accessToken', // request.jwtVerify()는 반드시 액세스토큰을 찾음
+        signed: false, // JWT에서 이미 서명되어있음
+      },
+    })
 
-  fastify.decorate(
-    'authenticate',
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      try {
-        await request.jwtVerify()
-      } catch (err) {
-        fastify.log.error(err)
-        reply.send(err)
-      }
-    },
-  )
-}
-
-export default fp(jwtPlugin)
+    fastify.decorate(
+      'authenticate',
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+          await request.jwtVerify()
+        } catch (err) {
+          fastify.log.error(err)
+          reply.send(err)
+        }
+      },
+    )
+  },
+  {
+    name: 'jwt',
+  },
+)

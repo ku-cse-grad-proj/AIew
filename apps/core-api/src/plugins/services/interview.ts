@@ -208,6 +208,6 @@ export default fp(
   },
   {
     name: 'interviewService',
-    dependencies: ['aiClientService'],
+    dependencies: ['aiClientService', 'prisma', 'r2', 'io'],
   },
 )
