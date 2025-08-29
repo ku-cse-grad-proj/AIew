@@ -146,7 +146,7 @@ export class InterviewService {
     }
   }
 
-  private async saveQuestionsAndNotifyClient(
+  public async saveQuestionsAndNotifyClient(
     sessionId: string,
     questions: QuestionGenerateResponse,
   ) {
@@ -192,6 +192,59 @@ export class InterviewService {
         message: 'Failed to process and save interview questions.',
       })
     }
+  }
+
+  /**
+   * 사용자의 답변을 처리하고 다음 질문을 반환하거나 면접을 종료합니다.
+   * TDD를 위해 우선 Mock 구현으로 시작합니다.
+   */
+  public async processUserAnswer(
+    sessionId: string,
+    stepId: string,
+    answer: string,
+    // eslint-disable-next-line
+    duration: number,
+  ) {
+    const { prisma, log } = this.fastify
+
+    log.info(
+      `[${sessionId}] Processing answer for step ${stepId}: ${answer.substring(
+        0,
+        20,
+      )}...`,
+    )
+
+    // TODO: [TDD] 1. 현재 stepId로 DB에서 step 정보 가져오기
+    // TODO: [TDD] 2. answer와 duration을 DB에 업데이트하기
+    // TODO: [TDD] 3. AI 연동하여 평가 및 다음 행동 결정하기 (지금은 Mock)
+
+    // --- Mock Logic Start ---
+    const session = await prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      include: { steps: { orderBy: { createdAt: 'asc' } } },
+    })
+
+    if (!session) {
+      throw new Error('Interview session not found')
+    }
+
+    // 현재가 마지막 질문이었는지 확인
+    if (session.currentQuestionIndex >= session.steps.length - 1) {
+      // TODO: 면접 종료 로직 (DB 업데이트 등)
+      log.info(`[${sessionId}] Last question answered. Finishing interview.`)
+      return null // 면접 종료 신호
+    }
+
+    // 다음 질문으로 넘기기
+    const nextIndex = session.currentQuestionIndex + 1
+    await prisma.interviewSession.update({
+      where: { id: sessionId },
+      data: { currentQuestionIndex: nextIndex },
+    })
+
+    log.info(`[${sessionId}] Moving to next question index: ${nextIndex}`)
+    return session.steps[nextIndex]
+    // --- Mock Logic End ---
   }
 }
 
