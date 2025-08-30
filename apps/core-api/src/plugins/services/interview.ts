@@ -202,49 +202,93 @@ export class InterviewService {
     sessionId: string,
     stepId: string,
     answer: string,
-    // eslint-disable-next-line
     duration: number,
   ) {
     const { prisma, log } = this.fastify
 
     log.info(
-      `[${sessionId}] Processing answer for step ${stepId}: ${answer.substring(
+      `[${sessionId}] Processing answer for step ${stepId}: "${answer.substring(
         0,
         20,
-      )}...`,
+      )}..."`,
     )
 
-    // TODO: [TDD] 1. 현재 stepId로 DB에서 step 정보 가져오기
-    // TODO: [TDD] 2. answer와 duration을 DB에 업데이트하기
-    // TODO: [TDD] 3. AI 연동하여 평가 및 다음 행동 결정하기 (지금은 Mock)
+    // 답변 내용과 시간을 DB에 업데이트
+    await prisma.interviewStep.update({
+      where: { id: stepId },
+      data: {
+        answer: answer,
+        answerDurationSec: duration,
+      },
+    })
 
-    // --- Mock Logic Start ---
+    // 현재 세션 정보와 모든 질문 목록을 가져옴
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
-      include: { steps: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        steps: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     })
 
     if (!session) {
       throw new Error('Interview session not found')
     }
+    const allSteps = session.steps
 
-    // 현재가 마지막 질문이었는지 확인
-    if (session.currentQuestionIndex >= session.steps.length - 1) {
-      // TODO: 면접 종료 로직 (DB 업데이트 등)
-      log.info(`[${sessionId}] Last question answered. Finishing interview.`)
-      return null // 면접 종료 신호
+    // --- AI 연동 로직 (현재는 Mock 처리) ---
+    // TODO: aiClientService.evaluateAndGetNextStep() 호출
+    const mockAiResponse = {
+      evaluation_result: {
+        /* ... */
+      },
+      next_action: 'MAIN', // 항상 다음 메인 질문으로 간다고 가정
+      follow_up_question: null,
+    }
+    // TODO: 평가 결과 DB에 저장
+    // --- AI 연동 로직 끝 ---
+
+    const { next_action } = mockAiResponse
+
+    if (next_action === 'FOLLOW_UP') {
+      // TODO: 꼬리 질문 처리 로직
     }
 
-    // 다음 질문으로 넘기기
-    const nextIndex = session.currentQuestionIndex + 1
+    if (next_action === 'MAIN') {
+      const mainQuestions = allSteps.filter((s) => !s.parentStepId)
+
+      // 현재가 마지막 메인 질문이었는지 확인
+      if (session.currentQuestionIndex >= mainQuestions.length - 1) {
+        log.info(
+          `[${sessionId}] Last main question answered. Finishing interview.`,
+        )
+        await prisma.interviewSession.update({
+          where: { id: sessionId },
+          data: { status: 'COMPLETED' },
+        })
+        return null // 면접 종료 신호
+      }
+
+      // 다음 메인 질문으로 넘기기
+      const nextIndex = session.currentQuestionIndex + 1
+      await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { currentQuestionIndex: nextIndex },
+      })
+
+      log.info(
+        `[${sessionId}] Moving to next main question index: ${nextIndex}`,
+      )
+      return mainQuestions[nextIndex]
+    }
+
+    // 'END' 또는 예외 케이스
     await prisma.interviewSession.update({
       where: { id: sessionId },
-      data: { currentQuestionIndex: nextIndex },
+      data: { status: 'COMPLETED' },
     })
-
-    log.info(`[${sessionId}] Moving to next question index: ${nextIndex}`)
-    return session.steps[nextIndex]
-    // --- Mock Logic End ---
+    return null
   }
 }
 

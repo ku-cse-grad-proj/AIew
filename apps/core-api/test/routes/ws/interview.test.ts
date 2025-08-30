@@ -37,13 +37,16 @@ test('WebSocket interview flow - happy path', async (t) => {
     throw new Error('Server address is not available')
   }
   const address = `http://localhost:${addressInfo.port}`
+  console.log(`[TEST] Server listening on ${address}`)
 
   // 서비스 레이어를 통해 테스트 유저와 세션을 생성
   const { user } = await createTestUserAndToken(app)
+  console.log(`[TEST] Created user: ${user.id}`)
 
   // 테스트 종료 후 유저를 삭제하기 위한 훅 추가
   t.after(async () => {
     await app.prisma.user.delete({ where: { id: user.id } })
+    console.log(`[TEST] Cleaned up user: ${user.id}`)
   })
 
   const session = await app.interviewService.initializeSession(user.id, {
@@ -53,11 +56,17 @@ test('WebSocket interview flow - happy path', async (t) => {
     idealTalent: { value: 'Proactive and collaborative' },
   })
   const sessionId = session.id
+  console.log(`[TEST] Initialized session: ${sessionId}`)
 
   // 웹소켓 클라이언트 생성
   const client: ClientSocket = Client(address, {
     query: { sessionId },
     autoConnect: false,
+  })
+
+  // Log all events received from the server
+  client.onAny((eventName, ...args) => {
+    console.log(`[TEST CLIENT] Received event: ${eventName}`, ...args)
   })
 
   // 이벤트와 연결을 기다리기 위한 Promise 세팅
@@ -70,42 +79,57 @@ test('WebSocket interview flow - happy path', async (t) => {
   )
 
   const connectionPromise = new Promise<void>((resolve) => {
-    client.on('connect', resolve)
+    client.on('connect', () => {
+      console.log('[TEST CLIENT] Connected to server.')
+      resolve()
+    })
   })
 
   // 연결 요청하고 기다리기
+  console.log('[TEST CLIENT] Connecting...')
   client.connect()
   await connectionPromise
 
   // 연결되었을테니 서버로부터 이벤트 트리거
+  console.log('[TEST] Triggering saveQuestionsAndNotifyClient...')
   await app.interviewService.saveQuestionsAndNotifyClient(
     sessionId,
     mockGeneratedQuestions,
   )
 
   // 'server:questions-ready'를 기다리기
+  console.log('[TEST] Waiting for server:questions-ready...')
   const questionsReadyPayload = await questionsReadyPromise
   const steps = questionsReadyPayload.steps
   assert.ok(Array.isArray(steps) && steps.length > 0, 'Should receive steps')
   const firstStepId = steps[0].id
+  console.log(
+    `[TEST] Received ${steps.length} questions. First step ID: ${firstStepId}`,
+  )
 
   // 사용자의 답변을 submit 하고 다음 질문 기다리기
   const nextQuestionPromise = new Promise<{
     step: InterviewStep
     isFollowUp: boolean
-  }>((resolve) => {
+  }>((resolve, reject) => {
     client.on('server:next-question', resolve)
+    client.on('server:error', reject) // Also listen for errors here
   })
 
+  console.log(
+    `[TEST CLIENT] Emitting client:submit-answer for step ${firstStepId}...`,
+  )
   client.emit('client:submit-answer', {
     stepId: firstStepId,
     answer: 'This is my test answer for the first question.',
     duration: 42,
   })
 
+  console.log('[TEST] Waiting for server:next-question...')
   const nextQuestionPayload = await nextQuestionPromise
 
   // 응답 assert
+  console.log('[TEST] Asserting the response...')
   assert.ok(
     nextQuestionPayload,
     'Should receive a payload for the next question',
@@ -130,7 +154,9 @@ test('WebSocket interview flow - happy path', async (t) => {
     mockGeneratedQuestions[1].question,
     'Should receive the second question',
   )
+  console.log('[TEST] Assertions passed.')
 
   // 연결 해제
+  console.log('[TEST CLIENT] Disconnecting...')
   client.disconnect()
 })

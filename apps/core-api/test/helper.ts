@@ -58,7 +58,7 @@ async function build(t: TestContext): Promise<FastifyInstance> {
     ajv: {
       plugins: [ajvFilePlugin],
     },
-    logger: false, // Disable logger for cleaner test output
+    logger: true, // Disable logger for cleaner test output
   }).withTypeProvider<TypeBoxTypeProvider>()
 
   // Register the main application plugin first
