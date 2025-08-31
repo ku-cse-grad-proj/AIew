@@ -69,23 +69,12 @@ export default fp(
           duration: number
         }) => {
           try {
-            const nextStep = await fastify.interviewService.processUserAnswer(
+            await fastify.interviewService.processUserAnswer(
               sessionId,
               payload.stepId,
               payload.answer,
               payload.duration,
             )
-
-            if (nextStep) {
-              const isFollowUp = !!nextStep.parentStepId
-              fastify.io
-                .to(sessionId)
-                .emit('server:next-question', { step: nextStep, isFollowUp })
-            } else {
-              fastify.io
-                .to(sessionId)
-                .emit('server:interview-finished', { sessionId })
-            }
           } catch (error) {
             fastify.log.error(
               `[${sessionId}] Error processing answer for step ${payload.stepId}: ${error}`,
@@ -111,6 +100,8 @@ export default fp(
       instance.io.close()
       done()
     })
+
+    fastify.log.info('Socket.io plugin loaded')
   },
   {
     name: 'io',

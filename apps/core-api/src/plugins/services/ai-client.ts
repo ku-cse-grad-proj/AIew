@@ -1,7 +1,16 @@
 import axios, { AxiosInstance } from 'axios'
 import fp from 'fastify-plugin'
 
-import { QuestionGenerateResponse } from '@/types/ai.types'
+import {
+  AiQuestionRequest,
+  AnswerEvaluationRequest,
+  EvaluationResult,
+  FollowUp,
+  FollowupRequest,
+  QuestionGenerateResponse,
+  ShownQuestion,
+  UserAnswer,
+} from '@/types/ai.types'
 
 // ai-server 응답 타입 정의
 interface PdfParseResponse {
@@ -57,8 +66,7 @@ export class AiClientService {
    * @param sessionId - 현재 면접 세션 ID
    */
   async generateQuestions(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any, // TODO: QuestionRequest 모델에 맞춰 타입 정의
+    data: AiQuestionRequest,
     sessionId: string,
   ): Promise<QuestionGenerateResponse> {
     const response = await this.client.post<QuestionGenerateResponse>(
@@ -71,6 +79,77 @@ export class AiClientService {
       },
     )
     return response.data
+  }
+
+  /**
+   * 사용자의 답변을 AI 서버로 보내 평가를 요청합니다.
+   * @param data - 답변 평가에 필요한 데이터
+   * @param sessionId - 현재 면접 세션 ID
+   */
+  async evaluateAnswer(
+    data: AnswerEvaluationRequest,
+    sessionId: string,
+  ): Promise<EvaluationResult> {
+    const response = await this.client.post<EvaluationResult>(
+      '/api/v1/evaluation/answer-evaluating',
+      data,
+      {
+        headers: {
+          'X-Session-Id': sessionId,
+        },
+      },
+    )
+    return response.data
+  }
+
+  /**
+   * 평가 결과를 바탕으로 AI 서버에 꼬리 질문 생성을 요청합니다.
+   * @param data - 꼬리 질문 생성에 필요한 데이터
+   * @param sessionId - 현재 면접 세션 ID
+   */
+  async generateFollowUpQuestion(
+    data: FollowupRequest,
+    sessionId: string,
+  ): Promise<FollowUp> {
+    const response = await this.client.post<FollowUp>(
+      '/api/v1/followup/followup-generating',
+      data,
+      {
+        headers: {
+          'X-Session-Id': sessionId,
+        },
+      },
+    )
+    return response.data
+  }
+
+  /**
+   * 출제된 질문을 AI 서버 메모리에 기록합니다.
+   * @param data - 출제된 질문 정보
+   * @param sessionId - 현재 면접 세션 ID
+   */
+  async logShownQuestion(
+    data: ShownQuestion,
+    sessionId: string,
+  ): Promise<void> {
+    await this.client.post('/api/v1/session-log/log/question-shown', data, {
+      headers: {
+        'X-Session-Id': sessionId,
+      },
+    })
+  }
+
+  /**
+   * 사용자의 답변을 AI 서버 메모리에 기록합니다.
+   * @param data - 사용자의 답변 정보
+   * @param sessionId - 현재 면접 세션 ID
+   */
+  async logUserAnswer(data: UserAnswer, sessionId: string): Promise<void> {
+    await this.client.post('/api/v1/session-log/log/user-answer', data, {
+      headers: {
+        'X-Session-Id': sessionId,
+      },
+    })
   }
 }
 
