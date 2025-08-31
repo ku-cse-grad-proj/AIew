@@ -65,13 +65,14 @@ model InterviewSession {
 
 // 질문과 답변, 평가를 한 세트로 묶는 모델
 model InterviewStep {
-  id        String       @id @default(cuid())
-  type      QuestionType // 질문 유형 (기술, 인성, 맞춤)
-  question  String       // AI가 생성한 질문 내용
-  answer    String?      // 사용자의 답변 내용
-  score     Int?         // AI가 평가한 총점 (0-100)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id             String       @id @default(cuid())
+  aiQuestionId   String       // AI가 생성한 질문의 고유 ID
+  type           QuestionType // 질문 유형 (기술, 인성, 맞춤)
+  question       String       // AI가 생성한 질문 내용
+  answer         String?      // 사용자의 답변 내용
+  score          Int?         // AI가 평가한 총점 (0-100)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   // ++ 추가: 질문 생성 시의 메타데이터
   rationale              String?   // 질문 선정 근거
