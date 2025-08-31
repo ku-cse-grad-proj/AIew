@@ -42,6 +42,15 @@ jobs:
       - name: Install python dependencies
         run: poetry --directory apps/ai-server install
 
+      - name: Start AI Server in Background
+        run: poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        working-directory: ./apps/ai-server
+
+      - name: Wait for AI Server to start
+        run: |
+          echo "Waiting 10 seconds for the AI server to be ready..."
+          sleep 10
+
       - name: Lint
         run: pnpm lint
 
