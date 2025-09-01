@@ -16,7 +16,7 @@ export default function FooterButtons({
     <div className="w-full h-48 flex gap-24 flex-none">
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() => router.push('/interview')}
         className="flex-3 rounded-[10px] border border-neutral-subtext text-neutral-subtext hover:shadow-md hover:cursor-pointer"
       >
         back
