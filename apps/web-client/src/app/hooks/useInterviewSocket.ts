@@ -24,9 +24,7 @@ export function useInterviewSocket(sessionId?: string) {
 
     const handleQuestionsReady = (data: QuestionsReadyEvent) => {
       console.log('Questions are ready:', data)
-      setTimeout(() => {
-        setIsQuestionsReady(true)
-      }, 5000) // 5초 후에 상태 업데이트, 상태 변화 감지를 위해 setTimeout 사용
+      setIsQuestionsReady(true)
     }
 
     socket.on('server:questions-ready', handleQuestionsReady)
