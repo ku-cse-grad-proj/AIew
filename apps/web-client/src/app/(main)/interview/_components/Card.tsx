@@ -7,7 +7,7 @@ export default function Card({
 }) {
   return (
     <div
-      className={`bg-neutral-card p-24 rounded-[20px] shadow-box ${className}`}
+      className={`bg-neutral-card p-24 rounded-[20px] min-w-400 min-h-640 shadow-box ${className}`}
     >
       {children}
     </div>

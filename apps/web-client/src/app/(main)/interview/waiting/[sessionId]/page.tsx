@@ -20,7 +20,7 @@ export default async function WaitingPage({
   return (
     <div className="w-full h-full flex flex-col lg:flex-row items-center justify-center p-24 gap-24">
       {/* TODO:: title, 인재상, resume, portfolio 제목 받아오기 */}
-      <Card className="w-full h-full flex flex-col min-w-400 min-h-600">
+      <Card className="w-full h-full flex flex-col">
         <span className="text-right text-gray-500">
           {new Date(interview.createdAt)
             .toLocaleString('sv-SE')
