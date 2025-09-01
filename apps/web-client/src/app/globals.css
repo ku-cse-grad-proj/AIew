@@ -1,8 +1,8 @@
 @import 'tailwindcss';
 
 :root {
-  /* --background: #ffffff; */
-  /* --foreground: #171717; */
+  --background: #f1f1f1;
+  --foreground: #333333;
 }
 
 @theme {
@@ -21,6 +21,32 @@
   --color-success: rgba(76, 175, 80, 1);
   --color-warning: rgba(255, 152, 0, 1);
   --color-error: rgba(244, 67, 54, 1);
+
+      /* Primary */
+  --color-primary: #333D71;
+  --color-primary-hover: #2A315A;
+
+  /* Secondary */
+  --color-secondary: #4B8EBF;
+  --color-secondary-hover: #3A739C;
+
+  /* Neutral */
+  --color-neutral-background: #F1F1F1; /* 전체 페이지 배경 */
+  --color-neutral-card: #F5F7F8;       /* 카드/패널 배경 */
+  --color-neutral-border: #E0E3E7;     /* divider, input border */
+  --color-neutral-text: #333333;       /* 본문 텍스트 */
+  --color-neutral-subtext: #666666;    /* 보조 텍스트 */
+  --color-neutral-inverse: #F5F7F8; /* 짙은 배경 위에 쓰는 텍스트 */
+
+  /* State */
+  --color-success: #4CAF50;
+  --color-success-hover: #3E8E41;
+
+  --color-warning: #FFC107;
+  --color-warning-hover: #E0A800;
+
+  --color-error: #F44336;
+  --color-error-hover: #D32F2F;
 
   /* Effect styles */
   --selected-box: 0px 4px 20px rgba(0, 0, 0, 0.25);
@@ -41,8 +67,8 @@
 }
 
 body {
-  /* background: var(--background); */
-  /* color: var(--foreground); */
+  background: var(--background);
+  color: var(--foreground);
 }
 
 /* Calmer breathing variants */
@@ -126,3 +152,13 @@ body {
     animation: none;
   }
 }
+
+button:hover {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

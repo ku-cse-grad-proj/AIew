@@ -19,14 +19,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const background =
-    'bg-[linear-gradient(109.6deg,rgba(204,228,247,1)_11.2%,rgba(237,246,250,1)_100.2%)]'
-
   return (
     <html lang="en" className={`${pretendard.variable}`}>
-      <body className={`${pretendard.className} ${background} h-dvh w-full`}>
-        {children}
-      </body>
+      <body className={`${pretendard.className} h-dvh w-full`}>{children}</body>
     </html>
   )
 }

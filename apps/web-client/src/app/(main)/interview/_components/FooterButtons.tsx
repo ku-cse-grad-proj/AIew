@@ -17,7 +17,7 @@ export default function FooterButtons({
       <button
         type="button"
         onClick={() => router.back()}
-        className="flex-3 rounded-[10px] border border-dark text-dark hover:shadow-md hover:cursor-pointer"
+        className="flex-3 rounded-[10px] border border-neutral-subtext text-neutral-subtext hover:shadow-md hover:cursor-pointer"
       >
         back
       </button>
@@ -25,7 +25,7 @@ export default function FooterButtons({
         type={isWaiting ? 'button' : 'submit'}
         disabled={isWaiting && !isQuestionsReady}
         onClick={onClick}
-        className="flex-7 rounded-[10px] bg-navy text-bright hover:shadow-xl hover:cursor-pointer
+        className="flex-7 rounded-[10px] bg-primary text-neutral-inverse hover:shadow-xl hover:cursor-pointer
         disabled:hover:shadow-none disabled:opacity-50
     disabled:cursor-not-allowed"
       >
