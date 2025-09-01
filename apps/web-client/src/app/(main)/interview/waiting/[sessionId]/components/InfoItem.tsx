@@ -9,8 +9,10 @@ export default function InfoItem({
 }) {
   return (
     <div className={`${className}`}>
-      <dt className="text-black text-[16px] leading-[24px]">{label}</dt>
-      <dd className="text-black text-[24px] leading-[32px]">{value}</dd>
+      <dt className="text-neutral-subtext text-[16px] leading-[24px]">
+        {label}
+      </dt>
+      <dd className="text-[24px] leading-[36px]">{value}</dd>
     </div>
   )
 }
