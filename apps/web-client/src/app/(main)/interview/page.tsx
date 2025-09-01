@@ -90,7 +90,7 @@ export default function InterviewPage() {
   ]
 
   return (
-    <>
+    <div className="w-full h-full flex flex-col">
       <div className="flex justify-between items-center">
         <h1 className="text-[40px] font-bold leading-[72px]">interview</h1>
         <Link
@@ -101,6 +101,6 @@ export default function InterviewPage() {
         </Link>
       </div>
       <Carousel cards={cards} />
-    </>
+    </div>
   )
 }

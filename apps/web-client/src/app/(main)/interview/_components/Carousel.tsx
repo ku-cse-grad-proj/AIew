@@ -53,12 +53,17 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
   const dot = `w-8 h-8 rounded-full bg-gray-300`
 
   return (
-    <section className="w-full relative">
+    <section className="w-full flex-1 relative">
       {/* Carousel 좌 우 로 이동하는 버튼 */}
       <PrevButton onClick={onPrevButtonClick} disabled={prevBtnDisabled} />
       <NextButton onClick={onNextButtonClick} disabled={nextBtnDisabled} />
 
-      {/* TODO:: 아무것도 없을 경우 어떻게 할 것인지 */}
+      {localCards.length === 0 && (
+        <div className="h-full flex items-center justify-center">
+          please create interview
+        </div>
+      )}
+
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {groups.map((group, groupIdx) => (
