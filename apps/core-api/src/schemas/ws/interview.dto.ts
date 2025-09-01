@@ -36,6 +36,26 @@ export type ServerQuestionsReadyMessage =
   WebSocketMessage<QuestionsReadyPayload>
 
 /**
+ * Type: 'server:next-question'
+ * 다음 질문(메인 또는 꼬리 질문)을 전달하는 메시지
+ */
+export interface NextQuestionPayload {
+  step: QuestionsReadyPayload['steps'][0] // 재사용
+  isFollowUp: boolean
+}
+export type ServerNextQuestionMessage = WebSocketMessage<NextQuestionPayload>
+
+/**
+ * Type: 'server:interview-finished'
+ * 면접이 종료되었음을 알리는 메시지
+ */
+export interface InterviewFinishedPayload {
+  sessionId: string
+}
+export type ServerInterviewFinishedMessage =
+  WebSocketMessage<InterviewFinishedPayload>
+
+/**
  * Type: 'server:error'
  * 처리 중 에러가 발생했음을 알리는 메시지
  */
@@ -48,27 +68,37 @@ export type ServerErrorMessage = WebSocketMessage<ErrorPayload>
 // --- 클라이언트 -> 서버 메시지 ---
 
 /**
- * Type: 'client:ready'
- * 클라이언트가 면접을 시작할 준비가 되었음을 알리는 메시지
+ * Type: 'client:submit-answer'
+ * 사용자의 답변을 서버로 제출하는 메시지
  */
-export interface ClientReadyPayload {
-  sessionId: string // 어떤 면접 세션에 대한 준비인지 확인
+export interface SubmitAnswerPayload {
+  stepId: string
+  answer: string
+  duration: number // 답변 소요 시간 (초)
 }
-export type ClientReadyMessage = WebSocketMessage<ClientReadyPayload>
+export type ClientSubmitAnswerMessage = WebSocketMessage<SubmitAnswerPayload>
 
 // --- JSON Schema definitions for documentation ---
 
-export const wsClientReadySchema = {
-  $id: SchemaId.WsClientReady,
+export const wsClientSubmitAnswerSchema = {
+  $id: SchemaId.WsClientSubmitAnswer,
   type: 'object',
   properties: {
-    type: { type: 'string', const: 'client:ready' },
+    type: { type: 'string', const: 'client:submit-answer' },
     payload: {
       type: 'object',
       properties: {
-        sessionId: { type: 'string' },
+        stepId: {
+          type: 'string',
+          description: '현재 답변하고 있는 질문(step)의 ID',
+        },
+        answer: { type: 'string', description: '사용자의 답변 내용' },
+        duration: {
+          type: 'integer',
+          description: '답변에 소요된 시간 (초 단위)',
+        },
       },
-      required: ['sessionId'],
+      required: ['stepId', 'answer', 'duration'],
     },
   },
   required: ['type', 'payload'],
@@ -113,6 +143,44 @@ export const wsServerQuestionsReadySchema = {
         },
       },
       required: ['steps'],
+    },
+  },
+  required: ['type', 'payload'],
+}
+
+export const wsServerNextQuestionSchema = {
+  $id: SchemaId.WsServerNextQuestion,
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'server:next-question' },
+    payload: {
+      type: 'object',
+      properties: {
+        step: {
+          $ref: `${SchemaId.WsServerQuestionsReady}#/properties/payload/properties/steps/items`,
+        },
+        isFollowUp: {
+          type: 'boolean',
+          description: '이 질문이 꼬리 질문인지 여부',
+        },
+      },
+      required: ['step', 'isFollowUp'],
+    },
+  },
+  required: ['type', 'payload'],
+}
+
+export const wsServerInterviewFinishedSchema = {
+  $id: SchemaId.WsServerInterviewFinished,
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'server:interview-finished' },
+    payload: {
+      type: 'object',
+      properties: {
+        sessionId: { type: 'string' },
+      },
+      required: ['sessionId'],
     },
   },
   required: ['type', 'payload'],

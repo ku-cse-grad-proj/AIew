@@ -5,8 +5,10 @@ enum SchemaId {
   Interview = 'InterviewResponse',
 
   // WebSocket Schemas
-  WsClientReady = 'WsClientReady',
+  WsClientSubmitAnswer = 'WsClientSubmitAnswer',
   WsServerQuestionsReady = 'WsServerQuestionsReady',
+  WsServerNextQuestion = 'WsServerNextQuestion',
+  WsServerInterviewFinished = 'WsServerInterviewFinished',
   WsServerError = 'WsServerError',
 }
 
