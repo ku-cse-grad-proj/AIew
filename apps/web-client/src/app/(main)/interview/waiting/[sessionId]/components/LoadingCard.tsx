@@ -10,7 +10,7 @@ import { useInterviewSocket } from '@/app/hooks/useInterviewSocket'
 export default function LoadingCard({ sessionId }: { sessionId: string }) {
   const { isQuestionsReady } = useInterviewSocket(sessionId)
   return (
-    <Card className="w-full h-full flex flex-col items-center justify-center relative">
+    <Card className="w-full h-full flex flex-col items-center justify-center relative min-w-400 min-h-600">
       <div className="flex-1 flex flex-col items-center justify-center gap-48">
         <LoadingCircle />
         <span

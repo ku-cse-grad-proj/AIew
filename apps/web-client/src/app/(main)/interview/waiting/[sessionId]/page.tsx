@@ -11,8 +11,8 @@ export default async function WaitingPage({
   const { sessionId } = await params
   console.log('WaitingPage sessionId:', sessionId)
   return (
-    <div className="w-full h-full flex items-center justify-center p-24 gap-24">
-      <Card className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col lg:flex-row items-center justify-center p-24 gap-24">
+      <Card className="w-full h-full flex flex-col min-w-400 min-h-600">
         <h1 className="text-[24px] font-bold text-black">Interview Summary</h1>
         <dl className="flex flex-col flex-1 pt-24 gap-24">
           <InfoItem label="select Job" value="Web Developer" />

@@ -31,10 +31,13 @@ export default function InterviewForm() {
   }
 
   return (
-    <form className="w-full h-full flex gap-24 m-auto" onSubmit={handleSubmit}>
+    <form
+      className="w-full h-full flex flex-col lg:flex-row gap-24 m-auto"
+      onSubmit={handleSubmit}
+    >
       {/* 왼쪽 card
        직업, 회사명, 인재상을 입력함*/}
-      <Card className="flex-1 flex flex-col justify-between">
+      <Card className="flex-1 flex flex-col justify-between min-w-400 min-h-600">
         <Label text="Job">
           <select
             name="jobTitle"
@@ -88,7 +91,7 @@ export default function InterviewForm() {
 
       {/* 오른쪽 카드 
       자기소개서, 포트폴리오를 입력받음*/}
-      <Card className="flex-1 flex flex-col gap-24">
+      <Card className="flex-1 flex flex-col gap-24 min-w-400 min-h-600">
         <div className="flex-1 flex flex-col gap-24 ">
           <Label text="Resume" className="grow flex flex-col">
             <DropzoneBox fileRef={resumeFileRef} className="flex-1" />
