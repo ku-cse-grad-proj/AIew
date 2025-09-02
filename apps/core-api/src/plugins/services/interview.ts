@@ -44,10 +44,18 @@ export class InterviewService {
     const { prisma, log } = this.fastify
     const sessionId = createId()
     log.info(`[${sessionId}] Initializing interview session...`)
+
+    // 제목 생성 로직
+    const count = await prisma.interviewSession.count({
+      where: { userId, company: interviewData.company.value },
+    })
+    const title = `${interviewData.company.value} interview ${count + 1}`
+
     const session = await prisma.interviewSession.create({
       data: {
         id: sessionId,
         userId,
+        title,
         company: interviewData.company.value,
         jobTitle: interviewData.jobTitle.value,
         jobSpec: interviewData.jobSpec.value,
@@ -90,8 +98,19 @@ export class InterviewService {
       )
       log.info(`[${sessionId}] Questions generated successfully.`)
       await this.saveQuestionsAndNotifyClient(sessionId, generatedQuestions)
+
+      // 성공 시 상태를 READY로 변경
+      await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'READY' },
+      })
     } catch (error) {
       log.error(`[${sessionId}] Error during background processing:`, { error })
+      // 실패 시 상태를 FAILED로 변경
+      await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'FAILED' },
+      })
       this.fastify.io.to(sessionId).emit('server:error', {
         code: 'INTERVIEW_SETUP_FAILED',
         message: 'Failed to set up the interview. Please try again.',
@@ -136,6 +155,8 @@ export class InterviewService {
         code: 'QUESTION_PROCESSING_FAILED',
         message: 'Failed to process and save interview questions.',
       })
+      // 이 함수에서 에러 발생 시 상위로 throw하여 FAILED 상태로 처리
+      throw error
     }
   }
 
@@ -148,6 +169,18 @@ export class InterviewService {
     const { prisma, log, io } = this.fastify
     log.info(`[${sessionId}] Start processing answer for step ${stepId}...`)
     try {
+      // 첫 답변 제출 시 IN_PROGRESS로 상태 변경
+      const session = await prisma.interviewSession.findUnique({
+        where: { id: sessionId },
+        select: { status: true },
+      })
+      if (session?.status === 'READY') {
+        await prisma.interviewSession.update({
+          where: { id: sessionId },
+          data: { status: 'IN_PROGRESS' },
+        })
+      }
+
       const currentStep = await prisma.interviewStep.update({
         where: { id: stepId },
         data: { answer, answerDurationSec: duration },
@@ -189,7 +222,61 @@ export class InterviewService {
     log.info(`[${sessionId}] Finished processing answer for step ${stepId}.`)
   }
 
+  /**
+   * 특정 사용자의 모든 면접 세션 목록을 조회합니다.
+   */
+  public async getUserInterviews(userId: string) {
+    const { prisma } = this.fastify
+    const sessions = await prisma.interviewSession.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    // 파일명 추출 로직 추가
+    return sessions.map((session) => {
+      const coverLetterFilename = session.coverLetter
+        ? this.extractFilenameFromUrl(session.coverLetter)
+        : undefined
+      const portfolioFilename = session.portfolio
+        ? this.extractFilenameFromUrl(session.portfolio)
+        : undefined
+
+      return {
+        ...session,
+        coverLetterFilename,
+        portfolioFilename,
+      }
+    })
+  }
+
+  /**
+   * ID를 기준으로 특정 면접 세션을 조회합니다.
+   * 해당 사용자의 세션이 아니면 null을 반환합니다.
+   */
+  public async getInterviewSessionById(sessionId: string, userId: string) {
+    const { prisma } = this.fastify
+    const session = await prisma.interviewSession.findFirst({
+      where: {
+        id: sessionId,
+        userId: userId,
+      },
+    })
+    return session
+  }
+
   // --- Helper Methods ---
+
+  /**
+   * R2 URL에서 Prefix를 제거하고 원본 파일명을 추출합니다.
+   * 예: "sessionId-coverLetter-my_cover_letter.pdf" -> "my_cover_letter.pdf"
+   */
+  private extractFilenameFromUrl(url: string): string {
+    const parts = url.split('/')
+    const filenameWithPrefix = parts[parts.length - 1]
+    // 첫 두 개의 '-' (sessionId-, key-) 이후의 모든 것을 반환
+    return filenameWithPrefix.split('-').slice(2).join('-')
+  }
+
   private async uploadFilesToR2(
     sessionId: string,
     files: { coverLetter: FilePayload; portfolio: FilePayload },

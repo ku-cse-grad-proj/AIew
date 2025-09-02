@@ -20,11 +20,13 @@ enum QuestionType {
   TAILORED
 }
 
-// ++ 추가: 면접 세션의 진행 상태를 나타내는 Enum
-enum InterviewStatus {
-  NOT_STARTED // 생성만 되고 아직 시작 안 함
-  IN_PROGRESS // 진행 중
-  COMPLETED   // 모든 질문에 답변 완료
+// 면접 세션의 진행 상태를 나타내는 Enum
+enum InterviewSessionStatus {
+  PENDING     // AI 질문 생성 중
+  READY       // 면접 시작 가능
+  IN_PROGRESS // 면접 진행 중
+  COMPLETED   // 면접 완료
+  FAILED      // AI 질문 생성 실패
 }
 
 model User {
@@ -42,6 +44,7 @@ model User {
 
 model InterviewSession {
   id                   String   @id @default(cuid())
+  title                String   // 예: "토스뱅크 interview 1"
   company              String
   jobTitle             String
   jobSpec              String
@@ -53,14 +56,15 @@ model InterviewSession {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
-  // ++ 추가: 면접 진행 상태 및 전체 시간
-  status               InterviewStatus @default(NOT_STARTED)
+  status               InterviewSessionStatus @default(PENDING)
   totalTimeSec         Int?            // 면접 전체 제한 시간 (초)
 
   // Relations
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId  String
   steps   InterviewStep[] // 이 세션에 속한 모든 질문/답변 목록
+
+  @@unique([userId, title])
 }
 
 // 질문과 답변, 평가를 한 세트로 묶는 모델
