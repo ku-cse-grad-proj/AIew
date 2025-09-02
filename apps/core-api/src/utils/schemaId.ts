@@ -2,7 +2,8 @@ enum SchemaId {
   // REST Schemas
   Error = 'ErrorResponse',
   User = 'UserResponse',
-  Interview = 'InterviewResponse',
+  InterviewListItem = 'InterviewListItem',
+  InterviewList = 'InterviewList',
 
   // WebSocket Schemas
   WsClientSubmitAnswer = 'WsClientSubmitAnswer',
