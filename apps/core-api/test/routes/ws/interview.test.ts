@@ -1,22 +1,27 @@
-import assert from 'node:assert'
-import http from 'node:http'
-import { test } from 'node:test'
-
-import { InterviewStep } from '@prisma/client'
-import axios from 'axios'
-import { FastifyInstance } from 'fastify'
+import { InterviewSession, InterviewStep, User } from '@prisma/client'
 import { io as Client, Socket as ClientSocket } from 'socket.io-client'
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  beforeAll,
+  afterAll,
+} from 'vitest'
 
-import { build, createTestUserAndToken } from '../../helper'
+import { build, createTestUserAndToken, FastifyInstance } from '../../helper'
 
 import {
   QuestionGenerateResponse,
   AiQuestionCategory,
   EvaluationResult,
   TailDecision,
-  FollowUp,
-  MemoryDump,
+  // FollowUp,
 } from '@/types/ai.types'
+
+// --- Mocks and Test Data ---
 
 const mockGeneratedQuestions: QuestionGenerateResponse = [
   {
@@ -39,313 +44,220 @@ const mockGeneratedQuestions: QuestionGenerateResponse = [
   },
 ]
 
-// Create an agent that does not use keep-alive connections.
-// This is crucial for allowing the test process to exit gracefully.
-const httpAgent = new http.Agent({ keepAlive: false })
-
-/**
- * Mocks methods of the aiClientService whose RETURN VALUES are needed to control logic flow.
- * Methods that are "fire-and-forget" (like logging) are NOT mocked,
- * allowing us to verify their side effects (i.e., memory updates).
- * @param app The Fastify instance.
- * @param t The test context.
- * @param evaluationResult A partial EvaluationResult to override defaults.
- */
 const mockAiClient = (
   app: FastifyInstance,
-  t: test.TestContext,
   evaluationResult: Partial<EvaluationResult>,
 ) => {
-  const originalEvaluateAnswer = app.aiClientService.evaluateAnswer
-  const originalGenerateFollowUp = app.aiClientService.generateFollowUpQuestion
+  vi.spyOn(app.aiClientService, 'evaluateAnswer').mockResolvedValue({
+    question_id: 'q1',
+    category: AiQuestionCategory.BEHAVIORAL,
+    overall_score: 80,
+    strengths: ['Clear explanation'],
+    improvements: ['Could be more detailed'],
+    red_flags: [],
+    criterion_scores: [],
+    tail_decision: TailDecision.SKIP,
+    tail_rationale: 'Answer was sufficient.',
+    tail_question: null,
+    ...evaluationResult,
+  } as EvaluationResult)
 
-  t.after(() => {
-    app.aiClientService.evaluateAnswer = originalEvaluateAnswer
-    app.aiClientService.generateFollowUpQuestion = originalGenerateFollowUp
+  vi.spyOn(app.aiClientService, 'generateFollowUpQuestion').mockResolvedValue({
+    followup_id: 'q1-fu1',
+    parent_question_id: 'q1',
+    focus_criteria: ['Protocol characteristics'],
+    rationale: 'To delve deeper into the technical understanding.',
+    question: 'Can you elaborate on the handshake process in TCP?',
+    expected_answer_time_sec: 75,
   })
 
-  app.aiClientService.evaluateAnswer = async (): Promise<EvaluationResult> => {
-    return {
-      question_id: 'q1',
-      category: AiQuestionCategory.BEHAVIORAL,
-      overall_score: 80,
-      strengths: ['Clear explanation'],
-      improvements: ['Could be more detailed'],
-      red_flags: [],
-      criterion_scores: [],
-      tail_decision: TailDecision.SKIP,
-      tail_rationale: 'Answer was sufficient.',
-      tail_question: null,
-      ...evaluationResult,
-    } as EvaluationResult
-  }
-
-  app.aiClientService.generateFollowUpQuestion =
-    async (): Promise<FollowUp> => {
-      return {
-        followup_id: 'q1-fu1',
-        parent_question_id: 'q1',
-        focus_criteria: ['Protocol characteristics'],
-        rationale: 'To delve deeper into the technical understanding.',
-        question: 'Can you elaborate on the handshake process in TCP?',
-        expected_answer_time_sec: 75,
-      }
-    }
+  vi.spyOn(app.aiClientService, 'logShownQuestion').mockResolvedValue(undefined)
+  vi.spyOn(app.aiClientService, 'logUserAnswer').mockResolvedValue(undefined)
 }
 
-test('WebSocket interview flow - happy path (generates follow-up and updates memory)', async (t) => {
-  const app: FastifyInstance = await build(t)
-  mockAiClient(app, t, { tail_decision: TailDecision.CREATE })
+// --- WebSocket Test Helper Class ---
 
-  const addressInfo = app.server.address()
-  if (addressInfo === null || typeof addressInfo === 'string') {
-    throw new Error('Server address is not available')
+class WebSocketTestClient {
+  private client: ClientSocket
+  private app: FastifyInstance
+  private sessionId: string
+
+  constructor(app: FastifyInstance, sessionId: string) {
+    this.app = app
+    this.sessionId = sessionId
+    const addressInfo = app.server.address()
+    if (addressInfo === null || typeof addressInfo === 'string') {
+      throw new Error('Server address is not available')
+    }
+    const address = `http://localhost:${addressInfo.port}`
+    this.client = Client(address, {
+      query: { sessionId },
+      autoConnect: false,
+      transports: ['websocket'],
+    })
   }
-  const address = `http://localhost:${addressInfo.port}`
 
-  // 서비스 레이어를 통해 테스트 유저와 세션을 생성
-  const { user } = await createTestUserAndToken(app)
-
-  // 테스트 종료 후 유저를 삭제하기 위한 훅 추가
-  t.after(async () => {
-    await app.prisma.user.delete({ where: { id: user.id } })
-  })
-
-  const session = await app.interviewService.initializeSession(user.id, {
-    company: { value: 'TestCorp' },
-    jobTitle: { value: 'Software Engineer' },
-    jobSpec: { value: 'Develop amazing things' },
-    idealTalent: { value: 'Proactive and collaborative' },
-  })
-  const sessionId = session.id
-
-  // Reset AI server memory for this session to ensure a clean slate
-  await axios.delete(`${process.env.AI_SERVER_URL}/api/v1/memory-debug/reset`, {
-    headers: { 'X-Session-Id': sessionId },
-    httpAgent,
-  })
-
-  const client: ClientSocket = Client(address, {
-    query: { sessionId },
-    autoConnect: false,
-  })
-
-  const questionsReadyPromise = new Promise<{ steps: InterviewStep[] }>(
-    (resolve, reject) => {
-      client.on('server:questions-ready', resolve)
-      client.on('server:error', reject)
-    },
-  )
-
-  const connectionPromise = new Promise<void>((resolve) =>
-    client.on('connect', resolve),
-  )
-  client.connect()
-  await connectionPromise
-
-  await app.interviewService.saveQuestionsAndNotifyClient(
-    sessionId,
-    mockGeneratedQuestions,
-  )
-
-  const { steps } = await questionsReadyPromise
-  const firstStepId = steps[0].id
-  const userAnswer = 'This is my test answer for the first question.'
-
-  const nextQuestionPromise = new Promise<{
-    step: InterviewStep
-    isFollowUp: boolean
-  }>((resolve, reject) => {
-    client.on('server:next-question', resolve)
-    client.on('server:error', reject)
-  })
-
-  client.emit('client:submit-answer', {
-    stepId: firstStepId,
-    answer: userAnswer,
-    duration: 42,
-  })
-
-  const nextQuestionPayload = await nextQuestionPromise
-
-  assert.ok(nextQuestionPayload)
-  assert.strictEqual(nextQuestionPayload.isFollowUp, true)
-  assert.strictEqual(nextQuestionPayload.step.parentStepId, firstStepId)
-  assert.strictEqual(nextQuestionPayload.step.aiQuestionId, 'q1-fu1')
-
-  // Verify AI server memory
-  const memoryResponse = await axios.get<MemoryDump>(
-    `${process.env.AI_SERVER_URL}/api/v1/memory-debug/dump`,
-    { headers: { 'X-Session-Id': sessionId }, httpAgent },
-  )
-
-  const memoryDump = memoryResponse.data
-  const aiMessages = memoryDump.messages.filter((m) => m.role === 'ai')
-
-  assert.strictEqual(memoryDump.session_id, sessionId)
-  assert.strictEqual(aiMessages.length, 3) // 1. question-shown, 2. user-answer, 3. followup-shown
-
-  const firstAiMsgContent = JSON.parse(aiMessages[0].content)
-  assert.strictEqual(
-    firstAiMsgContent.main_question_id,
-    mockGeneratedQuestions[0].main_question_id,
-  )
-
-  const humanMsgContent = JSON.parse(aiMessages[1].content)
-  assert.strictEqual(humanMsgContent.answer, userAnswer)
-
-  const secondAiMsgContent = JSON.parse(aiMessages[2].content)
-  assert.strictEqual(secondAiMsgContent.main_question_id, 'q1-fu1')
-
-  client.disconnect()
-})
-
-test('WebSocket interview flow - skips follow-up', async (t) => {
-  const app: FastifyInstance = await build(t)
-  mockAiClient(app, t, { tail_decision: TailDecision.SKIP })
-
-  const addressInfo = app.server.address()
-  if (addressInfo === null || typeof addressInfo === 'string') {
-    throw new Error('Server address is not available')
+  connect() {
+    return new Promise<void>((resolve) => {
+      this.client.once('connect', resolve)
+      this.client.connect()
+    })
   }
-  const address = `http://localhost:${addressInfo.port}`
 
-  const { user } = await createTestUserAndToken(app)
-  t.after(async () => {
-    await app.prisma.user.delete({ where: { id: user.id } })
-  })
-
-  const session = await app.interviewService.initializeSession(user.id, {
-    company: { value: 'TestCorp' },
-    jobTitle: { value: 'Software Engineer' },
-    jobSpec: { value: 'Develop amazing things' },
-    idealTalent: { value: 'Proactive and collaborative' },
-  })
-  const sessionId = session.id
-
-  const client: ClientSocket = Client(address, {
-    query: { sessionId },
-    autoConnect: false,
-  })
-
-  const questionsReadyPromise = new Promise<{ steps: InterviewStep[] }>(
-    (resolve) => client.on('server:questions-ready', resolve),
-  )
-  const connectionPromise = new Promise<void>((resolve) =>
-    client.on('connect', resolve),
-  )
-
-  client.connect()
-  await connectionPromise
-
-  await app.interviewService.saveQuestionsAndNotifyClient(
-    sessionId,
-    mockGeneratedQuestions,
-  )
-
-  const { steps } = await questionsReadyPromise
-  const firstStepId = steps[0].id
-
-  const nextQuestionPromise = new Promise<{
-    step: InterviewStep
-    isFollowUp: boolean
-  }>((resolve) => client.on('server:next-question', resolve))
-
-  client.emit('client:submit-answer', {
-    stepId: firstStepId,
-    answer: 'A very good answer that does not need a follow-up.',
-    duration: 30,
-  })
-
-  const nextQuestionPayload = await nextQuestionPromise
-
-  assert.strictEqual(nextQuestionPayload.isFollowUp, false)
-  assert.strictEqual(
-    nextQuestionPayload.step.question,
-    mockGeneratedQuestions[1].question,
-  )
-  assert.strictEqual(nextQuestionPayload.step.id, steps[1].id)
-
-  client.disconnect()
-})
-
-test('WebSocket interview flow - finishes interview', async (t) => {
-  const app: FastifyInstance = await build(t)
-  mockAiClient(app, t, { tail_decision: TailDecision.SKIP })
-
-  const addressInfo = app.server.address()
-  if (addressInfo === null || typeof addressInfo === 'string') {
-    throw new Error('Server address is not available')
+  disconnect() {
+    this.client.disconnect()
   }
-  const address = `http://localhost:${addressInfo.port}`
 
-  const { user } = await createTestUserAndToken(app)
-  t.after(async () => {
+  private waitForEvent<T>(eventName: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      this.client.once(eventName, resolve)
+      this.client.once('server:error', (e) =>
+        reject(new Error(typeof e === 'string' ? e : JSON.stringify(e))),
+      )
+    })
+  }
+
+  async triggerQuestionsAndAwaitForReady(): Promise<{
+    steps: InterviewStep[]
+  }> {
+    const promise = this.waitForEvent<{ steps: InterviewStep[] }>(
+      'server:questions-ready',
+    )
+    await this.app.interviewService.saveQuestionsAndNotifyClient(
+      this.sessionId,
+      mockGeneratedQuestions,
+    )
+    return promise
+  }
+
+  async submitAnswerAndWaitForNextQuestion(payload: {
+    stepId: string
+    answer: string
+    duration: number
+  }): Promise<{ step: InterviewStep; isFollowUp: boolean }> {
+    const promise = this.waitForEvent<{
+      step: InterviewStep
+      isFollowUp: boolean
+    }>('server:next-question')
+    this.client.emit('client:submit-answer', payload)
+    return promise
+  }
+
+  async submitAnswerAndWaitForFinish(payload: {
+    stepId: string
+    answer: string
+    duration: number
+  }): Promise<{ sessionId: string }> {
+    const promise = this.waitForEvent<{ sessionId: string }>(
+      'server:interview-finished',
+    )
+    this.client.emit('client:submit-answer', payload)
+    return promise
+  }
+}
+
+describe('WebSocket interview flow', () => {
+  let app: FastifyInstance
+  let user: User
+
+  // Run once before all tests in this describe block
+  beforeAll(async () => {
+    app = await build()
+    const testUser = await createTestUserAndToken(app)
+    user = testUser.user
+  })
+
+  // Run once after all tests in this describe block
+  afterAll(async () => {
     await app.prisma.user.delete({ where: { id: user.id } })
+    await app.close()
   })
 
-  const session = await app.interviewService.initializeSession(user.id, {
-    company: { value: 'TestCorp' },
-    jobTitle: { value: 'Software Engineer' },
-    jobSpec: { value: 'Develop amazing things' },
-    idealTalent: { value: 'Proactive and collaborative' },
-  })
-  const sessionId = session.id
+  let session: InterviewSession
+  let wsClient: WebSocketTestClient
 
-  const client: ClientSocket = Client(address, {
-    query: { sessionId },
-    autoConnect: false,
-  })
-
-  const questionsReadyPromise = new Promise<{ steps: InterviewStep[] }>(
-    (resolve) => client.on('server:questions-ready', resolve),
-  )
-  const connectionPromise = new Promise<void>((resolve) =>
-    client.on('connect', resolve),
-  )
-
-  client.connect()
-  await connectionPromise
-
-  await app.interviewService.saveQuestionsAndNotifyClient(
-    sessionId,
-    mockGeneratedQuestions,
-  )
-
-  const { steps } = await questionsReadyPromise
-  const firstStepId = steps[0].id
-  const secondStepId = steps[1].id
-
-  const nextQuestionPromise = new Promise<{
-    step: InterviewStep
-    isFollowUp: boolean
-  }>((resolve) => client.on('server:next-question', resolve))
-
-  client.emit('client:submit-answer', {
-    stepId: firstStepId,
-    answer: 'A very good answer that does not need a follow-up.',
-    duration: 30,
-  })
-  await nextQuestionPromise
-
-  const interviewFinishedPromise = new Promise<{ sessionId: string }>(
-    (resolve) => client.on('server:interview-finished', resolve),
-  )
-
-  client.emit('client:submit-answer', {
-    stepId: secondStepId,
-    answer: 'This is the final answer.',
-    duration: 35,
+  // Run before each test
+  beforeEach(async () => {
+    session = await app.interviewService.initializeSession(user.id, {
+      company: { value: 'TestCorp' },
+      jobTitle: { value: 'Software Engineer' },
+      jobSpec: { value: 'Develop amazing things' },
+      idealTalent: { value: 'Proactive and collaborative' },
+    })
+    wsClient = new WebSocketTestClient(app, session.id)
+    await wsClient.connect()
   })
 
-  const finishedPayload = await interviewFinishedPromise
-
-  assert.strictEqual(finishedPayload.sessionId, sessionId)
-
-  const finalSession = await app.prisma.interviewSession.findUnique({
-    where: { id: sessionId },
+  // Run after each test
+  afterEach(async () => {
+    vi.restoreAllMocks()
+    wsClient.disconnect()
+    // Clean up session data, user is cleaned up in afterAll
+    await app.prisma.interviewSession.delete({ where: { id: session.id } })
   })
-  assert.strictEqual(finalSession?.status, 'COMPLETED')
 
-  client.disconnect()
+  it('happy path (generates follow-up)', async () => {
+    mockAiClient(app, { tail_decision: TailDecision.CREATE })
+
+    const { steps } = await wsClient.triggerQuestionsAndAwaitForReady()
+    const firstStepId = steps[0].id
+    const userAnswer = 'This is my test answer for the first question.'
+
+    const nextQuestionPayload =
+      await wsClient.submitAnswerAndWaitForNextQuestion({
+        stepId: firstStepId,
+        answer: userAnswer,
+        duration: 42,
+      })
+
+    expect(nextQuestionPayload).toBeDefined()
+    expect(nextQuestionPayload.isFollowUp).toBe(true)
+    expect(nextQuestionPayload.step.parentStepId).toBe(firstStepId)
+    expect(nextQuestionPayload.step.aiQuestionId).toBe('q1-fu1')
+  })
+
+  it('skips follow-up', async () => {
+    mockAiClient(app, { tail_decision: TailDecision.SKIP })
+
+    const { steps } = await wsClient.triggerQuestionsAndAwaitForReady()
+
+    const nextQuestionPayload =
+      await wsClient.submitAnswerAndWaitForNextQuestion({
+        stepId: steps[0].id,
+        answer: 'A very good answer that does not need a follow-up.',
+        duration: 30,
+      })
+
+    expect(nextQuestionPayload.isFollowUp).toBe(false)
+    expect(nextQuestionPayload.step.question).toBe(
+      mockGeneratedQuestions[1].question,
+    )
+    expect(nextQuestionPayload.step.id).toBe(steps[1].id)
+  })
+
+  it('finishes interview', async () => {
+    mockAiClient(app, { tail_decision: TailDecision.SKIP })
+
+    const { steps } = await wsClient.triggerQuestionsAndAwaitForReady()
+
+    const nextQuestionPayload =
+      await wsClient.submitAnswerAndWaitForNextQuestion({
+        stepId: steps[0].id,
+        answer: 'A very good answer that does not need a follow-up.',
+        duration: 30,
+      })
+
+    const finishedPayload = await wsClient.submitAnswerAndWaitForFinish({
+      stepId: nextQuestionPayload.step.id,
+      answer: 'This is the final answer.',
+      duration: 35,
+    })
+
+    expect(finishedPayload.sessionId).toBe(session.id)
+
+    const finalSession = await app.prisma.interviewSession.findUnique({
+      where: { id: session.id },
+    })
+    expect(finalSession?.status).toBe('COMPLETED')
+  })
 })

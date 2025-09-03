@@ -1,14 +1,13 @@
-import * as assert from 'node:assert'
-import { test } from 'node:test'
-
 import Fastify from 'fastify'
+import { describe, it, expect } from 'vitest'
 
 import Support from '../../src/plugins/support'
 
-test('support works standalone', async () => {
-  const fastify = Fastify()
-  void fastify.register(Support)
-  await fastify.ready()
-
-  assert.equal(fastify.someSupport(), 'hugs')
+describe('support works standalone', () => {
+  it('should return "hugs"', async () => {
+    const fastify = Fastify()
+    void fastify.register(Support)
+    await fastify.ready()
+    expect(fastify.someSupport()).toBe('hugs')
+  })
 })
