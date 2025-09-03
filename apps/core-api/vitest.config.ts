@@ -1,0 +1,16 @@
+/// <reference types="vitest" />
+import tsconfigPaths from 'vite-tsconfig-paths'
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+  test: {
+    // globals: true,
+    environment: 'node',
+    testTimeout: 30000, // 30 seconds
+    // reporters: ['verbose'],
+    deps: {
+      inline: ['@fastify/autoload'],
+    },
+  },
+})
