@@ -1,6 +1,5 @@
 // This file contains code that we reuse between our tests.
 import { join } from 'node:path'
-import * as test from 'node:test'
 
 import { S3Client } from '@aws-sdk/client-s3'
 import AutoLoad from '@fastify/autoload'
@@ -14,6 +13,7 @@ import { PrismaClient, User } from '@prisma/client'
 import { FastifyInstance as OriginalFastifyInstance } from 'fastify'
 import Fastify from 'fastify'
 import { Server as SocketIOServer } from 'socket.io'
+import { afterEach } from 'vitest'
 
 import { app as AppPlugin } from '../src/app'
 import { AiClientService } from '../src/plugins/services/ai-client'
@@ -48,17 +48,13 @@ export type FastifyInstance = OriginalFastifyInstance<
   TypeBoxTypeProvider
 >
 
-export type TestContext = {
-  after: typeof test.after
-}
-
 // Automatically build and tear down our instance
-async function build(t: TestContext): Promise<FastifyInstance> {
+async function build(): Promise<FastifyInstance> {
   const app = Fastify({
     ajv: {
       plugins: [ajvFilePlugin],
     },
-    logger: true, // Disable logger for cleaner test output
+    logger: false, // Disable logger for cleaner test output
   }).withTypeProvider<TypeBoxTypeProvider>()
 
   // Register the main application plugin first
@@ -91,7 +87,7 @@ async function build(t: TestContext): Promise<FastifyInstance> {
   await app.listen({ port: 0 })
 
   // Tear down our app after we are done
-  t.after(() => app.close())
+  afterEach(() => app.close())
 
   await app.ready()
 
