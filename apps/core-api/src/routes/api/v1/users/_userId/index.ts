@@ -28,8 +28,7 @@ const controller: FastifyPluginAsyncTypebox = async (
   const getSchema: FastifySchema = {
     tags: [Tag.User],
     summary: '특정 사용자 정보 조회',
-    description:
-      '`:userId`에 해당하는 사용자 정보를 조회합니다. **우선은 본인 정보만 조회할 수 있습니다.**',
+    description: '`:userId`에 해당하는 사용자 정보를 조회합니다.',
     params: C_Params,
     response: {
       200: C_User,
@@ -43,11 +42,6 @@ const controller: FastifyPluginAsyncTypebox = async (
     reply,
   ) => {
     const { userId: requestedUserId } = request.params
-    const { userId: currentUserId } = request.user
-
-    if (requestedUserId !== currentUserId) {
-      return reply.forbidden('You are not authorized to access this resource.')
-    }
 
     const user = await server.prisma.user.findUnique({
       where: { id: requestedUserId },
