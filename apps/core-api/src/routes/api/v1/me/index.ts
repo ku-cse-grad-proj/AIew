@@ -13,7 +13,10 @@ const meRoute: FastifyPluginAsync = async (fastify) => {
     onRequest: [fastify.authenticate],
     schema: {
       tags: [Tag.User],
-      summary: '현재 로그인된 사용자 정보 조회',
+      summary:
+        '현재 로그인된 사용자 정보 조회 (GET /users/:userId 의 단축 경로)',
+      description:
+        '현재 로그인한 사용자의 정보를 반환합니다. `GET /api/v1/users/{자신의 ID}`와 동일한 역할을 하는 편의성 API입니다.',
       response: {
         '200': {
           description: '성공적으로 사용자 정보 반환',
@@ -44,19 +47,10 @@ const meRoute: FastifyPluginAsync = async (fastify) => {
 
     const user = await fastify.prisma.user.findUnique({
       where: { id: userId },
-      // Exclude sensitive data like password if you add it later
-      select: {
-        email: true,
-        name: true,
-        pic_url: true,
-        provider: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     })
 
     if (!user) {
-      return reply.status(404).send({ message: 'User not found' })
+      return reply.notFound('User not found')
     }
 
     return user

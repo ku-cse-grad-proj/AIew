@@ -2,6 +2,8 @@ enum SchemaId {
   // REST Schemas
   Error = 'ErrorResponse',
   User = 'UserResponse',
+  UserPatchBody = 'UserPatchBody',
+  UserDeleteResponse = 'UserDeleteResponse',
   InterviewListItem = 'InterviewListItem',
   InterviewList = 'InterviewList',
 
