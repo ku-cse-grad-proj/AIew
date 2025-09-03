@@ -53,6 +53,9 @@ async function build(): Promise<FastifyInstance> {
   const app = Fastify({
     ajv: {
       plugins: [ajvFilePlugin],
+      customOptions: {
+        keywords: ['example'],
+      },
     },
     logger: false, // Disable logger for cleaner test output
   }).withTypeProvider<TypeBoxTypeProvider>()

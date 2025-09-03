@@ -18,6 +18,9 @@ const start = async () => {
   const app = Fastify({
     ajv: {
       plugins: [ajvFilePlugin],
+      customOptions: {
+        keywords: ['example'],
+      },
     },
     logger: {
       transport: {
