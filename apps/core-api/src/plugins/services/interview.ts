@@ -434,7 +434,8 @@ export class InterviewService {
     }
     const followupResult: FollowUp =
       await this.aiClient.generateFollowUpQuestion(followupRequest, sessionId)
-    const createdFollowup = await prisma.interviewStep.create({
+
+    const newFollowupStep = await prisma.interviewStep.create({
       data: {
         interviewSessionId: sessionId,
         parentStepId: parentStep.id,
@@ -447,14 +448,6 @@ export class InterviewService {
         estimatedAnswerTimeSec: followupResult.expected_answer_time_sec,
       },
     })
-
-    const newFollowupStep = await prisma.interviewStep.findUnique({
-      where: { id: createdFollowup.id },
-    })
-
-    if (!newFollowupStep) {
-      throw new Error('Failed to fetch newly created followup step.')
-    }
 
     await this.aiClient.logShownQuestion(
       { question: this.formatStepToAiQuestion(newFollowupStep) },
@@ -471,13 +464,17 @@ export class InterviewService {
     const { prisma, log, io } = this.fastify
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
-      include: {
-        steps: { where: { parentStepId: null }, orderBy: { createdAt: 'asc' } },
-      },
+      select: { currentQuestionIndex: true },
     })
     if (!session) throw new Error(`Session not found for id: ${sessionId}`)
-    const mainQuestions = session.steps
+
     const nextIndex = session.currentQuestionIndex + 1
+
+    const mainQuestions = await prisma.interviewStep.findMany({
+      where: { interviewSessionId: sessionId, parentStepId: null },
+      orderBy: { aiQuestionId: 'asc' },
+    })
+
     if (nextIndex >= mainQuestions.length) {
       log.info(
         `[${sessionId}] Last main question answered. Finishing interview.`,
