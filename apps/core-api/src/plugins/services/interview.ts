@@ -264,6 +264,61 @@ export class InterviewService {
     return session
   }
 
+  /**
+   * 면접 세션 정보를 수정합니다.
+   * @throws {Error} 403 Forbidden - 소유자가 아닐 경우
+   * @throws {Error} 404 Not Found - 세션이 존재하지 않을 경우
+   */
+  public async updateInterviewSession(
+    sessionId: string,
+    userId: string,
+    data: Partial<{ title: string }>,
+  ) {
+    const { prisma } = this.fastify
+    const session = await prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+    })
+
+    if (!session) {
+      throw this.fastify.httpErrors.notFound('Interview session not found.')
+    }
+    if (session.userId !== userId) {
+      throw this.fastify.httpErrors.forbidden(
+        'You are not authorized to modify this session.',
+      )
+    }
+
+    return prisma.interviewSession.update({
+      where: { id: sessionId },
+      data,
+    })
+  }
+
+  /**
+   * 면접 세션을 삭제합니다.
+   * @throws {Error} 403 Forbidden - 소유자가 아닐 경우
+   * @throws {Error} 404 Not Found - 세션이 존재하지 않을 경우
+   */
+  public async deleteInterviewSession(sessionId: string, userId: string) {
+    const { prisma } = this.fastify
+    const session = await prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+    })
+
+    if (!session) {
+      throw this.fastify.httpErrors.notFound('Interview session not found.')
+    }
+    if (session.userId !== userId) {
+      throw this.fastify.httpErrors.forbidden(
+        'You are not authorized to delete this session.',
+      )
+    }
+
+    return prisma.interviewSession.delete({
+      where: { id: sessionId },
+    })
+  }
+
   // --- Helper Methods ---
 
   /**
