@@ -36,13 +36,10 @@ export async function createInterview(formData: FormData) {
 
   console.log('newFormData', newFormData)
 
-  const res = await privateFetch(
-    'http://localhost:3000/api/v1/interviews/create',
-    {
-      method: 'POST',
-      body: newFormData,
-    },
-  )
+  const res = await privateFetch('http://localhost:3000/api/v1/interviews', {
+    method: 'POST',
+    body: newFormData,
+  })
 
   if (!res.ok) {
     throw new Error('면접 생성에 실패했습니다.')
