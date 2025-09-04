@@ -1,60 +1,119 @@
 import {
-  FastifyPluginAsync,
-  FastifySchema,
-  RequestGenericInterface,
-  RouteHandler,
-} from 'fastify'
+  FastifyPluginAsyncTypebox,
+  TypeBoxTypeProvider,
+} from '@fastify/type-provider-typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { FastifyInstance } from 'fastify'
 
 import { Tag } from '@/configs/swaggerOption'
+import {
+  S_InterviewSessionDeleteResponse,
+  S_InterviewSessionItem,
+  S_InterviewSessionPatchBody,
+} from '@/schemas/rest/interview'
 import SchemaId from '@/utils/schemaId'
 
-interface requestGeneric extends RequestGenericInterface {
-  Params: {
-    sessionId: string
-  }
-}
+const controller: FastifyPluginAsyncTypebox = async (
+  fastify: FastifyInstance,
+) => {
+  const server = fastify.withTypeProvider<TypeBoxTypeProvider>()
 
-const controller: FastifyPluginAsync = async (fastify) => {
-  const schema: FastifySchema = {
-    tags: [Tag.Interview],
-    summary: '사용자가 생성한 단일 면접 조회',
-    description: '`sessionId`를 parameter로 받아와 일치하는 면접 조회',
-    params: {
-      type: 'object',
-      properties: {
-        sessionId: {
-          type: 'string',
-          description: '면접 세션의 ID',
-        },
-      },
-      required: ['sessionId'],
-    },
-    response: {
-      200: {
-        $ref: SchemaId.InterviewListItem,
-      },
-      '4XX': {
-        $ref: SchemaId.Error,
-      },
-    },
-  }
+  const C_Params = Type.Object({
+    sessionId: Type.String({
+      description: '면접 세션의 ID',
+    }),
+  })
+  const C_ResErr = Type.Ref(SchemaId.Error)
 
-  const handler: RouteHandler<requestGeneric> = async (request, reply) => {
-    const session = await fastify.interviewService.getInterviewSessionById(
-      request.params.sessionId,
-      request.user.userId,
-    )
-
-    if (!session) return reply.notFound('Interview session not found.')
-    reply.send(session)
-  }
-
-  fastify.route<requestGeneric>({
-    onRequest: [fastify.authenticate],
+  // --- GET /interviews/:sessionId ---
+  server.route<{ Params: Static<typeof C_Params> }>({
     method: 'GET',
     url: '/',
-    schema,
-    handler,
+    onRequest: [server.authenticate],
+    schema: {
+      tags: [Tag.Interview],
+      summary: '사용자가 생성한 단일 면접 세션 조회',
+      description: '`sessionId`를 parameter로 받아와 일치하는 면접 세션 조회',
+      params: C_Params,
+      response: {
+        200: S_InterviewSessionItem,
+        '4XX': C_ResErr,
+      },
+    },
+    handler: async (request, reply) => {
+      const session = await server.interviewService.getInterviewSessionById(
+        request.params.sessionId,
+        request.user.userId,
+      )
+
+      if (!session) {
+        return reply.notFound('Interview session not found.')
+      }
+      reply.send(session)
+    },
+  })
+
+  // --- PATCH /interviews/:sessionId ---
+  server.route<{
+    Params: Static<typeof C_Params>
+    Body: Static<typeof S_InterviewSessionPatchBody>
+  }>({
+    method: 'PATCH',
+    url: '/',
+    onRequest: [server.authenticate],
+    schema: {
+      tags: [Tag.Interview],
+      summary: '단일 면접 세션 수정',
+      description:
+        '`sessionId`에 해당하는 면접 세션의 정보를 수정합니다. **본인의 면접 세션만 수정할 수 있습니다.**',
+      params: C_Params,
+      body: S_InterviewSessionPatchBody,
+      response: {
+        200: S_InterviewSessionItem,
+        403: C_ResErr,
+        404: C_ResErr,
+      },
+    },
+    handler: async (request, reply) => {
+      const { sessionId } = request.params
+      const { userId } = request.user
+
+      const updatedSession =
+        await server.interviewService.updateInterviewSession(
+          sessionId,
+          userId,
+          request.body,
+        )
+
+      reply.send(updatedSession)
+    },
+  })
+
+  // --- DELETE /interviews/:sessionId ---
+  server.route<{ Params: Static<typeof C_Params> }>({
+    method: 'DELETE',
+    url: '/',
+    onRequest: [server.authenticate],
+    schema: {
+      tags: [Tag.Interview],
+      summary: '단일 면접 세션 삭제',
+      description:
+        '`sessionId`에 해당하는 면접 세션을 삭제합니다. **본인의 면접 세션만 삭제할 수 있습니다.**',
+      params: C_Params,
+      response: {
+        200: S_InterviewSessionDeleteResponse,
+        403: C_ResErr,
+        404: C_ResErr,
+      },
+    },
+    handler: async (request, reply) => {
+      const { sessionId } = request.params
+      const { userId } = request.user
+
+      await server.interviewService.deleteInterviewSession(sessionId, userId)
+
+      reply.send({ message: 'Interview session deleted successfully.' })
+    },
   })
 }
 
