@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
+import InterviewStatusChip from './InterviewStatusChip'
+
 export type Interview = {
   id: string
   title: string
@@ -8,7 +10,7 @@ export type Interview = {
   jobTitle: string
   jobSpec: string
   createdAt: string
-  status?: 'ready' | 'draft' | 'done'
+  status: InterviewStatus
 }
 
 export default function InterviewCard({
@@ -18,15 +20,7 @@ export default function InterviewCard({
   data: Interview
   onDelete?: (id: string) => void
 }) {
-  const {
-    id,
-    title,
-    company,
-    jobTitle,
-    jobSpec,
-    createdAt,
-    status = 'ready',
-  } = data
+  const { id, title, company, jobTitle, jobSpec, createdAt, status } = data
 
   return (
     <article className="relative min-w-50 min-h-280 p-24 rounded-[20px] bg-neutral-card flex flex-col justify-between shadow-box">
@@ -41,9 +35,7 @@ export default function InterviewCard({
       {/* 질문 준비 상태와 날짜 */}
       {/* TODO: 상태값 변화 어떻게 인식할지 */}
       <header className="w-full flex justify-between items-center">
-        <div className="px-28 text-neutral-inverse bg-success rounded-full inline-flex items-center h-32">
-          {status}
-        </div>
+        <InterviewStatusChip status={status} />
         <span className="text-neutral-subtext">
           {new Date(createdAt).toISOString().split('T')[0]}
         </span>

@@ -11,6 +11,14 @@ declare global {
 
   // payload의 questions 필드 타입
   type QuestionsMap = Record<QuestionCategory, QuestionBundles>
+
+  // interview 상태
+  type InterviewStatus =
+    | 'PENDING'
+    | 'READY'
+    | 'IN_PROGRESS'
+    | 'COMPLETED'
+    | 'FAILED'
 }
 
 export {}
