@@ -515,18 +515,27 @@ export class InterviewService {
       | Static<typeof S_InterviewSessionPatchBody>,
     parsedTexts: { resume_text: string; portfolio_text: string },
   ) {
-    const company =
-      'company' in interviewData && interviewData.company?.valueOf()
-        ? (interviewData.company.valueOf() as string)
-        : (interviewData.company as string)
-    const jobTitle =
-      'jobTitle' in interviewData && interviewData.jobTitle?.valueOf()
-        ? (interviewData.jobTitle.valueOf() as string)
-        : (interviewData.jobTitle as string)
-    const idealTalent =
-      'idealTalent' in interviewData && interviewData.idealTalent?.valueOf()
-        ? (interviewData.idealTalent.valueOf() as string)
-        : (interviewData.idealTalent as string)
+    // POST 요청 (InterviewRequestBody)과 PATCH 요청 (S_InterviewSessionPatchBody)의 데이터 구조가 다르므로 분기 처리
+    const isPostRequest = (data: unknown): data is InterviewRequestBody =>
+      typeof data === 'object' &&
+      data !== null &&
+      'company' in data &&
+      typeof (data as { company: unknown }).company === 'object' &&
+      (data as { company: unknown }).company !== null &&
+      'value' in ((data as { company: unknown }).company as { value: unknown })
+
+    let company: string, jobTitle: string, idealTalent: string | undefined
+
+    if (isPostRequest(interviewData)) {
+      company = interviewData.company.value
+      jobTitle = interviewData.jobTitle.value
+      idealTalent = interviewData.idealTalent.value
+    } else {
+      // PATCH 요청의 경우, 데이터가 optional string이므로 타입 캐스팅
+      company = interviewData.company as string
+      jobTitle = interviewData.jobTitle as string
+      idealTalent = interviewData.idealTalent as string
+    }
 
     return {
       user_info: {

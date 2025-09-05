@@ -78,10 +78,9 @@ const controller: FastifyPluginAsync = async (fastify) => {
           if (part.mimetype !== 'application/pdf') {
             // 스트림을 소비해야 에러가 전파되지 않음
             void part.file.resume()
-            throw {
-              statusCode: 415,
-              message: `Unsupported Media Type: '${part.filename}'. Only PDF files are allowed.`,
-            }
+            throw fastify.httpErrors.unsupportedMediaType(
+              `Unsupported Media Type: '${part.filename}'. Only PDF files are allowed.`,
+            )
           }
           const buffer = await part.toBuffer()
           if (part.fieldname === 'coverLetter') {
@@ -99,10 +98,9 @@ const controller: FastifyPluginAsync = async (fastify) => {
 
       // 필수 파일 확인
       if (!files.coverLetter || !files.portfolio) {
-        throw {
-          statusCode: 400,
-          message: 'Both coverLetter and portfolio files are required.',
-        }
+        throw fastify.httpErrors.badRequest(
+          'Both coverLetter and portfolio files are required.',
+        )
       }
 
       // 면접 세션 초기화 및 즉시 응답
@@ -124,7 +122,7 @@ const controller: FastifyPluginAsync = async (fastify) => {
         },
       )
     } catch (error) {
-      fastify.log.error(error)
+      fastify.log.error(`[${request.id}] Error in postHandler:`, { error })
       const statusCode = (error as { statusCode?: number }).statusCode ?? 500
       const message =
         (error as { message?: string }).message ?? 'Internal Server Error'
