@@ -1,11 +1,13 @@
-import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createId } from '@paralleldrive/cuid2'
-import { InterviewStep, QuestionType } from '@prisma/client'
+import { InterviewSession, InterviewStep, QuestionType } from '@prisma/client'
+import { Static } from '@sinclair/typebox'
 import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
 import { AiClientService } from './ai-client'
 
+import { S_InterviewSessionPatchBody } from '@/schemas/rest'
 import {
   AiInterviewQuestion,
   AiQuestionCategory,
@@ -71,7 +73,9 @@ export class InterviewService {
    */
   public async processInterviewInBackground(
     sessionId: string,
-    interviewData: InterviewRequestBody,
+    interviewData:
+      | InterviewRequestBody
+      | Static<typeof S_InterviewSessionPatchBody>,
     files: {
       coverLetter: FilePayload
       portfolio: FilePayload
@@ -80,6 +84,7 @@ export class InterviewService {
     const { prisma, log } = this.fastify
     try {
       log.info(`[${sessionId}] Starting background processing...`)
+
       const fileUrls = await this.uploadFilesToR2(sessionId, files)
       log.info(`[${sessionId}] Files uploaded successfully.`)
       await prisma.interviewSession.update({
@@ -272,9 +277,14 @@ export class InterviewService {
   public async updateInterviewSession(
     sessionId: string,
     userId: string,
-    data: Partial<{ title: string }>,
-  ) {
-    const { prisma } = this.fastify
+    data: Static<typeof S_InterviewSessionPatchBody>,
+    files?: {
+      coverLetter?: FilePayload
+      portfolio?: FilePayload
+    },
+  ): Promise<InterviewSession> {
+    const { prisma, log } = this.fastify
+
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
     })
@@ -287,11 +297,71 @@ export class InterviewService {
         'You are not authorized to modify this session.',
       )
     }
+    const isTitleOnlyUpdate = Object.keys(data).length === 1 && 'title' in data
 
-    return prisma.interviewSession.update({
-      where: { id: sessionId },
-      data,
-    })
+    if (
+      (session.status === 'IN_PROGRESS' || session.status === 'COMPLETED') &&
+      !isTitleOnlyUpdate
+    ) {
+      throw this.fastify.httpErrors.badRequest(
+        'Cannot modify an interview that is in progress or completed (only title can be updated).',
+      )
+    }
+
+    const hasNewFiles = files && (files.coverLetter || files.portfolio)
+    const aiTriggerFields: (keyof Static<
+      typeof S_InterviewSessionPatchBody
+    >)[] = ['company', 'jobTitle', 'jobSpec', 'idealTalent']
+    const hasAiTriggerFieldUpdate = aiTriggerFields.some(
+      (field) => field in data,
+    )
+
+    const needsReprocessing = hasNewFiles || hasAiTriggerFieldUpdate
+
+    if (needsReprocessing) {
+      log.info(`[${sessionId}] Re-processing interview due to updated data.`)
+      // 텍스트 데이터 업데이트 및 상태 PENDING으로 변경
+      const updatedSession = await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: {
+          ...data,
+          status: 'PENDING',
+        },
+      })
+
+      // 기존 질문 삭제
+      await prisma.interviewStep.deleteMany({
+        where: { interviewSessionId: sessionId },
+      })
+
+      // 백그라운드 재처리 시작
+      const fullInterviewData = {
+        company: { value: updatedSession.company },
+        jobTitle: { value: updatedSession.jobTitle },
+        jobSpec: { value: updatedSession.jobSpec },
+        idealTalent: { value: updatedSession.idealTalent || '' },
+      }
+
+      // AI 재처리에 필요한 파일들을 준비 (새 파일 또는 R2에서 다운로드)
+      const filesForProcessing = await this.prepareFilesForReprocessing(
+        session,
+        files,
+      )
+
+      void this.processInterviewInBackground(
+        sessionId,
+        fullInterviewData,
+        filesForProcessing,
+      )
+
+      return updatedSession
+    } else {
+      // title만 변경하는 경우
+      return prisma.interviewSession.update({
+        where: { id: sessionId },
+        data,
+      })
+    }
   }
 
   /**
@@ -321,6 +391,57 @@ export class InterviewService {
 
   // --- Helper Methods ---
 
+  private async prepareFilesForReprocessing(
+    session: InterviewSession,
+    newFiles?: {
+      coverLetter?: FilePayload
+      portfolio?: FilePayload
+    },
+  ): Promise<{
+    coverLetter: FilePayload
+    portfolio: FilePayload
+  }> {
+    const coverLetter =
+      newFiles?.coverLetter ??
+      (await this.getFileBufferFromR2(session.coverLetter))
+    const portfolio =
+      newFiles?.portfolio ?? (await this.getFileBufferFromR2(session.portfolio))
+
+    if (!coverLetter || !portfolio) {
+      throw this.fastify.httpErrors.badRequest(
+        'Cover letter and portfolio are required for AI re-processing.',
+      )
+    }
+
+    return { coverLetter, portfolio }
+  }
+
+  private async getFileBufferFromR2(
+    fileUrl: string | null,
+  ): Promise<FilePayload | null> {
+    if (!fileUrl) return null
+    const { r2 } = this.fastify
+    const { R2_BUCKET_NAME } = process.env
+    const fileKey = fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+
+    try {
+      const command = new GetObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: fileKey,
+      })
+      const response = await r2.send(command)
+      const buffer = Buffer.from(
+        (await response.Body?.transformToByteArray()) || [],
+      )
+      const filename = this.extractFilenameFromUrl(fileUrl)
+      return { buffer, filename }
+    } catch (error) {
+      this.fastify.log.error(`Failed to fetch file from R2: ${fileKey}`, error)
+      // 파일을 가져오지 못하면 재처리 불가하므로 null 반환
+      return null
+    }
+  }
+
   /**
    * R2 URL에서 Prefix를 제거하고 원본 파일명을 추출합니다.
    * 예: "sessionId-coverLetter-my_cover_letter.pdf" -> "my_cover_letter.pdf"
@@ -339,6 +460,7 @@ export class InterviewService {
     const { r2 } = this.fastify
     const { R2_BUCKET_NAME, R2_PUBLIC_URL } = process.env
     const uploadPromises = Object.entries(files).map(async ([key, file]) => {
+      if (!file) return null // 파일이 제공되지 않은 경우 건너뜀
       const fileKey = `${sessionId}-${key}-${file.filename}`
       await r2.send(
         new PutObjectCommand({
@@ -353,7 +475,9 @@ export class InterviewService {
         url: `${R2_PUBLIC_URL}/${fileKey}`,
       }
     })
-    const fileUrlResults = await Promise.all(uploadPromises)
+    const fileUrlResults = (await Promise.all(uploadPromises)).filter(
+      (r): r is { key: 'coverLetter' | 'portfolio'; url: string } => r !== null,
+    )
     return fileUrlResults.reduce(
       (acc, { key, url }) => {
         acc[key] = url
@@ -386,15 +510,30 @@ export class InterviewService {
   }
 
   private prepareQuestionRequest(
-    interviewData: InterviewRequestBody,
+    interviewData:
+      | InterviewRequestBody
+      | Static<typeof S_InterviewSessionPatchBody>,
     parsedTexts: { resume_text: string; portfolio_text: string },
   ) {
+    const company =
+      'company' in interviewData && interviewData.company?.valueOf()
+        ? (interviewData.company.valueOf() as string)
+        : (interviewData.company as string)
+    const jobTitle =
+      'jobTitle' in interviewData && interviewData.jobTitle?.valueOf()
+        ? (interviewData.jobTitle.valueOf() as string)
+        : (interviewData.jobTitle as string)
+    const idealTalent =
+      'idealTalent' in interviewData && interviewData.idealTalent?.valueOf()
+        ? (interviewData.idealTalent.valueOf() as string)
+        : (interviewData.idealTalent as string)
+
     return {
       user_info: {
         ...parsedTexts,
-        company: interviewData.company.value,
-        desired_role: interviewData.jobTitle.value,
-        core_values: interviewData.idealTalent.value,
+        company,
+        desired_role: jobTitle,
+        core_values: idealTalent,
       },
     }
   }
