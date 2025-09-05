@@ -51,7 +51,7 @@ const controller: FastifyPluginAsyncTypebox = async (
       return reply.notFound(`User with ID '${requestedUserId}' not found.`)
     }
 
-    return user
+    reply.send(user)
   }
 
   server.route<{ Params: Static<typeof C_Params> }>({
@@ -93,7 +93,7 @@ const controller: FastifyPluginAsyncTypebox = async (
       data: request.body as Prisma.UserUpdateInput,
     })
 
-    return updatedUser
+    reply.send(updatedUser)
   }
 
   server.route<{
