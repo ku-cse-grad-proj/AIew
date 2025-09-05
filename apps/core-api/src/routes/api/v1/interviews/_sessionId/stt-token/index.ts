@@ -21,7 +21,7 @@ const controller: FastifyPluginAsyncTypebox = async (
   })
 
   const Res201 = Type.Object({
-    client_secret: Type.Object({
+    data: Type.Object({
       value: Type.String(),
     }),
   })
@@ -57,13 +57,29 @@ const controller: FastifyPluginAsyncTypebox = async (
         })
       }
 
+      //session 설정
+      //turn_detection: semantic_vad가 가장 좋은 성능을 보임
+      const sessionConfig = {
+        session: {
+          type: 'transcription',
+          audio: {
+            input: {
+              transcription: {
+                model: 'gpt-4o-transcribe',
+                language: 'ko',
+              },
+              turn_detection: {
+                type: 'semantic_vad',
+              },
+            },
+          },
+        },
+      }
+
       // 소유권이 확인되면 토큰 발급 진행
       const response = await axios.post<Static<typeof Res201>>(
-        'https://api.openai.com/v1/realtime/sessions',
-        {
-          model: 'gpt-4o-mini-transcribe',
-          voice: 'verse',
-        },
+        'https://api.openai.com/v1/realtime/client_secrets',
+        sessionConfig,
         {
           headers: {
             Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -71,7 +87,8 @@ const controller: FastifyPluginAsyncTypebox = async (
           },
         },
       )
-      return reply.status(201).send(response.data)
+      //EPHEMERAL_KEY 값인 data.value를 반환.
+      return reply.status(201).send(response)
     } catch (error) {
       server.log.error(error, 'Failed to get token from OpenAI.')
       if (axios.isAxiosError(error) && error.response) {
