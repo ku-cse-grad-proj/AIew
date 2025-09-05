@@ -9,12 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@openai/agents": "^0.1.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
     "next": "15.4.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
