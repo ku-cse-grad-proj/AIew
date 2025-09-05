@@ -18,7 +18,7 @@ export default async function WaitingPage({
   const interview: Interview = await response.json()
   console.log('WaitingPage sessionId:', sessionId)
   return (
-    <div className="w-full h-full flex flex-col lg:flex-row items-center justify-center p-24 gap-24">
+    <div className="w-full h-full flex flex-col lg:flex-row p-24 gap-24">
       {/* TODO:: title, 인재상, resume, portfolio 제목 받아오기 */}
       <Card className="w-full h-full flex flex-col">
         <span className="text-right text-gray-500">

@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${pretendard.variable}`}>
-      <body className={`${pretendard.className} h-dvh w-full`}>{children}</body>
+      <body className={`${pretendard.className}`}>{children}</body>
     </html>
   )
 }
