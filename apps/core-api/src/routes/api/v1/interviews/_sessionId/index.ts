@@ -56,7 +56,6 @@ const controller: FastifyPluginAsyncTypebox = async (
   // --- PATCH /interviews/:sessionId ---
   server.route<{
     Params: Static<typeof C_Params>
-    Body: Static<typeof S_InterviewSessionPatchBody>
   }>({
     method: 'PATCH',
     url: '/',
@@ -67,7 +66,7 @@ const controller: FastifyPluginAsyncTypebox = async (
       description:
         '`sessionId`에 해당하는 면접 세션의 정보를 수정합니다. **본인의 면접 세션만 수정할 수 있습니다.**',
       params: C_Params,
-      body: S_InterviewSessionPatchBody,
+      consumes: ['multipart/form-data'],
       response: {
         200: S_InterviewSessionItem,
         403: C_ResErr,
@@ -78,11 +77,44 @@ const controller: FastifyPluginAsyncTypebox = async (
       const { sessionId } = request.params
       const { userId } = request.user
 
+      const body = {} as Static<typeof S_InterviewSessionPatchBody>
+      const files: {
+        coverLetter?: { buffer: Buffer; filename: string }
+        portfolio?: { buffer: Buffer; filename: string }
+      } = {}
+
+      const parts = request.parts()
+      for await (const part of parts) {
+        if (part.type === 'file') {
+          if (part.mimetype !== 'application/pdf') {
+            // 스트림을 소비해야 에러가 전파되지 않음
+            void part.file.resume()
+            throw fastify.httpErrors.unsupportedMediaType(
+              `Unsupported Media Type: '${part.filename}'. Only PDF files are allowed.`,
+            )
+          }
+          const buffer = await part.toBuffer()
+          if (part.fieldname === 'coverLetter') {
+            files.coverLetter = { buffer, filename: part.filename }
+          } else if (part.fieldname === 'portfolio') {
+            files.portfolio = { buffer, filename: part.filename }
+          }
+        } else {
+          if (part.value) {
+            const key = part.fieldname as keyof Static<
+              typeof S_InterviewSessionPatchBody
+            >
+            body[key] = JSON.parse(part.value as string)
+          }
+        }
+      }
+
       const updatedSession =
         await server.interviewService.updateInterviewSession(
           sessionId,
           userId,
-          request.body,
+          body,
+          files,
         )
 
       reply.send(updatedSession)
