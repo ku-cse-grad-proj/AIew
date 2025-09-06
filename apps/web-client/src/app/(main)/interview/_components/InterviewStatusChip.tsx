@@ -10,7 +10,6 @@ export default function InterviewStatusChip({
     IN_PROGRESS: 'bg-neutral-subtext',
     COMPLETED: 'bg-neutral-subtext',
   }
-  console.log(status)
   return (
     <div
       className={`w-96 h-32 flex justify-center items-center rounded-full text-neutral-inverse ${STATUS_STYLES[status]}`}

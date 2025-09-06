@@ -1,7 +1,12 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 import InterviewStatusChip from './InterviewStatusChip'
+
+import { privateFetch } from '@/app/lib/fetch'
 
 export type Interview = {
   id: string
@@ -20,11 +25,36 @@ export default function InterviewCard({
   data: Interview
   onDelete?: (id: string) => void
 }) {
-  const { id, title, company, jobTitle, jobSpec, createdAt, status } = data
+  const [interview, setInterview] = useState(data)
+
+  // interview 상태가 PENDING이 아닐 때까지 상태를 polling
+  useEffect(() => {
+    if (interview.status !== 'PENDING') return
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await privateFetch(
+          `${process.env.NEXT_PUBLIC_API_BASE}/interviews/${interview.id}`,
+          { cache: 'no-store' }, // 항상 fresh fetch
+        )
+        const updated = await res.json()
+        setInterview(updated)
+
+        if (updated.status !== 'PENDING') {
+          clearInterval(interval) // READY or FAILED 되면 중단
+        }
+      } catch (err) {
+        console.error('Failed to fetch interview:', err)
+      }
+    }, 2000) // 2초마다 polling
+
+    return () => clearInterval(interval)
+  }, [interview.id, interview.status])
+
+  const { id, title, company, jobTitle, jobSpec, createdAt, status } = interview
 
   return (
     <article className="relative min-w-50 min-h-280 p-24 rounded-[20px] bg-neutral-card flex flex-col justify-between shadow-box">
-      {/* InterviewCard 클릭시 waiting room으로 이동 */}
       <Link
         href={`/interview/waiting/${id}`}
         className="absolute inset-0 rounded-[20px] z-0"
@@ -32,8 +62,6 @@ export default function InterviewCard({
         <span className="sr-only">인터뷰 대기 화면으로 이동</span>
       </Link>
 
-      {/* 질문 준비 상태와 날짜 */}
-      {/* TODO: 상태값 변화 어떻게 인식할지 */}
       <header className="w-full flex justify-between items-center">
         <InterviewStatusChip status={status} />
         <span className="text-neutral-subtext">
