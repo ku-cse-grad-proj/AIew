@@ -8,7 +8,7 @@ import LoadingCircle from './LoadingCircle'
 import { useInterviewSocket } from '@/app/hooks/useInterviewSocket'
 
 export default function LoadingCard({ sessionId }: { sessionId: string }) {
-  const { isQuestionsReady } = useInterviewSocket(sessionId)
+  const { isQuestionsReady, destroySocket } = useInterviewSocket(sessionId)
   return (
     <Card className="w-full h-full flex flex-col items-center justify-center relative">
       <div className="flex-1 flex flex-col items-center justify-center gap-48">
@@ -26,7 +26,11 @@ export default function LoadingCard({ sessionId }: { sessionId: string }) {
             : 'preparing interview...'}
         </span>
       </div>
-      <FooterButtons isWaiting isQuestionsReady={isQuestionsReady} />
+      <FooterButtons
+        isWaiting
+        isQuestionsReady={isQuestionsReady}
+        destroySocket={destroySocket}
+      />
     </Card>
   )
 }

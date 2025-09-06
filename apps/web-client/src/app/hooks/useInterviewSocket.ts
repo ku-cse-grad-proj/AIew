@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-import { getSocket } from '../lib/socket'
+import { getSocket, destroySocket } from '../lib/socket'
 
 // 최종 이벤트 payload
 export interface QuestionsReadyPayload {
@@ -39,5 +39,10 @@ export function useInterviewSocket(sessionId?: string) {
     }
   }, [socket, sessionId])
 
-  return { socket, isConnected: !!socket?.connected, isQuestionsReady }
+  return {
+    socket,
+    destroySocket,
+    isConnected: !!socket?.connected,
+    isQuestionsReady,
+  }
 }
