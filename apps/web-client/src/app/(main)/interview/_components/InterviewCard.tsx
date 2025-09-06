@@ -1,9 +1,9 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
+import EditDeleteButtons from './EditDeleteButtons'
 import InterviewStatusChip from './InterviewStatusChip'
 
 import { privateFetch } from '@/app/lib/fetch'
@@ -40,6 +40,28 @@ export default function InterviewCard({
 
     return () => clearInterval(interval)
   }, [interview.id, interview.status])
+
+  const handleDelete = async () => {
+    //TODO:: 추후 커스텀한 modal 창 생성
+    if (!confirm('정말 삭제하시겠습니까?')) return
+    try {
+      const res = await privateFetch(
+        `${process.env.NEXT_PUBLIC_API_BASE}/interviews/${interview.id}`,
+        {
+          method: 'DELETE',
+        },
+      )
+
+      if (res.ok) {
+        // 부모로 삭제 이벤트 전달
+        onDelete?.(interview.id)
+      } else {
+        console.error('Failed to delete interview:', await res.text())
+      }
+    } catch (err) {
+      console.error('Error deleting interview:', err)
+    }
+  }
 
   const { id, title, company, jobTitle, jobSpec, createdAt, status } = interview
 
@@ -80,38 +102,7 @@ export default function InterviewCard({
 
       <footer className="flex justify-between items-center h-40">
         <div className="flex gap-8 h-32">
-          <button
-            type="button"
-            className="px-10 text-neutral-subtext flex items-center justify-center gap-6 z-10"
-            onClick={(e) => {
-              e.preventDefault()
-              // TODO: open edit screen
-            }}
-          >
-            <Image
-              src="/icons/edit.svg"
-              alt="edit icon"
-              width={12}
-              height={12}
-            />
-            edit
-          </button>
-          <button
-            type="button"
-            className="px-10 text-error flex items-center justify-center gap-6 z-10"
-            onClick={(e) => {
-              e.preventDefault()
-              onDelete?.(id)
-            }}
-          >
-            <Image
-              src="/icons/delete.svg"
-              alt="delete icon"
-              width={12}
-              height={12}
-            />
-            delete
-          </button>
+          <EditDeleteButtons id={id} onDeleteClick={handleDelete} />
         </div>
         <Link
           className="bg-primary rounded-[10px] text-neutral-inverse px-20 h-40 flex items-center justify-center z-10"

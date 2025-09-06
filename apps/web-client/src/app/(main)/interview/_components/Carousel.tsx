@@ -3,7 +3,7 @@
 import useEmblaCarousel from 'embla-carousel-react'
 import { useMemo, useState } from 'react'
 
-import InterviewCard, { Interview } from './InterviewCard'
+import InterviewCard from './InterviewCard'
 
 import {
   NextButton,
@@ -47,7 +47,6 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
 
       return next
     })
-    // TODO:: 실제로 데이터 삭제하기
   }
 
   const dot = `w-8 h-8 rounded-full bg-gray-300`
