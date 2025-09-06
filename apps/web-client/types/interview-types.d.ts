@@ -19,6 +19,21 @@ declare global {
     | 'IN_PROGRESS'
     | 'COMPLETED'
     | 'FAILED'
+
+  type Interview = {
+    id: string
+    title: string
+    company: string
+    jobTitle: string
+    jobSpec: string
+    status: InterviewStatus
+    currentQuestionIndex: number
+    idealTalent: string
+    coverLetterFilename: string
+    portfolioFilename: string
+    createdAt: string
+    updatedAt: string
+  }
 }
 
 export {}

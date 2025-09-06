@@ -8,16 +8,6 @@ import InterviewStatusChip from './InterviewStatusChip'
 
 import { privateFetch } from '@/app/lib/fetch'
 
-export type Interview = {
-  id: string
-  title: string
-  company: string
-  jobTitle: string
-  jobSpec: string
-  createdAt: string
-  status: InterviewStatus
-}
-
 export default function InterviewCard({
   data,
   onDelete,

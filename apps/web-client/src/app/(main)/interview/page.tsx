@@ -1,7 +1,6 @@
 import Link from 'next/link'
 
 import Carousel from './_components/Carousel'
-import { Interview } from './_components/InterviewCard'
 
 import { privateFetch } from '@/app/lib/fetch'
 
