@@ -255,21 +255,11 @@ export class InterviewService {
       orderBy: { createdAt: 'desc' },
     })
 
-    // 파일명 추출 로직 추가
-    return sessions.map((session) => {
-      const coverLetterFilename = session.coverLetter
-        ? this.extractFilenameFromUrl(session.coverLetter)
-        : undefined
-      const portfolioFilename = session.portfolio
-        ? this.extractFilenameFromUrl(session.portfolio)
-        : undefined
-
-      return {
-        ...session,
-        coverLetterFilename,
-        portfolioFilename,
-      }
-    })
+    // 파일명 추출 로직 추가 (헬퍼 사용)
+    return sessions.map((session) => ({
+      ...session,
+      ...this.getFileNamesFromSession(session),
+    }))
   }
 
   /**
@@ -284,7 +274,13 @@ export class InterviewService {
         userId: userId,
       },
     })
-    return session
+
+    return (
+      session && {
+        ...session,
+        ...this.getFileNamesFromSession(session),
+      }
+    )
   }
 
   /**
@@ -469,6 +465,23 @@ export class InterviewService {
     const filenameWithPrefix = parts[parts.length - 1]
     // 첫 두 개의 '-' (sessionId-, key-) 이후의 모든 것을 반환
     return filenameWithPrefix.split('-').slice(2).join('-')
+  }
+
+  /**
+   * 세션 객체에서 원본 파일명을 추출해 반환합니다.
+   */
+  private getFileNamesFromSession(session?: {
+    coverLetter: string | null
+    portfolio: string | null
+  }) {
+    const coverLetterFilename = session?.coverLetter
+      ? this.extractFilenameFromUrl(session.coverLetter)
+      : undefined
+    const portfolioFilename = session?.portfolio
+      ? this.extractFilenameFromUrl(session.portfolio)
+      : undefined
+
+    return { coverLetterFilename, portfolioFilename }
   }
 
   private async uploadFilesToR2(
