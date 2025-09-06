@@ -13,6 +13,7 @@ import { PrismaClient, User } from '@prisma/client'
 import { FastifyInstance as OriginalFastifyInstance } from 'fastify'
 import Fastify from 'fastify'
 import { Server as SocketIOServer } from 'socket.io'
+import { io as ioc, Socket as ClientSocket } from 'socket.io-client'
 import { afterEach } from 'vitest'
 
 import { app as AppPlugin } from '../src/app'
@@ -57,7 +58,7 @@ async function build(): Promise<FastifyInstance> {
         keywords: ['example'],
       },
     },
-    logger: false, // Disable logger for cleaner test output
+    logger: false,
   }).withTypeProvider<TypeBoxTypeProvider>()
 
   // Register the main application plugin first
@@ -83,6 +84,7 @@ async function build(): Promise<FastifyInstance> {
   await app.register(AutoLoad, {
     dir: join(__dirname, '../src/routes'),
     dirNameRoutePrefix: true,
+    routeParams: true,
     options: {},
   })
 
@@ -103,12 +105,15 @@ async function build(): Promise<FastifyInstance> {
 async function createTestUserAndToken(
   app: FastifyInstance,
 ): Promise<{ user: User; accessToken: string }> {
-  const testEmail = `test-${Date.now()}@example.com`
+  // Use a more robust way to generate unique emails
+  const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+  const testEmail = `test-${uniqueId}@example.com`
+
   const user = await app.prisma.user.create({
     data: {
       email: testEmail,
       name: 'Test User',
-      provider: 'TEST',
+      provider: 'GITHUB',
     },
   })
 
@@ -116,4 +121,21 @@ async function createTestUserAndToken(
   return { user, accessToken }
 }
 
-export { build, createTestUserAndToken }
+function startWebSocketClient(
+  fastify: FastifyInstance,
+  token: string,
+): ClientSocket {
+  const address = fastify.server.address()
+  if (typeof address === 'string') {
+    throw new Error('Server address is a string, expected an object.')
+  }
+  const url = `http://localhost:${address.port}`
+  return ioc(url, {
+    transports: ['websocket'],
+    auth: {
+      token,
+    },
+  })
+}
+
+export { build, createTestUserAndToken, startWebSocketClient }
