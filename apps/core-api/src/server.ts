@@ -51,6 +51,7 @@ const start = async () => {
   })
   await app.register(Cors, {
     origin: 'http://localhost:4000',
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     credentials: true, // Allow cookies to be sent
   })
 
