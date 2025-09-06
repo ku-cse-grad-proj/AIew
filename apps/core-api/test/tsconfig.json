@@ -5,7 +5,8 @@
     "paths": {
       "@/*": ["../src/*"]
     },
-    "noEmit": true
+    "noEmit": true,
+    "rootDir": "/"
   },
   "include": ["../src/**/*.ts", "**/*.ts", "../vitest.config.ts"]
 }

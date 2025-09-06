@@ -4,8 +4,10 @@ enum SchemaId {
   User = 'UserResponse',
   UserPatchBody = 'UserPatchBody',
   UserDeleteResponse = 'UserDeleteResponse',
-  InterviewListItem = 'InterviewListItem',
-  InterviewList = 'InterviewList',
+  InterviewSessionItem = 'InterviewSessionItem',
+  InterviewSessionList = 'InterviewSessionList',
+  InterviewSessionPatchBody = 'InterviewSessionPatchBody',
+  InterviewSessionDeleteResponse = 'InterviewSessionDeleteResponse',
 
   // WebSocket Schemas
   WsClientSubmitAnswer = 'WsClientSubmitAnswer',
