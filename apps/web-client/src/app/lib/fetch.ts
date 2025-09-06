@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import { RedirectType } from 'next/navigation'
 
 /**
@@ -15,6 +14,7 @@ export async function privateFetch<T>(
 
   if (isServer) {
     // 서버 환경일 경우, 'next/headers'에서 쿠키를 가져와 수동으로 헤더에 추가합니다.
+    const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
     const cookieHeader = cookieStore
       .getAll()
