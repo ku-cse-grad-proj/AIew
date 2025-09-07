@@ -207,14 +207,12 @@ export class InterviewService {
       await this.saveEvaluationResult(stepId, evaluationResult)
 
       if (evaluationResult.tail_decision === TailDecision.CREATE) {
-        const parentQuestionId = currentStep.parentStepId ?? currentStep.id
+        // 꼬리질문의 '뿌리'가 되는 메인 질문의 ID를 찾음
+        const rootQuestionId = currentStep.parentStepId ?? currentStep.id
         const followUpCount = await prisma.interviewStep.count({
           where: {
             interviewSessionId: sessionId,
-            OR: [
-              { parentStepId: parentQuestionId },
-              { id: parentQuestionId, parentStepId: { not: null } },
-            ],
+            parentStepId: rootQuestionId, // 단순하고 효율적인 카운팅
           },
         })
 
@@ -661,7 +659,7 @@ export class InterviewService {
     const newFollowupStep = await prisma.interviewStep.create({
       data: {
         interviewSessionId: sessionId,
-        parentStepId: parentStep.id,
+        parentStepId: parentStep.parentStepId ?? parentStep.id, // 항상 메인 질문을 가리킴
         aiQuestionId: followupResult.followup_id,
         type: parentStep.type,
         question: followupResult.question,
