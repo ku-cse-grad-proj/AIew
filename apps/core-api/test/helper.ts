@@ -132,8 +132,9 @@ function startWebSocketClient(
   const url = `http://localhost:${address.port}`
   return ioc(url, {
     transports: ['websocket'],
-    auth: {
-      token,
+    // Node.js 환경에서는 브라우저처럼 쿠키 저장소가 없으므로, 직접 Cookie 헤더를 붙여줘야 함
+    extraHeaders: {
+      Cookie: `accessToken=${token}`,
     },
   })
 }
