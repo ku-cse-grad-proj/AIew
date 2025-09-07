@@ -14,6 +14,19 @@ declare module 'socket.io' {
   }
 }
 
+function getAccessTokenFromCookieHeader(
+  cookieHeader?: string,
+): string | undefined {
+  if (!cookieHeader) return undefined
+  const cookies = Object.fromEntries(
+    cookieHeader.split(';').map((c) => {
+      const [k, ...rest] = c.trim().split('=')
+      return [k, decodeURIComponent(rest.join('='))]
+    }),
+  )
+  return cookies['accessToken']
+}
+
 export default fp(
   async (fastify) => {
     const io = new Server(fastify.server, {
@@ -27,12 +40,14 @@ export default fp(
 
     // 인증 미들웨어
     io.use(async (socket, next) => {
-      const token = socket.handshake.auth.token
+      const token = getAccessTokenFromCookieHeader(
+        socket.request.headers.cookie,
+      )
       if (!token) {
         return next(new Error('Authentication error: Token not provided.'))
       }
       try {
-        const decoded = await fastify.jwt.verify<{ userId: string }>(token)
+        const decoded = fastify.jwt.verify<{ userId: string }>(token)
         const user = await fastify.prisma.user.findUnique({
           where: { id: decoded.userId },
         })
