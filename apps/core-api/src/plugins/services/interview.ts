@@ -205,13 +205,33 @@ export class InterviewService {
         sessionId,
       )
       await this.saveEvaluationResult(stepId, evaluationResult)
+
       if (evaluationResult.tail_decision === TailDecision.CREATE) {
-        await this.handleFollowupQuestion(
-          sessionId,
-          currentStep,
-          answer,
-          evaluationResult,
-        )
+        const parentQuestionId = currentStep.parentStepId ?? currentStep.id
+        const followUpCount = await prisma.interviewStep.count({
+          where: {
+            interviewSessionId: sessionId,
+            OR: [
+              { parentStepId: parentQuestionId },
+              { id: parentQuestionId, parentStepId: { not: null } },
+            ],
+          },
+        })
+
+        const MAX_FOLLOWUPS = 3
+        if (followUpCount >= MAX_FOLLOWUPS) {
+          log.info(
+            `[${sessionId}] Max follow-up limit (${MAX_FOLLOWUPS}) reached for question ${currentStep.aiQuestionId}. Moving to next main question.`,
+          )
+          await this.handleNextMainQuestion(sessionId)
+        } else {
+          await this.handleFollowupQuestion(
+            sessionId,
+            currentStep,
+            answer,
+            evaluationResult,
+          )
+        }
       } else {
         await this.handleNextMainQuestion(sessionId)
       }
