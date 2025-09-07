@@ -1,3 +1,4 @@
+import { User } from '@prisma/client'
 import fp from 'fastify-plugin'
 import { Server, Socket } from 'socket.io'
 
@@ -7,59 +8,88 @@ declare module 'fastify' {
   }
 }
 
+declare module 'socket.io' {
+  interface Socket {
+    user: User
+  }
+}
+
 export default fp(
   async (fastify) => {
-    // socket.io 서버를 생성하고, Fastify의 HTTP 서버에 연결합니다.
     const io = new Server(fastify.server, {
       cors: {
-        origin: 'http://localhost:4000',
+        origin: process.env.WEB_CLIENT_URL || 'http://localhost:4000',
         credentials: true,
       },
     })
 
-    // 생성된 io 인스턴스를 fastify.decorate를 통해 추가합니다.
-    // 이제 다른 라우트나 플러그인에서 fastify.io로 접근할 수 있습니다.
     fastify.decorate('io', io)
 
-    const onConnection = async (socket: Socket) => {
+    // 인증 미들웨어
+    io.use(async (socket, next) => {
+      const token = socket.handshake.auth.token
+      if (!token) {
+        return next(new Error('Authentication error: Token not provided.'))
+      }
+      try {
+        const decoded = await fastify.jwt.verify<{ userId: string }>(token)
+        const user = await fastify.prisma.user.findUnique({
+          where: { id: decoded.userId },
+        })
+        if (!user) {
+          return next(new Error('Authentication error: User not found.'))
+        }
+        socket.user = user
+        next()
+      } catch (err) {
+        fastify.log.error('Socket authentication error:', err)
+        return next(new Error('Authentication error: Invalid token.'))
+      }
+    })
+
+    // 연결 핸들러
+    const onConnection = (socket: Socket) => {
       fastify.log.info(`Socket connected: ${socket.id}`)
 
-      // 클라이언트 연결 시 URL 쿼리에서 sessionId를 추출합니다.
-      const sessionId = socket.handshake.query.sessionId as string
-      if (!sessionId) {
-        socket.emit('server:error', {
-          code: 'SESSION_ID_REQUIRED',
-          message: 'Session ID is required for connection.',
-        })
-        socket.disconnect(true)
-        return
-      }
+      socket.on('client:join-room', async ({ sessionId }) => {
+        try {
+          const session = await fastify.prisma.interviewSession.findFirst({
+            where: { id: sessionId, userId: socket.user.id },
+          })
+          if (session) {
+            await socket.join(sessionId)
+            fastify.log.info(
+              `Socket ${socket.id} joined room: ${sessionId} for user ${socket.user.id}`,
+            )
+            // 방 참여 성공을 클라이언트에게 알림 (For testing)
+            socket.emit('server:room-joined', { sessionId })
 
-      // 해당 sessionId의 방(room)에 클라이언트를 참여시킵니다.
-      socket.join(sessionId)
-      fastify.log.info(`Socket ${socket.id} joined room ${sessionId}`)
+            // 재접속 시 이미 질문이 준비되었는지 확인 후 전송
+            const steps = await fastify.prisma.interviewStep.findMany({
+              where: { interviewSessionId: sessionId },
+              orderBy: { createdAt: 'asc' },
+            })
 
-      try {
-        // DB를 조회하여 질문이 이미 생성되었는지 확인합니다.
-        const steps = await fastify.prisma.interviewStep.findMany({
-          where: { interviewSessionId: sessionId },
-          orderBy: { createdAt: 'asc' },
-        })
-
-        // 질문(steps)이 이미 존재한다면, 즉시 해당 클라이언트에게 전송합니다.
-        if (steps.length > 0) {
-          socket.emit('server:questions-ready', { steps })
+            // 질문(steps)이 이미 존재한다면, 즉시 해당 클라이언트에게 전송합니다.
+            if (steps.length > 0) {
+              socket.emit('server:questions-ready', { steps })
+            }
+          } else {
+            fastify.log.warn(
+              `Unauthorized attempt to join room ${sessionId} by user ${socket.user.id}`,
+            )
+            socket.emit('server:error', {
+              message: 'Unauthorized or session not found.',
+            })
+          }
+        } catch (error) {
+          fastify.log.error(
+            `Error joining room ${sessionId} for socket ${socket.id}:`,
+            error,
+          )
+          socket.emit('server:error', { message: 'Error joining room.' })
         }
-      } catch (error) {
-        fastify.log.error(
-          `Error fetching session ${sessionId} for socket ${socket.id}`,
-          error,
-        )
-        socket.emit('server:error', {
-          code: 'SESSION_FETCH_FAILED',
-          message: 'Could not retrieve session details.',
-        })
-      }
+      })
 
       socket.on(
         'client:submit-answer',
@@ -69,15 +99,23 @@ export default fp(
           duration: number
         }) => {
           try {
+            const step = await fastify.prisma.interviewStep.findUnique({
+              where: { id: payload.stepId },
+              select: { interviewSessionId: true },
+            })
+            if (!step) {
+              throw new Error(`Step with id ${payload.stepId} not found.`)
+            }
             await fastify.interviewService.processUserAnswer(
-              sessionId,
+              step.interviewSessionId,
               payload.stepId,
               payload.answer,
               payload.duration,
             )
           } catch (error) {
             fastify.log.error(
-              `[${sessionId}] Error processing answer for step ${payload.stepId}: ${error}`,
+              `Error processing answer for step ${payload.stepId}:`,
+              error,
             )
             socket.emit('server:error', {
               code: 'ANSWER_PROCESSING_FAILED',
@@ -88,9 +126,7 @@ export default fp(
       )
 
       socket.on('disconnect', () => {
-        fastify.log.info(
-          `Socket disconnected: ${socket.id} from room ${sessionId}`,
-        )
+        fastify.log.info(`Socket disconnected: ${socket.id}`)
       })
     }
 
@@ -104,7 +140,7 @@ export default fp(
     fastify.log.info('Socket.io plugin loaded')
   },
   {
-    name: 'io',
-    dependencies: ['prisma'],
+    name: 'socket',
+    dependencies: ['prisma', 'jwt'],
   },
 )
