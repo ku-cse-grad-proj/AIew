@@ -41,26 +41,13 @@ export default function InterviewCard({
     return () => clearInterval(interval)
   }, [interview.id, interview.status])
 
-  const handleDelete = async () => {
-    //TODO:: 추후 커스텀한 modal 창 생성
-    if (!confirm('정말 삭제하시겠습니까?')) return
-    try {
-      const res = await privateFetch(
-        `${process.env.NEXT_PUBLIC_API_BASE}/interviews/${interview.id}`,
-        {
-          method: 'DELETE',
-        },
-      )
-
-      if (res.ok) {
-        // 부모로 삭제 이벤트 전달
-        onDelete?.(interview.id)
-      } else {
-        console.error('Failed to delete interview:', await res.text())
-      }
-    } catch (err) {
-      console.error('Error deleting interview:', err)
+  const handleDelete = (id?: string) => {
+    if (!id) {
+      console.error('id가 필요합니다')
+      return
     }
+    //Carousel에서 삭제
+    onDelete?.(id)
   }
 
   const { id, title, company, jobTitle, jobSpec, createdAt, status } = interview
