@@ -205,13 +205,31 @@ export class InterviewService {
         sessionId,
       )
       await this.saveEvaluationResult(stepId, evaluationResult)
+
       if (evaluationResult.tail_decision === TailDecision.CREATE) {
-        await this.handleFollowupQuestion(
-          sessionId,
-          currentStep,
-          answer,
-          evaluationResult,
-        )
+        // 꼬리질문의 '뿌리'가 되는 메인 질문의 ID를 찾음
+        const rootQuestionId = currentStep.parentStepId ?? currentStep.id
+        const followUpCount = await prisma.interviewStep.count({
+          where: {
+            interviewSessionId: sessionId,
+            parentStepId: rootQuestionId, // 단순하고 효율적인 카운팅
+          },
+        })
+
+        const MAX_FOLLOWUPS = 3
+        if (followUpCount >= MAX_FOLLOWUPS) {
+          log.info(
+            `[${sessionId}] Max follow-up limit (${MAX_FOLLOWUPS}) reached for question ${currentStep.aiQuestionId}. Moving to next main question.`,
+          )
+          await this.handleNextMainQuestion(sessionId)
+        } else {
+          await this.handleFollowupQuestion(
+            sessionId,
+            currentStep,
+            answer,
+            evaluationResult,
+          )
+        }
       } else {
         await this.handleNextMainQuestion(sessionId)
       }
@@ -641,7 +659,7 @@ export class InterviewService {
     const newFollowupStep = await prisma.interviewStep.create({
       data: {
         interviewSessionId: sessionId,
-        parentStepId: parentStep.id,
+        parentStepId: parentStep.parentStepId ?? parentStep.id, // 항상 메인 질문을 가리킴
         aiQuestionId: followupResult.followup_id,
         type: parentStep.type,
         question: followupResult.question,

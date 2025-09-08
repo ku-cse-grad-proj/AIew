@@ -21,7 +21,13 @@ import {
   startWebSocketClient,
 } from '../../helper'
 
-import { AiQuestionCategory, QuestionGenerateResponse } from '@/types/ai.types'
+import {
+  AiQuestionCategory,
+  EvaluationResult,
+  FollowUp,
+  QuestionGenerateResponse,
+  TailDecision,
+} from '@/types/ai.types'
 
 const DUMMY_FILE_PATH = path.join(__dirname, 'dummy-ws.pdf')
 
@@ -50,14 +56,26 @@ const mockGeneratedQuestions: QuestionGenerateResponse = [
 class WebSocketTestClient {
   private client: Socket
 
-  constructor(fastify: FastifyInstance, token: string) {
-    this.client = startWebSocketClient(fastify, token)
+  // The constructor is now private
+  private constructor(client: Socket) {
+    this.client = client
   }
 
-  async waitForConnection(): Promise<void> {
-    if (this.client.connected) return
-    return new Promise((resolve) => {
-      this.client.on('connect', resolve)
+  // Static factory method to create and connect a client
+  public static create(
+    fastify: FastifyInstance,
+    token: string,
+  ): Promise<WebSocketTestClient> {
+    const client = startWebSocketClient(fastify, token)
+    return new Promise((resolve, reject) => {
+      client.once('connect', () => {
+        // Remove the error listener once connected successfully
+        client.off('connect_error')
+        resolve(new WebSocketTestClient(client))
+      })
+      client.once('connect_error', (err) => {
+        reject(new Error(`WebSocket connection failed: ${err.message}`))
+      })
     })
   }
 
@@ -74,16 +92,29 @@ class WebSocketTestClient {
   }
 
   waitForEvent<T>(eventName: string): Promise<T> {
+    // console.log(`[Client] Waiting for event: ${eventName}...`)
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error(`Event "${eventName}" timed out after 5 seconds`))
-      }, 5000)
+        console.error(`[Client] Timeout waiting for event: ${eventName}`)
+        reject(new Error(`Event "${eventName}" timed out after 10 seconds`))
+      }, 10000) // Increased timeout for longer tests
+
+      // Temporary listener for all events for debugging
+      // eslint-disable-next-line
+      const debugListener = (event: string, ...args: any[]) => {
+        // console.log(`[Client] Received event: ${event}`, args)
+      }
+      this.client.onAny(debugListener)
 
       this.client.once(eventName, (data) => {
+        // console.log(`[Client] Successfully received event: ${eventName}`, data)
+        this.client.offAny(debugListener) // Clean up the debug listener
         clearTimeout(timeout)
         resolve(data)
       })
       this.client.once('server:error', (e) => {
+        console.error(`[Client] Received server:error`, e)
+        this.client.offAny(debugListener) // Clean up the debug listener
         clearTimeout(timeout)
         reject(new Error(e.message || JSON.stringify(e)))
       })
@@ -117,79 +148,174 @@ describe('WebSocket interview flow', () => {
   })
 
   beforeEach(() => {
-    // Mock only the answer processing to control the test flow
-    vi.spyOn(app.interviewService, 'processUserAnswer').mockImplementation(
-      async (sessionId, stepId) => {
-        const currentStep = await app.prisma.interviewStep.findUnique({
-          where: { id: stepId },
-        })
-        if (currentStep?.aiQuestionId === 'q2') {
-          app.io.to(sessionId).emit('server:interview-finished', { sessionId })
-        } else {
-          const nextStep = await app.prisma.interviewStep.findFirst({
-            where: { interviewSessionId: sessionId, aiQuestionId: 'q2' },
-          })
-          app.io
-            .to(sessionId)
-            .emit('server:next-question', { step: nextStep, isFollowUp: false })
-        }
-      },
-    )
-  })
-
-  afterEach(() => {
+    // Restore all mocks before each test to ensure isolation
     vi.restoreAllMocks()
   })
 
-  it.skip('should conduct a full interview flow via WebSocket', async () => {
-    const wsClient = new WebSocketTestClient(app, testUserToken)
+  afterEach(() => {
+    // Restore all mocks after each test
+    vi.restoreAllMocks()
+  })
+
+  it('should move to the next main question after 3 follow-ups', async () => {
+    // console.log('[TEST START] Follow-up limit test starting...')
+    const wsClient = await WebSocketTestClient.create(app, testUserToken)
     let session: InterviewSession | null = null
+    let followupCounter = 0
+
+    // Mock all necessary AI client methods
+    vi.spyOn(app.aiClientService, 'logShownQuestion').mockResolvedValue(
+      undefined,
+    )
+    vi.spyOn(app.aiClientService, 'logUserAnswer').mockResolvedValue(undefined)
+    vi.spyOn(app.aiClientService, 'evaluateAnswer').mockImplementation(
+      async (req): Promise<EvaluationResult> => {
+        // console.log(`[MOCK] evaluateAnswer called for ${req.question_id}`)
+        return {
+          question_id: req.question_id,
+          category: req.category,
+          tail_decision: TailDecision.CREATE, // Always create a follow-up
+          tail_question: `Follow-up for ${req.question_id}`,
+          tail_rationale: 'Drill down',
+          overall_score: 50,
+          strengths: [],
+          improvements: ['Needs more depth'],
+          red_flags: [],
+          criterion_scores: [],
+          answer_duration_sec: 30,
+        }
+      },
+    )
+
+    vi.spyOn(
+      app.aiClientService,
+      'generateFollowUpQuestion',
+    ).mockImplementation(async (req): Promise<FollowUp> => {
+      followupCounter++
+
+      const mainQuestionId = req.question_id.split('-')[0]
+
+      return {
+        followup_id: `${mainQuestionId}-fu${followupCounter}`,
+        parent_question_id: req.question_id,
+        question: `This is follow-up #${followupCounter}`,
+        focus_criteria: [],
+        rationale: '',
+        expected_answer_time_sec: 30,
+      }
+    })
+
     try {
-      // 1. Create session directly in DB, bypassing the problematic API call
+      // console.log('[TEST STEP] Creating interview session in DB...')
       session = await app.prisma.interviewSession.create({
         data: {
           userId: testUser.id,
-          company: 'TestCo',
-          title: 'WS Test',
+          company: 'FollowUpTest',
+          title: 'Follow-up Limit Test',
           jobTitle: 'Tester',
-          jobSpec: 'WS',
+          jobSpec: 'Limits',
         },
       })
+      // console.log(`[TEST STEP] Session created: ${session.id}`)
 
-      await wsClient.waitForConnection()
+      // console.log(`[TEST STEP] Joining room: ${session.id}`)
       wsClient.joinRoom(session.id)
+      await wsClient.waitForEvent('server:room-joined')
+      // console.log('[TEST STEP] Room joined and confirmed.')
 
-      // 2. Manually call the service method that saves questions and emits
-      await app.interviewService.saveQuestionsAndNotifyClient(
-        session.id,
-        mockGeneratedQuestions,
-      )
+      // console.log(
+      //   '[TEST STEP] Setting up listener and saving initial questions...',
+      // )
+      const [{ steps: initialSteps }] = await Promise.all([
+        wsClient.waitForEvent<{ steps: InterviewStep[] }>(
+          'server:questions-ready',
+        ),
+        app.interviewService.saveQuestionsAndNotifyClient(
+          session.id,
+          mockGeneratedQuestions,
+        ),
+      ])
+      // console.log('[TEST STEP] Initial questions saved and event received.')
 
-      const { steps } = await wsClient.waitForEvent<{
-        steps: InterviewStep[]
-      }>('server:questions-ready')
-      expect(steps.length).toBe(2)
+      let currentStep = initialSteps[0]
+      // console.log(
+      //   `[TEST STEP] Received initial questions. Starting with step: ${currentStep.id}`,
+      // )
 
-      // 3. Simulate answering questions and verify the flow
-      wsClient.submitAnswer(steps[0].id, 'My first answer')
-      const { step: nextStep } = await wsClient.waitForEvent<{
+      // 1st Follow-up
+      // console.log(
+      //   `[TEST ACTION] Submitting answer for step ${currentStep.id} (q1)`,
+      // )
+      wsClient.submitAnswer(currentStep.id, 'Answer to q1')
+      let nextQuestionPayload = await wsClient.waitForEvent<{
         step: InterviewStep
+        isFollowUp: boolean
       }>('server:next-question')
-      expect(nextStep.aiQuestionId).toBe('q2')
+      // console.log(
+      //   `[TEST RESULT] Received next question: ${nextQuestionPayload.step.aiQuestionId}`,
+      // )
+      expect(nextQuestionPayload.isFollowUp).toBe(true)
+      expect(nextQuestionPayload.step.aiQuestionId).toBe('q1-fu1')
+      currentStep = nextQuestionPayload.step
 
-      wsClient.submitAnswer(steps[1].id, 'My second answer')
-      const { sessionId: finishedSessionId } = await wsClient.waitForEvent<{
-        sessionId: string
-      }>('server:interview-finished')
-      expect(finishedSessionId).toBe(session.id)
+      // 2nd Follow-up
+      // console.log(
+      //   `[TEST ACTION] Submitting answer for step ${currentStep.id} (q1-fu1)`,
+      // )
+      wsClient.submitAnswer(currentStep.id, 'Answer to q1-fu1')
+      nextQuestionPayload = await wsClient.waitForEvent<{
+        step: InterviewStep
+        isFollowUp: boolean
+      }>('server:next-question')
+      // console.log(
+      //   `[TEST RESULT] Received next question: ${nextQuestionPayload.step.aiQuestionId}`,
+      // )
+      expect(nextQuestionPayload.isFollowUp).toBe(true)
+      expect(nextQuestionPayload.step.aiQuestionId).toBe('q1-fu2')
+      currentStep = nextQuestionPayload.step
+
+      // 3rd Follow-up
+      // console.log(
+      //   `[TEST ACTION] Submitting answer for step ${currentStep.id} (q1-fu2)`,
+      // )
+      wsClient.submitAnswer(currentStep.id, 'Answer to q1-fu2')
+      nextQuestionPayload = await wsClient.waitForEvent<{
+        step: InterviewStep
+        isFollowUp: boolean
+      }>('server:next-question')
+      // console.log(
+      //   `[TEST RESULT] Received next question: ${nextQuestionPayload.step.aiQuestionId}`,
+      // )
+      expect(nextQuestionPayload.isFollowUp).toBe(true)
+      expect(nextQuestionPayload.step.aiQuestionId).toBe('q1-fu3')
+      currentStep = nextQuestionPayload.step
+
+      // 4th answer -> Should move to next MAIN question (q2)
+      // console.log(
+      //   `[TEST ACTION] Submitting answer for step ${currentStep.id} (q1-fu3)`,
+      // )
+      wsClient.submitAnswer(currentStep.id, 'Answer to q1-fu3')
+      nextQuestionPayload = await wsClient.waitForEvent<{
+        step: InterviewStep
+        isFollowUp: boolean
+      }>('server:next-question')
+      // console.log(
+      //   `[TEST RESULT] Received final next question: ${nextQuestionPayload.step.aiQuestionId}`,
+      // )
+
+      // *** VERIFICATION POINT ***
+      expect(nextQuestionPayload.isFollowUp).toBe(false)
+      expect(nextQuestionPayload.step.aiQuestionId).toBe('q2')
+      // console.log('[TEST SUCCESS] Verification complete.')
     } finally {
+      // console.log('[TEST CLEANUP] Disconnecting client and deleting session.')
       wsClient.disconnect()
       if (session) {
-        // Use deleteMany to be safe, as steps might be created
         await app.prisma.interviewSession.deleteMany({
           where: { id: session.id },
         })
       }
+      // console.log('[TEST END] Follow-up limit test finished.')
     }
   })
 })
