@@ -127,7 +127,7 @@ export class InterviewService {
     sessionId: string,
     questions: QuestionGenerateResponse,
   ) {
-    const { prisma, log, io } = this.fastify
+    const { prisma, log, io, ttsService } = this.fastify
     try {
       log.info(`[${sessionId}] Formatting and saving questions to DB...`)
       const stepsToCreate = questions.map(this.formatQuestionToStep)
@@ -152,6 +152,26 @@ export class InterviewService {
       log.info(`[${sessionId}] Logged first question to AI memory.`)
       log.info(`[${sessionId}] Notifying client via WebSocket...`)
       io.to(sessionId).emit('server:questions-ready', { steps: createdSteps })
+
+      // 첫 질문 음성 생성 및 전송
+      try {
+        log.info(`[${sessionId}] Generating TTS for the first question...`)
+        const audioBase64 = await ttsService.generate(firstQuestion.question)
+        io.to(sessionId).emit('server:question-audio-ready', {
+          stepId: firstQuestion.id,
+          audioBase64,
+        })
+        log.info(`[${sessionId}] First question TTS sent successfully.`)
+      } catch (ttsError) {
+        log.error(`[${sessionId}] Failed to generate TTS for first question:`, {
+          ttsError,
+        })
+        // 클라이언트에게 TTS 실패를 알릴 수도 있음
+        io.to(sessionId).emit('server:error', {
+          code: 'TTS_GENERATION_FAILED',
+          message: 'Failed to generate audio for the first question.',
+        })
+      }
     } catch (error) {
       log.error(`[${sessionId}] Error in saveQuestionsAndNotifyClient:`, {
         error,
@@ -640,7 +660,7 @@ export class InterviewService {
     answer: string,
     evaluation: EvaluationResult,
   ) {
-    const { prisma, log, io } = this.fastify
+    const { prisma, log, io, ttsService } = this.fastify
     log.info(`[${sessionId}] Generating follow-up question...`)
     const followupRequest: FollowupRequest = {
       question_id: parentStep.aiQuestionId,
@@ -675,14 +695,19 @@ export class InterviewService {
       sessionId,
     )
     log.info(`[${sessionId}] Next question logged to AI memory.`)
+
+    // 꼬리 질문 음성 생성
+    const audioBase64 = await ttsService.generate(newFollowupStep.question)
+
     io.to(sessionId).emit('server:next-question', {
       step: newFollowupStep,
       isFollowUp: true,
+      audioBase64,
     })
   }
 
   private async handleNextMainQuestion(sessionId: string) {
-    const { prisma, log, io } = this.fastify
+    const { prisma, log, io, ttsService } = this.fastify
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
       select: { currentQuestionIndex: true },
@@ -719,9 +744,14 @@ export class InterviewService {
         sessionId,
       )
       log.info(`[${sessionId}] Next question logged to AI memory.`)
+
+      // 다음 메인 질문 음성 생성
+      const audioBase64 = await ttsService.generate(nextStep.question)
+
       io.to(sessionId).emit('server:next-question', {
         step: nextStep,
         isFollowUp: false,
+        audioBase64,
       })
     }
   }
@@ -740,6 +770,6 @@ export default fp(
   },
   {
     name: 'interviewService',
-    dependencies: ['aiClientService', 'prisma', 'r2'],
+    dependencies: ['aiClientService', 'prisma', 'r2', 'ttsService'],
   },
 )
