@@ -1,7 +1,7 @@
 import { InterviewSessionStatus } from '@prisma/client'
 import { Type } from '@sinclair/typebox'
 
-import SchemaId from '@/utils/schemaId'
+import SchemaId from '@/utils/schema-id'
 
 // --- Reusable Properties ---
 const InterviewSessionProperties = {

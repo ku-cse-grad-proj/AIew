@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox'
 
-import SchemaId from '@/utils/schemaId'
+import SchemaId from '@/utils/schema-id'
 
 // GET /me, GET /users/:userId 응답 등에 재사용될 기본 사용자 정보
 export const S_User = Type.Object(

@@ -1,4 +1,4 @@
-import SchemaId from '@/utils/schemaId'
+import SchemaId from '@/utils/schema-id'
 
 // --- TypeScript Interfaces for type-safety in code ---
 

@@ -1,7 +1,7 @@
 import { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
 import fp from 'fastify-plugin'
 
-import { Tag } from './configs/swaggerOption'
+import { Tag } from './configs/swagger-option'
 
 export type AppOptions = FastifyServerOptions & Partial<unknown>
 

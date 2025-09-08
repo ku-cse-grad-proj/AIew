@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox'
 
-import SchemaId from '@/utils/schemaId'
+import SchemaId from '@/utils/schema-id'
 
 export const errorSchema = Type.Object(
   {

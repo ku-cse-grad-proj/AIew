@@ -11,8 +11,8 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Fastify from 'fastify'
 
 import { app as AppPlugin } from './app'
-import SwaggerOption from './configs/swaggerOption'
-import SwaggerUiOption from './configs/swaggerUiOption'
+import SwaggerOption from './configs/swagger-option'
+import SwaggerUiOption from './configs/swagger-ui-option'
 
 const start = async () => {
   const app = Fastify({

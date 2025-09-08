@@ -7,8 +7,8 @@ import { Type, Static } from '@sinclair/typebox'
 import axios from 'axios'
 import { FastifySchema, RouteHandler } from 'fastify'
 
-import { Tag } from '@/configs/swaggerOption'
-import SchemaId from '@/utils/schemaId'
+import { Tag } from '@/configs/swagger-option'
+import SchemaId from '@/utils/schema-id'
 
 const controller: FastifyPluginAsyncTypebox = async (fastify) => {
   const server = fastify.withTypeProvider<TypeBoxTypeProvider>()

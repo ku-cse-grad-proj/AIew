@@ -4,8 +4,8 @@ import {
   RouteShorthandOptions,
 } from 'fastify'
 
-import { Tag } from '@/configs/swaggerOption'
-import SchemaId from '@/utils/schemaId'
+import { Tag } from '@/configs/swagger-option'
+import SchemaId from '@/utils/schema-id'
 
 const websocketDocsRoute: FastifyPluginAsync = async (fastify) => {
   const path: string = '/'

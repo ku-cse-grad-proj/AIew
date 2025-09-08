@@ -5,13 +5,13 @@ import {
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyInstance } from 'fastify'
 
-import { Tag } from '@/configs/swaggerOption'
+import { Tag } from '@/configs/swagger-option'
 import {
   S_InterviewSessionDeleteResponse,
   S_InterviewSessionItem,
   S_InterviewSessionPatchBody,
 } from '@/schemas/rest/interview'
-import SchemaId from '@/utils/schemaId'
+import SchemaId from '@/utils/schema-id'
 
 const controller: FastifyPluginAsyncTypebox = async (
   fastify: FastifyInstance,

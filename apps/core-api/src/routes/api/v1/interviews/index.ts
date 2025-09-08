@@ -1,9 +1,9 @@
 import { FastifyPluginAsync, FastifySchema, RouteHandler } from 'fastify'
 
-import { Tag } from '@/configs/swaggerOption'
+import { Tag } from '@/configs/swagger-option'
 import { S_InterviewSessionList } from '@/schemas/rest/interview'
 import { InterviewRequestBody } from '@/types/interview.types'
-import SchemaId from '@/utils/schemaId'
+import SchemaId from '@/utils/schema-id'
 
 const controller: FastifyPluginAsync = async (fastify) => {
   // GET /interviews
