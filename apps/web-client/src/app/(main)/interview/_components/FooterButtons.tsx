@@ -2,11 +2,13 @@
 import { useRouter } from 'next/navigation'
 
 export default function FooterButtons({
+  isEdit = false,
   isWaiting = false,
   onClick,
   isQuestionsReady = false,
   destroySocket,
 }: {
+  isEdit?: boolean
   isWaiting?: boolean
   onClick?: () => void
   isQuestionsReady?: boolean
@@ -36,7 +38,11 @@ export default function FooterButtons({
         disabled:hover:shadow-none disabled:opacity-50
     disabled:cursor-not-allowed"
       >
-        {isWaiting ? 'start interview' : 'create interview'}
+        {isWaiting
+          ? 'start interview'
+          : isEdit
+            ? 'edit interview'
+            : 'create interview'}
       </button>
     </div>
   )
