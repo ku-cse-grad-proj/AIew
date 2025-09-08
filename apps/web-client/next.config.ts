@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '15mb',
+    },
+  },
   // TurboPack 설정
   turbopack: {
     rules: {
@@ -47,14 +52,6 @@ const nextConfig: NextConfig = {
     )
     fileLoaderRule.exclude = /\.svg$/i
     return config
-  },
-}
-
-module.exports = {
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '15mb',
-    },
   },
 }
 
