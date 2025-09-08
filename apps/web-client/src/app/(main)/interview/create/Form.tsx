@@ -15,7 +15,7 @@ export default function InterviewForm({
   interview?: Interview
 }) {
   //interview가 존재하면 수정하는 것임
-  const isEdit = !!interview && interview.id
+  const isEdit = !!interview && !!interview.id
   const [job, setJob] = useState(interview?.jobTitle)
 
   // Dropzone containers and selected files
