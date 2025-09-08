@@ -163,6 +163,9 @@ describe('WebSocket interview flow', () => {
     let session: InterviewSession | null = null
     let followupCounter = 0
 
+    // Mock TTS Service to prevent actual API calls
+    vi.spyOn(app.ttsService, 'generate').mockResolvedValue('fake-audio-base64')
+
     // Mock all necessary AI client methods
     vi.spyOn(app.aiClientService, 'logShownQuestion').mockResolvedValue(
       undefined,
