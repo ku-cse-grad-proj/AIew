@@ -15,5 +15,6 @@ export default fp(
   },
   {
     name: 'googleTTS',
+    dependencies: ['googleTTSAuth'],
   },
 )

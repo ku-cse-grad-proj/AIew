@@ -77,6 +77,6 @@ export default fp(
   },
   {
     name: 'ttsService',
-    dependencies: ['googleTTS'],
+    dependencies: ['googleTTS', 'googleTTSAuth'],
   },
 )
