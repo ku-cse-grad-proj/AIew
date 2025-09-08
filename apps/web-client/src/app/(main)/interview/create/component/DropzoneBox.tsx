@@ -98,9 +98,12 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, onRemove }) => {
         <span className="font-medium truncate" title={file.name}>
           {file.name}
         </span>
-        <span className="text-gray-500 text-xs">
-          {(file.size / 1024 / 1024).toFixed(2)} MB
-        </span>
+        {/* 파일의 크기가 존재할 경우에만 표시 */}
+        {file.size !== 0 && (
+          <span className="text-gray-500 text-xs">
+            {(file.size / 1024 / 1024).toFixed(2)} MB
+          </span>
+        )}
       </div>
       <button
         type="button"

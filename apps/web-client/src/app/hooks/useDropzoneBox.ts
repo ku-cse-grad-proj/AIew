@@ -39,7 +39,8 @@ export default function useDropzoneBox({
   const inputId = useId()
 
   const [dragActive, setDragActive] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
+  //만약 초기값이 존재한다면 그 값을 file로 설정
+  const [file, setFile] = useState<File | null>(() => fileRef?.current ?? null)
   const [error, setError] = useState<string>('')
 
   // keep external ref in sync
@@ -51,6 +52,7 @@ export default function useDropzoneBox({
     setFile(null)
     setError('')
     if (inputRef.current) inputRef.current.value = ''
+    if (fileRef?.current) fileRef.current = null
     e.preventDefault()
     e.stopPropagation()
   }, [])
