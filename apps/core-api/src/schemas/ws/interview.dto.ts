@@ -36,12 +36,24 @@ export type ServerQuestionsReadyMessage =
   WebSocketMessage<QuestionsReadyPayload>
 
 /**
+ * Type: 'server:question-audio-ready'
+ * 특정 질문에 대한 TTS 음성 파일이 준비되었음을 알리는 메시지
+ */
+export interface QuestionAudioReadyPayload {
+  stepId: string
+  audioBase64: string
+}
+export type ServerQuestionAudioReadyMessage =
+  WebSocketMessage<QuestionAudioReadyPayload>
+
+/**
  * Type: 'server:next-question'
  * 다음 질문(메인 또는 꼬리 질문)을 전달하는 메시지
  */
 export interface NextQuestionPayload {
   step: QuestionsReadyPayload['steps'][0] // 재사용
   isFollowUp: boolean
+  audioBase64: string
 }
 export type ServerNextQuestionMessage = WebSocketMessage<NextQuestionPayload>
 
@@ -148,6 +160,29 @@ export const wsServerQuestionsReadySchema = {
   required: ['type', 'payload'],
 }
 
+export const wsServerQuestionAudioReadySchema = {
+  $id: SchemaId.WsServerQuestionAudioReady,
+  type: 'object',
+  properties: {
+    type: { type: 'string', const: 'server:question-audio-ready' },
+    payload: {
+      type: 'object',
+      properties: {
+        stepId: {
+          type: 'string',
+          description: '음성 파일에 해당하는 질문(step)의 ID',
+        },
+        audioBase64: {
+          type: 'string',
+          description: 'Base64로 인코딩된 MP3 오디오 데이터',
+        },
+      },
+      required: ['stepId', 'audioBase64'],
+    },
+  },
+  required: ['type', 'payload'],
+}
+
 export const wsServerNextQuestionSchema = {
   $id: SchemaId.WsServerNextQuestion,
   type: 'object',
@@ -163,8 +198,12 @@ export const wsServerNextQuestionSchema = {
           type: 'boolean',
           description: '이 질문이 꼬리 질문인지 여부',
         },
+        audioBase64: {
+          type: 'string',
+          description: 'Base64로 인코딩된 다음 질문의 MP3 오디오 데이터',
+        },
       },
-      required: ['step', 'isFollowUp'],
+      required: ['step', 'isFollowUp', 'audioBase64'],
     },
   },
   required: ['type', 'payload'],
