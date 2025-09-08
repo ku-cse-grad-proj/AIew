@@ -1,4 +1,5 @@
 import Card from '../../_components/Card'
+import EditDeleteButtons from '../../_components/EditDeleteButtons'
 
 import InfoItem from './components/InfoItem'
 import LoadingCard from './components/LoadingCard'
@@ -13,12 +14,11 @@ export default async function WaitingPage({
   const { sessionId } = await params
   const response = await privateFetch(
     process.env.NEXT_PUBLIC_API_BASE + '/interviews/' + sessionId,
+    { cache: 'no-store' },
   )
   const interview: Interview = await response.json()
-  console.log('WaitingPage sessionId:', sessionId)
   return (
     <div className="w-full h-full flex flex-col lg:flex-row p-24 gap-24">
-      {/* TODO:: title, 인재상, resume, portfolio 제목 받아오기 */}
       <Card className="w-full h-full flex flex-col">
         <span className="text-right text-gray-500">
           {new Date(interview.createdAt)
@@ -38,6 +38,9 @@ export default async function WaitingPage({
           <InfoItem label="resume" value={interview.coverLetterFilename} />
           <InfoItem label="portfolio" value={interview.portfolioFilename} />
         </dl>
+        <div className="flex justify-end">
+          <EditDeleteButtons id={sessionId} />
+        </div>
       </Card>
       <LoadingCard sessionId={sessionId} />
     </div>
