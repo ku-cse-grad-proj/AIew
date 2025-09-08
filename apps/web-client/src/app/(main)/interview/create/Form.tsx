@@ -5,16 +5,28 @@ import { useState, useRef } from 'react'
 import Card from '../_components/Card'
 import FooterButtons from '../_components/FooterButtons'
 
-import { createInterview } from './action'
+import { createInterview, patchInterview } from './action'
 import DropzoneBox from './component/DropzoneBox'
 import { Label } from './component/Label'
 
-export default function InterviewForm() {
-  const [job, setJob] = useState('')
+export default function InterviewForm({
+  interview,
+}: {
+  interview?: Interview
+}) {
+  //interview가 존재하면 수정하는 것임
+  const isEdit = !!interview && interview.id
+  const [job, setJob] = useState(interview?.jobTitle)
 
   // Dropzone containers and selected files
   const resumeFileRef = useRef<File | null>(null)
   const portfolioFileRef = useRef<File | null>(null)
+
+  //수정시 Dropzone에 기존 file의 이름을 보여줌
+  if (isEdit) {
+    resumeFileRef.current = new File([], interview.coverLetterFilename)
+    portfolioFileRef.current = new File([], interview.portfolioFilename)
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -24,7 +36,11 @@ export default function InterviewForm() {
     if (portfolioFileRef.current)
       formData.append('portfolio', portfolioFileRef.current)
     try {
-      await createInterview(formData)
+      if (isEdit) {
+        await patchInterview(formData, interview)
+      } else {
+        await createInterview(formData)
+      }
     } catch (error) {
       console.error('면접 생성 실패:', error)
     }
@@ -38,6 +54,17 @@ export default function InterviewForm() {
       {/* 왼쪽 card
        직업, 회사명, 인재상을 입력함*/}
       <Card className="flex-1 flex flex-col justify-between">
+        {isEdit && (
+          <Label text="Title">
+            <input
+              type="text"
+              name="title"
+              className="mt-1 block w-full h-48 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 hover:shadow-md"
+              placeholder="Enter Title"
+              defaultValue={interview?.title}
+            />
+          </Label>
+        )}
         <Label text="Job">
           <select
             name="jobTitle"
@@ -62,6 +89,7 @@ export default function InterviewForm() {
             <select
               name="jobSpec"
               className="mt-1 block w-full h-48 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 hover:shadow-md"
+              defaultValue={interview?.jobSpec}
             >
               <option value="" hidden>
                 Select
@@ -78,6 +106,7 @@ export default function InterviewForm() {
             name="company"
             className="mt-1 block w-full h-48 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 hover:shadow-md"
             placeholder="Enter company name"
+            defaultValue={interview?.company}
           />
         </Label>
         <Label text="Ideal Talent" className="basis-[40%] flex flex-col">
@@ -85,6 +114,7 @@ export default function InterviewForm() {
             name="idealTalent"
             className="mt-1 block w-full flex-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none hover:shadow-md"
             placeholder="Describe the ideal talent"
+            defaultValue={interview?.idealTalent}
           ></textarea>
         </Label>
       </Card>
@@ -100,7 +130,7 @@ export default function InterviewForm() {
             <DropzoneBox fileRef={portfolioFileRef} className="flex-1" />
           </Label>
         </div>
-        <FooterButtons />
+        <FooterButtons isEdit={isEdit} />
       </Card>
     </form>
   )
