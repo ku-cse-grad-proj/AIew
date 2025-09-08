@@ -15,6 +15,7 @@ enum SchemaId {
   WsServerNextQuestion = 'WsServerNextQuestion',
   WsServerInterviewFinished = 'WsServerInterviewFinished',
   WsServerError = 'WsServerError',
+  WsServerQuestionAudioReady = 'WsServerQuestionAudioReady',
 }
 
 export default SchemaId
