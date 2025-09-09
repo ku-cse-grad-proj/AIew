@@ -1,0 +1,6 @@
+# poetry --directory apps/ai-server lock
+# git add apps/ai-server/poetry.lock
+# pnpm lint-staged
+#!/bin/sh
+. ../../.venv/Scripts/activate
+poetry run black .
