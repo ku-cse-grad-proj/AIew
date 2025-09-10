@@ -1,5 +1,5 @@
-import Card from '../../_components/Card'
-import EditDeleteButtons from '../../_components/EditDeleteButtons'
+import Card from '../../../_components/Card'
+import EditDeleteButtons from '../../../_components/EditDeleteButtons'
 
 import InfoItem from './components/InfoItem'
 import LoadingCard from './components/LoadingCard'

@@ -1,10 +1,9 @@
 'use client'
 
-import Card from '../../../_components/Card'
-import FooterButtons from '../../../_components/FooterButtons'
-
 import LoadingCircle from './LoadingCircle'
 
+import Card from '@/app/(main)/interview/_components/Card'
+import FooterButtons from '@/app/(main)/interview/_components/FooterButtons'
 import { useInterviewSocket } from '@/app/hooks/useInterviewSocket'
 
 export default function LoadingCard({ sessionId }: { sessionId: string }) {
