@@ -42,7 +42,7 @@ export default async function WaitingPage({
           <EditDeleteButtons id={sessionId} />
         </div>
       </Card>
-      <LoadingCard sessionId={sessionId} />
+      <LoadingCard />
     </div>
   )
 }

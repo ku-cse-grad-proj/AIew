@@ -4,32 +4,28 @@ import LoadingCircle from './LoadingCircle'
 
 import Card from '@/app/(main)/interview/_components/Card'
 import FooterButtons from '@/app/(main)/interview/_components/FooterButtons'
-import { useInterviewSocket } from '@/app/hooks/useInterviewSocket'
+import { useInterviewStore } from '@/app/lib/socket/interviewStore'
 
-export default function LoadingCard({ sessionId }: { sessionId: string }) {
-  const { isQuestionsReady, destroySocket } = useInterviewSocket(sessionId)
+export default function LoadingCard() {
+  const questions = useInterviewStore((state) => state.questions)
   return (
     <Card className="w-full h-full flex flex-col items-center justify-center relative">
       <div className="flex-1 flex flex-col items-center justify-center gap-48">
         <LoadingCircle />
         <span
-          className={`text-black ${!isQuestionsReady && `shimmer-text`}`}
+          className={`text-black ${!questions && `shimmer-text`}`}
           data-content={
-            isQuestionsReady
+            questions
               ? 'All set. Ready when you are.'
               : 'preparing interview...'
           }
         >
-          {isQuestionsReady
+          {questions
             ? 'All set. Ready when you are.'
             : 'preparing interview...'}
         </span>
       </div>
-      <FooterButtons
-        isWaiting
-        isQuestionsReady={isQuestionsReady}
-        destroySocket={destroySocket}
-      />
+      <FooterButtons mode="waiting" isQuestionsReady={!!questions} />
     </Card>
   )
 }
