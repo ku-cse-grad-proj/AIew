@@ -1,5 +1,12 @@
 import { ReactNode } from 'react'
 
+import InterviewSocket from './InterviewSocket'
+
 export default function SocketLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>
+  return (
+    <>
+      <InterviewSocket />
+      {children}
+    </>
+  )
 }
