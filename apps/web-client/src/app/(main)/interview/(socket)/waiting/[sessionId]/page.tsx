@@ -1,5 +1,5 @@
-import Card from '../../_components/Card'
-import EditDeleteButtons from '../../_components/EditDeleteButtons'
+import Card from '../../../_components/Card'
+import EditDeleteButtons from '../../../_components/EditDeleteButtons'
 
 import InfoItem from './components/InfoItem'
 import LoadingCard from './components/LoadingCard'
@@ -42,7 +42,7 @@ export default async function WaitingPage({
           <EditDeleteButtons id={sessionId} />
         </div>
       </Card>
-      <LoadingCard sessionId={sessionId} />
+      <LoadingCard />
     </div>
   )
 }

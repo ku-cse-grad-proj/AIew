@@ -130,7 +130,7 @@ export default function InterviewForm({
             <DropzoneBox fileRef={portfolioFileRef} className="flex-1" />
           </Label>
         </div>
-        <FooterButtons isEdit={isEdit} />
+        <FooterButtons mode={interview?.id ? 'edit' : 'create'} />
       </Card>
     </form>
   )

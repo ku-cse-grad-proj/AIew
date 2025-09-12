@@ -1,25 +1,25 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+
+type mode = 'create' | 'edit' | 'waiting'
 
 export default function FooterButtons({
-  isEdit = false,
-  isWaiting = false,
-  onClick,
+  mode,
   isQuestionsReady = false,
-  destroySocket,
 }: {
-  isEdit?: boolean
-  isWaiting?: boolean
-  onClick?: () => void
+  mode: mode
   isQuestionsReady?: boolean
-  destroySocket?: () => void
 }) {
   const router = useRouter()
+  const params = useParams<{ sessionId?: string }>()
 
   function handleBackButton() {
-    destroySocket?.()
     router.push('/interview')
   }
+
+  const rightButtonStyle =
+    'flex-7 rounded-[10px] bg-primary text-neutral-inverse hover:shadow-xl hover:cursor-pointer'
 
   return (
     <div className="w-full h-48 flex gap-24 flex-none">
@@ -30,20 +30,18 @@ export default function FooterButtons({
       >
         back
       </button>
-      <button
-        type={isWaiting ? 'button' : 'submit'}
-        disabled={isWaiting && !isQuestionsReady}
-        onClick={onClick}
-        className="flex-7 rounded-[10px] bg-primary text-neutral-inverse hover:shadow-xl hover:cursor-pointer
-        disabled:hover:shadow-none disabled:opacity-50
-    disabled:cursor-not-allowed"
-      >
-        {isWaiting
-          ? 'start interview'
-          : isEdit
-            ? 'edit interview'
-            : 'create interview'}
-      </button>
+      {mode === 'waiting' ? (
+        <Link
+          href={`/interview/${params?.sessionId}`}
+          className={`${rightButtonStyle} inline-flex items-center justify-center ${!isQuestionsReady && 'pointer-events-none opacity-50'}`}
+        >
+          start interview
+        </Link>
+      ) : (
+        <button type="submit" className={rightButtonStyle}>
+          {mode == 'create' ? 'create interview' : 'edit interview'}
+        </button>
+      )}
     </div>
   )
 }

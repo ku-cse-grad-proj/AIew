@@ -93,7 +93,7 @@ export default function InterviewCard({
         </div>
         <Link
           className="bg-primary rounded-[10px] text-neutral-inverse px-20 h-40 flex items-center justify-center z-10"
-          href={`/interview/waiting/${id}`}
+          href={`/interview/${id}`}
         >
           start interview
         </Link>
