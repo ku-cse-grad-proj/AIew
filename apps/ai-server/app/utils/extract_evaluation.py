@@ -51,8 +51,7 @@ def extract_evaluation(memory: ConversationBufferMemory) -> tuple[float, str]:
                 except json.JSONDecodeError:
                     continue
     
-    print(f"SCORE: {scores}, PAIRS: {qa_pairs}")
-    avg_score = round(mean(scores), 2) if scores else 0.0
+    avg_score = round(mean(scores), 2) 
     conversation_text = "\n\n".join(conversation_blocks)
 
     return float(avg_score), conversation_text

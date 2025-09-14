@@ -31,7 +31,6 @@ def _load_prompt_template(path: Path) -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-
 def _strip_json(text: str) -> str:
     m = re.search(r"```json(.*?)```", text, re.DOTALL)
     if m:
@@ -39,17 +38,6 @@ def _strip_json(text: str) -> str:
     text = text.strip()
     i, j = text.find("{"), text.rfind("}")
     return text[i : j + 1] if i != -1 and j != -1 and j > i else text
-
-def safe_parse_json(text: str) -> dict:
-    """JSON 파싱 시도 → 실패하면 Python dict 스타일도 허용"""
-    json_text = _strip_json(text)
-    try:
-        return json.loads(json_text)   # 정상 JSON
-    except json.JSONDecodeError:
-        try:
-            return ast.literal_eval(json_text)  # Python dict도 파싱
-        except Exception as e:
-            raise ValueError(f"LLM 응답 파싱 실패: {e}\n원본: {json_text}")
 
 def evaluate_answer(
     req: AnswerEvaluationRequest, memory: Optional[ConversationBufferMemory] = None
@@ -124,9 +112,10 @@ def evaluate_session(
 
     result = chain.invoke(vars)
     content = result.content if hasattr(result, "content") else str(result)
+    json_text = _strip_json(content)
 
     try:
-        parsed = safe_parse_json(content)
+        parsed = json.loads(json_text)
     except ValueError as e:
         print("LLM 세션 평가 응답 파싱 실패:", e)
         print("원본 응답:", content)
