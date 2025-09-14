@@ -48,10 +48,33 @@ export class InterviewService {
     log.info(`[${sessionId}] Initializing interview session...`)
 
     // 제목 생성 로직
-    const count = await prisma.interviewSession.count({
-      where: { userId, company: interviewData.company.value },
+    const companyName = interviewData.company.value
+    let title, suffix
+
+    // 해당 회사에 대한 기존 세션 수를 기본 접미사로 사용
+    const baseCount = await prisma.interviewSession.count({
+      where: { userId, company: companyName },
     })
-    const title = `${interviewData.company.value} interview ${count + 1}`
+    suffix = baseCount + 1
+
+    // 유니크한 제목을 찾을 때까지 반복
+    while (true) {
+      const potentialTitle = `${companyName} interview ${suffix}`
+      const existingSession = await prisma.interviewSession.findUnique({
+        where: {
+          userId_title: {
+            userId,
+            title: potentialTitle,
+          },
+        },
+      })
+
+      if (!existingSession) {
+        title = potentialTitle
+        break
+      }
+      suffix++
+    }
 
     const session = await prisma.interviewSession.create({
       data: {
