@@ -331,14 +331,18 @@ export class InterviewService {
         'You are not authorized to modify this session.',
       )
     }
-    const isTitleOnlyUpdate = Object.keys(data).length === 1 && 'title' in data
 
-    if (
-      (session.status === 'IN_PROGRESS' || session.status === 'COMPLETED') &&
-      !isTitleOnlyUpdate
-    ) {
+    // 상태별 수정 정책 적용
+    if (session.status === 'PENDING') {
       throw this.fastify.httpErrors.badRequest(
-        'Cannot modify an interview that is in progress or completed (only title can be updated).',
+        'Cannot modify an interview that is currently being processed.',
+      )
+    }
+
+    const isTitleOnlyUpdate = Object.keys(data).length === 1 && 'title' in data
+    if (session.status === 'COMPLETED' && !isTitleOnlyUpdate) {
+      throw this.fastify.httpErrors.badRequest(
+        'Only the title can be updated for a completed interview.',
       )
     }
 
@@ -415,6 +419,12 @@ export class InterviewService {
     if (session.userId !== userId) {
       throw this.fastify.httpErrors.forbidden(
         'You are not authorized to delete this session.',
+      )
+    }
+
+    if (session.status === 'PENDING') {
+      throw this.fastify.httpErrors.badRequest(
+        'Cannot delete an interview that is currently being processed.',
       )
     }
 

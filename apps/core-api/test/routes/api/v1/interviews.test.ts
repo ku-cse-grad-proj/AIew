@@ -194,18 +194,47 @@ describe('Interview API (/api/v1/interviews)', () => {
   })
 
   describe('DELETE /:sessionId', () => {
-    it('should delete an interview session', async () => {
-      const session = await createDummySession(testUser.id)
+    it('should delete an interview session if status is not PENDING', async () => {
+      let session = await createDummySession(testUser.id)
+      // Change status from PENDING to READY to allow deletion
+      session = await app.prisma.interviewSession.update({
+        where: { id: session.id },
+        data: { status: 'READY' },
+      })
+
       const res = await app.inject({
         method: 'DELETE',
         url: `/api/v1/interviews/${session.id}`,
         cookies: { accessToken: testUserToken },
       })
+
       expect(res.statusCode).toBe(200)
       const dbSession = await app.prisma.interviewSession.findUnique({
         where: { id: session.id },
       })
       expect(dbSession).toBeNull()
+    })
+
+    it('should return 400 when trying to delete a PENDING session', async () => {
+      const session = await createDummySession(testUser.id) // status is PENDING
+      try {
+        const res = await app.inject({
+          method: 'DELETE',
+          url: `/api/v1/interviews/${session.id}`,
+          cookies: { accessToken: testUserToken },
+        })
+        expect(res.statusCode).toBe(400)
+        const dbSession = await app.prisma.interviewSession.findUnique({
+          where: { id: session.id },
+        })
+        expect(dbSession).not.toBeNull() // Ensure it was not deleted
+      } finally {
+        if (session) {
+          await app.prisma.interviewSession.delete({
+            where: { id: session.id },
+          })
+        }
+      }
     })
   })
 })
