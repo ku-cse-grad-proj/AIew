@@ -2,10 +2,17 @@
 import { create } from 'zustand'
 
 import { interviewSocket } from './interviewSocket'
+import { useSttStore } from './sttStore'
 import type { IInterviewSocket } from './types'
 
 // 최소 상태 타입들 (필요 시 프로젝트 타입에 맞춰 확장)
 type Questions = QuestionBundles
+
+type NextQuestionPayload = {
+  step: { id: string; question?: string }
+  audioBase64?: string
+  isFollowUp?: boolean
+}
 
 type CurrentQuestion = {
   stepId: string
@@ -52,7 +59,13 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
 
   // 5) 답변 제출
   submitAnswer: (payload, s = interviewSocket) => {
-    s.emit('client:answer', payload)
+    try {
+      useSttStore.getState().disconnect()
+    } catch (error) {
+      throw new Error('stt disconnect에 실패했습니다', error as Error)
+    }
+
+    s.emit('client:submit-answer', payload)
   },
 
   connect: (sessionId, s = interviewSocket) => {
@@ -60,6 +73,16 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
 
     // 1) 연결 수립 (+ 연결 시 방 참가는 socket 구현이 처리)
     s.connect(url, sessionId)
+
+    // 공통 STT 연결 함수
+    const connectStt = () => {
+      try {
+        useSttStore.getState().connect(sessionId)
+      } catch (e) {
+        console.error(e)
+        throw new Error('stt connect에 실패했습니다', e as Error)
+      }
+    }
 
     try {
       // 2~8) 이벤트 핸들러 (중복 등록 방지)
@@ -72,17 +95,25 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       s.on('disconnect', () => set({ isConnected: false }))
 
       // 3) 질문 목록 수신
-      s.on('server:questions-ready', (q: unknown) =>
-        set({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      s.on('server:questions-ready', (q: any) => {
+        const firstStep = q.steps[0]
+
+        //session시작 훅이 필요함...
+        //아니면 hook이 시작되면
+        // ⬇️ 질문 수신 시 STT 연결
+        connectStt()
+
+        return set({
           questions: q as Questions,
           finished: false,
           current: {
-            stepId: (q as CurrentQuestion)?.stepId,
-            text: (q as CurrentQuestion)?.text,
+            stepId: firstStep.id,
+            text: firstStep.question,
             isFollowUp: false, //첫 질문이기에 꼬리질문 아님
           },
-        }),
-      )
+        })
+      })
 
       // 4) 첫 질문 음성 수신
       s.on('server:question-audio-ready', (data: unknown) =>
@@ -96,29 +127,33 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       )
 
       // 6) 다음 질문 수신 (텍스트+음성) 또는 꼬리질문
-      s.on('server:next-question', (nq) =>
-        set({
+      s.on('server:next-question', (nq: unknown) => {
+        // ⬇️ 질문 수신 시 STT 연결
+        connectStt()
+
+        set(() => ({
           current: {
-            stepId: (nq as CurrentQuestion)?.stepId,
-            text: (nq as CurrentQuestion)?.text,
-            audioBase64: (nq as CurrentQuestion)?.audioBase64,
-            isFollowUp: (nq as CurrentQuestion)?.isFollowUp,
+            stepId: (nq as NextQuestionPayload)?.step?.id ?? '',
+            text: (nq as NextQuestionPayload)?.step?.question,
+            audioBase64: (nq as NextQuestionPayload)?.audioBase64,
+            isFollowUp: (nq as NextQuestionPayload)?.isFollowUp ?? false,
           },
-        }),
-      )
+        }))
+      })
 
       // 종료
       s.on('server:interview-finished', () => set({ finished: true }))
 
       // 에러 처리
-      s.on('server:error', (err: unknown) =>
+      s.on('server:error', (err: unknown) => {
         set({
           error: (err as ServerError) ?? {
             code: 'UNKNOWN',
             message: 'Unknown error',
           },
-        }),
-      )
+        })
+        throw new Error('질문 처리 중 문제가 발생했습니다', err as Error)
+      })
 
       handlersBound.value = true
     } catch (error) {
