@@ -84,6 +84,11 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       }
     }
 
+    const playAudio = (base64: string | undefined) => {
+      const audio = new Audio(`data:audio/mp3;base64,${base64}`)
+      audio.play()
+    }
+
     try {
       // 2~8) 이벤트 핸들러 (중복 등록 방지)
       if (handlersBound.value) return
@@ -116,20 +121,23 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       })
 
       // 4) 첫 질문 음성 수신
-      s.on('server:question-audio-ready', (data: unknown) =>
+      s.on('server:question-audio-ready', (data: unknown) => {
+        playAudio((data as CurrentQuestion)?.audioBase64)
         set((prev) => ({
           current: {
             ...(prev.current ?? {}),
             stepId: (data as CurrentQuestion)?.stepId,
             audioBase64: (data as CurrentQuestion)?.audioBase64,
           },
-        })),
-      )
+        }))
+      })
 
       // 6) 다음 질문 수신 (텍스트+음성) 또는 꼬리질문
       s.on('server:next-question', (nq: unknown) => {
         // ⬇️ 질문 수신 시 STT 연결
         connectStt()
+
+        playAudio((nq as NextQuestionPayload).audioBase64)
 
         set(() => ({
           current: {
