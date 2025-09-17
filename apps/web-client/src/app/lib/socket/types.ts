@@ -10,7 +10,7 @@ export type ServerEvent =
   | 'server:error'
 
 // 클라이언트에서 보내는 이벤트
-export type ClientEvent = 'client:join-room' | 'client:answer'
+export type ClientEvent = 'client:join-room' | 'client:submit-answer'
 
 export interface IInterviewSocket {
   connect(url: string, sessionId: string): void
