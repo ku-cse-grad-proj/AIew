@@ -2,7 +2,6 @@
 import { create } from 'zustand'
 
 import { interviewSocket } from './interviewSocket'
-import { useSttStore } from './sttStore'
 import type { IInterviewSocket } from './types'
 
 // 최소 상태 타입들 (필요 시 프로젝트 타입에 맞춰 확장)
@@ -42,7 +41,6 @@ type InterviewState = {
 
 // 핸들러 중복 바인딩 방지용 플래그
 const handlersBound = { value: false }
-
 export const useInterviewStore = create<InterviewState>((set, get, store) => ({
   sessionId: '',
   isConnected: false,
@@ -59,12 +57,6 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
 
   // 5) 답변 제출
   submitAnswer: (payload, s = interviewSocket) => {
-    try {
-      useSttStore.getState().disconnect()
-    } catch (error) {
-      throw new Error('stt disconnect에 실패했습니다', error as Error)
-    }
-
     s.emit('client:submit-answer', payload)
   },
 
@@ -73,16 +65,6 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
 
     // 1) 연결 수립 (+ 연결 시 방 참가는 socket 구현이 처리)
     s.connect(url, sessionId)
-
-    // 공통 STT 연결 함수
-    const connectStt = () => {
-      try {
-        useSttStore.getState().connect(sessionId)
-      } catch (e) {
-        console.error(e)
-        throw new Error('stt connect에 실패했습니다', e as Error)
-      }
-    }
 
     const playAudio = (base64: string | undefined) => {
       const audio = new Audio(`data:audio/mp3;base64,${base64}`)
@@ -103,11 +85,6 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       s.on('server:questions-ready', (q: any) => {
         const firstStep = q.steps[0]
-
-        //session시작 훅이 필요함...
-        //아니면 hook이 시작되면
-        // ⬇️ 질문 수신 시 STT 연결
-        connectStt()
 
         return set({
           questions: q as Questions,
@@ -134,9 +111,6 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
 
       // 6) 다음 질문 수신 (텍스트+음성) 또는 꼬리질문
       s.on('server:next-question', (nq: unknown) => {
-        // ⬇️ 질문 수신 시 STT 연결
-        connectStt()
-
         playAudio((nq as NextQuestionPayload).audioBase64)
 
         set(() => ({
