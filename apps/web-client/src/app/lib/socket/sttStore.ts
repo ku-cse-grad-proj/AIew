@@ -7,7 +7,7 @@ type sttState = {
   sentences: string
   isMicPaused: boolean
   canStopSession: boolean
-  connect: (sessionId: string) => void
+  connect: (sessionId: string) => Promise<void>
   disconnect: () => void
   pauseMic: () => void
   resumeMic: () => void
@@ -20,6 +20,7 @@ type RealtimeEvent = {
   transcript?: string
 } & Record<string, string>
 
+let isConnecting = false
 let lastestItemId = ''
 let peerConnection: RTCPeerConnection | null
 let mediaStream: MediaStream | null
@@ -54,9 +55,13 @@ export const useSttStore = create<sttState>((set, get, store) => ({
   },
 
   disconnect: () => {
-    if (!get().canStopSession) {
-      new Error('세션은 모든 작업이 완료된 후에 종료할 수 있습니다')
-    }
+    //이미 종료된 상태면 무시
+    if (!(dataChannel || peerConnection || mediaStream)) return
+    console.log('sst disconnect')
+
+    // if (!get().canStopSession) {
+    //   new Error('세션은 모든 작업이 완료된 후에 종료할 수 있습니다')
+    // }
 
     if (dataChannel) {
       dataChannel.close()
@@ -66,10 +71,13 @@ export const useSttStore = create<sttState>((set, get, store) => ({
       peerConnection.getSenders().forEach((sender) => {
         if (sender.track) {
           sender.track.stop()
+          console.log('sender stop')
         }
       })
       peerConnection.close()
     }
+
+    stopAllTracks(mediaStream)
 
     mediaStream = null
     peerConnection = null
@@ -79,6 +87,13 @@ export const useSttStore = create<sttState>((set, get, store) => ({
   },
 
   connect: async (sessionId: string) => {
+    if (isConnecting) {
+      console.log('stt 연결 중입니다')
+      return
+    }
+
+    isConnecting = true
+
     //만약 session이 존재하면 연결을 끊는다
     if (peerConnection || dataChannel) get().disconnect()
 
@@ -173,5 +188,25 @@ export const useSttStore = create<sttState>((set, get, store) => ({
     peerConnection = pc
     mediaStream = ms
     dataChannel = dc
+
+    console.log('sttConnet')
+    isConnecting = false
   },
 }))
+
+// 모든 트랙을 안전하게 중지하는 유틸
+function stopAllTracks(stream?: MediaStream | null) {
+  if (!stream) return
+  const tracks = stream.getTracks?.() ?? []
+  tracks.forEach((t) => {
+    try {
+      t.stop()
+      console.log('track stop')
+    } catch (e) {
+      console.warn('track.stop() failed', e)
+    }
+    try {
+      stream.removeTrack?.(t)
+    } catch {}
+  })
+}
