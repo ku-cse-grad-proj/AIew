@@ -150,7 +150,7 @@ export class InterviewService {
     sessionId: string,
     questions: QuestionGenerateResponse,
   ) {
-    const { prisma, log, io, ttsService } = this.fastify
+    const { prisma, log, io } = this.fastify
     try {
       log.info(`[${sessionId}] Formatting and saving questions to DB...`)
       const stepsToCreate = questions.map(this.formatQuestionToStep)
@@ -163,38 +163,15 @@ export class InterviewService {
         })
       }
       log.info(`[${sessionId}] Questions saved successfully.`)
-      const createdSteps = await prisma.interviewStep.findMany({
-        where: { interviewSessionId: sessionId },
-        orderBy: { createdAt: 'asc' },
-      })
-      const firstQuestion = createdSteps[0]
-      await this.aiClient.logShownQuestion(
-        { question: this.formatStepToAiQuestion(firstQuestion) },
-        sessionId,
-      )
-      log.info(`[${sessionId}] Logged first question to AI memory.`)
-      log.info(`[${sessionId}] Notifying client via WebSocket...`)
-      io.to(sessionId).emit('server:questions-ready', { steps: createdSteps })
 
-      // 첫 질문 음성 생성 및 전송
-      try {
-        log.info(`[${sessionId}] Generating TTS for the first question...`)
-        const audioBase64 = await ttsService.generate(firstQuestion.question)
-        io.to(sessionId).emit('server:question-audio-ready', {
-          stepId: firstQuestion.id,
-          audioBase64,
-        })
-        log.info(`[${sessionId}] First question TTS sent successfully.`)
-      } catch (ttsError) {
-        log.error(`[${sessionId}] Failed to generate TTS for first question:`, {
-          ttsError,
-        })
-        // 클라이언트에게 TTS 실패를 알릴 수도 있음
-        io.to(sessionId).emit('server:error', {
-          code: 'TTS_GENERATION_FAILED',
-          message: 'Failed to generate audio for the first question.',
-        })
-      }
+      // 상태를 READY로 업데이트하고, 클라이언트에게 준비되었음을 알립니다.
+      // 이것이 questions-ready 이벤트의 유일한 발생 지점이 됩니다.
+      await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: { status: 'READY' },
+      })
+      log.info(`[${sessionId}] Notifying client that questions are ready.`)
+      io.to(sessionId).emit('server:questions-ready', { sessionId })
     } catch (error) {
       log.error(`[${sessionId}] Error in saveQuestionsAndNotifyClient:`, {
         error,
@@ -648,7 +625,7 @@ export class InterviewService {
     }
   }
 
-  private formatStepToAiQuestion(step: InterviewStep) {
+  public formatStepToAiQuestion(step: InterviewStep) {
     return {
       main_question_id: step.aiQuestionId,
       category: step.type,
