@@ -1,11 +1,12 @@
 'use client'
 
+import Image from 'next/image'
 import { useShallow } from 'zustand/shallow'
 
 import { useInterviewStore } from '@/app/lib/socket/interviewStore'
 import { useSttStore } from '@/app/lib/socket/sttStore'
 
-export default function AnswerControl() {
+export default function AnswerButton({ className }: { className?: string }) {
   const sttState = useSttStore()
   const { current, submitAnswer } = useInterviewStore(
     useShallow((state) => ({
@@ -29,17 +30,18 @@ export default function AnswerControl() {
   }
 
   return (
-    <div>
-      {sttState.isMicPaused ? (
-        <button
-          disabled={!sttState.isSessionActive}
-          onClick={sttState.resumeMic}
-        >
-          답변 시작
-        </button>
-      ) : (
-        <button onClick={handleAnswer}>답변 완료</button>
-      )}
-    </div>
+    <button
+      disabled={!sttState.isSessionActive}
+      onClick={sttState.isMicPaused ? sttState.resumeMic : handleAnswer}
+      aria-label={sttState.isMicPaused ? '답변 시작' : '답변 제출'}
+      // TODO:: 사용자 음성 크기에 따라 버튼 크기 달라지도록
+      className={`w-48 h-48 p-8 rounded-full ${
+        sttState.isMicPaused
+          ? 'bg-primary'
+          : 'bg-primary ring-4 ring-offset-4 ring-primary/40 animate-pulse'
+      } ${className}`}
+    >
+      <Image src={'/icons/mic.svg'} alt={'mic icon'} width={32} height={32} />
+    </button>
   )
 }
