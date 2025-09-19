@@ -1,5 +1,5 @@
 import AnswerControl from './_comonents/AnswerControl/AnswerControl'
-import IntervieweePannel from './_comonents/IntervieweePannel'
+import IntervieweePannel from './_comonents/IntervieweePannel/IntervieweePannel'
 import InterviewerPannel from './_comonents/InterviewerPannel/InterviewerPannel'
 
 export default async function InterviewPage({
