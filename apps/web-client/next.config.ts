@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '15mb',
     },
   },
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
   // TurboPack 설정
   turbopack: {
     rules: {
