@@ -66,11 +66,6 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
     // 1) 연결 수립 (+ 연결 시 방 참가는 socket 구현이 처리)
     s.connect(url, sessionId)
 
-    const playAudio = (base64: string | undefined) => {
-      const audio = new Audio(`data:audio/mp3;base64,${base64}`)
-      audio.play()
-    }
-
     try {
       // 2~8) 이벤트 핸들러 (중복 등록 방지)
       if (handlersBound.value) return
@@ -81,39 +76,21 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       )
       s.on('disconnect', () => set({ isConnected: false }))
 
-      // 3) 질문 목록 수신
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      s.on('server:questions-ready', (q: any) => {
-        const firstStep = q.steps[0]
-
-        return set({
-          questions: q as Questions,
-          finished: false,
-          current: {
-            stepId: firstStep.id,
-            text: firstStep.question,
-            isFollowUp: false, //첫 질문이기에 꼬리질문 아님
-          },
-        })
+      // 서버로부터 질문 생성 완료 신호 수신
+      // eslint-disable-next-line
+      // @ts-ignore
+      s.on('server:questions-ready', ({ sessionId: readySessionId }) => {
+        // 클라이언트가 준비되었음을 서버에 알림 (핸드셰이크)
+        s.emit('client:ready', { sessionId: readySessionId })
       })
 
-      // 4) 첫 질문 음성 수신
-      s.on('server:question-audio-ready', (data: unknown) => {
-        playAudio((data as CurrentQuestion)?.audioBase64)
-        set((prev) => ({
-          current: {
-            ...(prev.current ?? {}),
-            stepId: (data as CurrentQuestion)?.stepId,
-            audioBase64: (data as CurrentQuestion)?.audioBase64,
-          },
-        }))
-      })
-
-      // 6) 다음 질문 수신 (텍스트+음성) 또는 꼬리질문
+      // 다음 질문 수신 (첫 질문 포함)
       s.on('server:next-question', (nq: unknown) => {
-        playAudio((nq as NextQuestionPayload).audioBase64)
-
-        set(() => ({
+        set((state) => ({
+          // 첫 질문일 때 questions 상태 초기화 (필요 시)
+          questions:
+            state.questions === null ? ({} as Questions) : state.questions,
+          finished: false,
           current: {
             stepId: (nq as NextQuestionPayload)?.step?.id ?? '',
             text: (nq as NextQuestionPayload)?.step?.question,
