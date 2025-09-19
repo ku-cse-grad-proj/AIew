@@ -184,7 +184,7 @@ describe('InterviewService Unit Tests', () => {
     }
   })
 
-  it('saveQuestionsAndNotifyClient - should generate and send TTS for the first question', async () => {
+  it('saveQuestionsAndNotifyClient - should emit questions-ready with sessionId', async () => {
     let session
     try {
       // Create a real session to satisfy the foreign key constraint
@@ -198,35 +198,19 @@ describe('InterviewService Unit Tests', () => {
         mockGeneratedQuestions,
       )
 
-      // Verify server:questions-ready was called
+      // Verify server:questions-ready was called with the correct session ID
       expect(app.io.to(session.id).emit).toHaveBeenCalledWith(
         'server:questions-ready',
-        expect.objectContaining({
-          steps: expect.any(Array),
-        }),
-      )
-
-      // Verify ttsService.generate was called with the first question's text
-      const firstQuestionText = mockGeneratedQuestions[0].question
-      expect(app.ttsService.generate).toHaveBeenCalledWith(firstQuestionText)
-
-      // Verify server:question-audio-ready was called with correct payload
-      const createdSteps = await app.prisma.interviewStep.findMany({
-        where: { interviewSessionId: session.id },
-      })
-      const firstStepId = createdSteps.find((s) => s.aiQuestionId === 'q1')!.id
-      expect(app.io.to(session.id).emit).toHaveBeenCalledWith(
-        'server:question-audio-ready',
         {
-          stepId: firstStepId,
-          audioBase64: 'fake-base64-string',
+          sessionId: session.id,
         },
       )
+
+      // Verify that TTS is NO LONGER called in this function
+      expect(app.ttsService.generate).not.toHaveBeenCalled()
     } finally {
-      // Cleanup
       if (session) {
         await app.prisma.interviewSession.delete({ where: { id: session.id } })
-        // Steps are cascade deleted by the schema
       }
     }
   })

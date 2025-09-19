@@ -83,6 +83,10 @@ class WebSocketTestClient {
     this.client.emit('client:join-room', { sessionId })
   }
 
+  ready(sessionId: string) {
+    this.client.emit('client:ready', { sessionId })
+  }
+
   submitAnswer(stepId: string, answer: string) {
     this.client.emit('client:submit-answer', {
       stepId,
@@ -209,7 +213,6 @@ describe('WebSocket interview flow', () => {
     })
 
     try {
-      // console.log('[TEST STEP] Creating interview session in DB...')
       session = await app.prisma.interviewSession.create({
         data: {
           userId: testUser.id,
@@ -219,106 +222,77 @@ describe('WebSocket interview flow', () => {
           jobSpec: 'Limits',
         },
       })
-      // console.log(`[TEST STEP] Session created: ${session.id}`)
 
-      // console.log(`[TEST STEP] Joining room: ${session.id}`)
       wsClient.joinRoom(session.id)
       await wsClient.waitForEvent('server:room-joined')
-      // console.log('[TEST STEP] Room joined and confirmed.')
 
-      // console.log(
-      //   '[TEST STEP] Setting up listener and saving initial questions...',
-      // )
-      const [{ steps: initialSteps }] = await Promise.all([
-        wsClient.waitForEvent<{ steps: InterviewStep[] }>(
-          'server:questions-ready',
-        ),
-        app.interviewService.saveQuestionsAndNotifyClient(
-          session.id,
-          mockGeneratedQuestions,
-        ),
-      ])
-      // console.log('[TEST STEP] Initial questions saved and event received.')
+      // Start listening for questions-ready and trigger the process
+      const readyPromise = wsClient.waitForEvent<{ sessionId: string }>(
+        'server:questions-ready',
+      )
+      await app.interviewService.saveQuestionsAndNotifyClient(
+        session.id,
+        mockGeneratedQuestions,
+      )
+      const { sessionId } = await readyPromise
+      expect(sessionId).toBe(session.id)
 
-      let currentStep = initialSteps[0]
-      // console.log(
-      //   `[TEST STEP] Received initial questions. Starting with step: ${currentStep.id}`,
-      // )
+      // New handshake step: client sends ready, waits for the first question
+      const firstQuestionPromise = wsClient.waitForEvent<{
+        step: InterviewStep
+      }>('server:next-question')
+      wsClient.ready(sessionId)
+      const { step: firstStep } = await firstQuestionPromise
+
+      let currentStep = firstStep
 
       // 1st Follow-up
-      // console.log(
-      //   `[TEST ACTION] Submitting answer for step ${currentStep.id} (q1)`,
-      // )
       wsClient.submitAnswer(currentStep.id, 'Answer to q1')
       let nextQuestionPayload = await wsClient.waitForEvent<{
         step: InterviewStep
         isFollowUp: boolean
       }>('server:next-question')
-      // console.log(
-      //   `[TEST RESULT] Received next question: ${nextQuestionPayload.step.aiQuestionId}`,
-      // )
       expect(nextQuestionPayload.isFollowUp).toBe(true)
       expect(nextQuestionPayload.step.aiQuestionId).toBe('q1-fu1')
       currentStep = nextQuestionPayload.step
 
       // 2nd Follow-up
-      // console.log(
-      //   `[TEST ACTION] Submitting answer for step ${currentStep.id} (q1-fu1)`,
-      // )
       wsClient.submitAnswer(currentStep.id, 'Answer to q1-fu1')
       nextQuestionPayload = await wsClient.waitForEvent<{
         step: InterviewStep
         isFollowUp: boolean
       }>('server:next-question')
-      // console.log(
-      //   `[TEST RESULT] Received next question: ${nextQuestionPayload.step.aiQuestionId}`,
-      // )
       expect(nextQuestionPayload.isFollowUp).toBe(true)
       expect(nextQuestionPayload.step.aiQuestionId).toBe('q1-fu2')
       currentStep = nextQuestionPayload.step
 
       // 3rd Follow-up
-      // console.log(
-      //   `[TEST ACTION] Submitting answer for step ${currentStep.id} (q1-fu2)`,
-      // )
       wsClient.submitAnswer(currentStep.id, 'Answer to q1-fu2')
       nextQuestionPayload = await wsClient.waitForEvent<{
         step: InterviewStep
         isFollowUp: boolean
       }>('server:next-question')
-      // console.log(
-      //   `[TEST RESULT] Received next question: ${nextQuestionPayload.step.aiQuestionId}`,
-      // )
       expect(nextQuestionPayload.isFollowUp).toBe(true)
       expect(nextQuestionPayload.step.aiQuestionId).toBe('q1-fu3')
       currentStep = nextQuestionPayload.step
 
       // 4th answer -> Should move to next MAIN question (q2)
-      // console.log(
-      //   `[TEST ACTION] Submitting answer for step ${currentStep.id} (q1-fu3)`,
-      // )
       wsClient.submitAnswer(currentStep.id, 'Answer to q1-fu3')
       nextQuestionPayload = await wsClient.waitForEvent<{
         step: InterviewStep
         isFollowUp: boolean
       }>('server:next-question')
-      // console.log(
-      //   `[TEST RESULT] Received final next question: ${nextQuestionPayload.step.aiQuestionId}`,
-      // )
 
       // *** VERIFICATION POINT ***
       expect(nextQuestionPayload.isFollowUp).toBe(false)
       expect(nextQuestionPayload.step.aiQuestionId).toBe('q2')
-      // console.log('[TEST SUCCESS] Verification complete.')
     } finally {
-      // console.log('[TEST CLEANUP] Disconnecting client and deleting session.')
       wsClient.disconnect()
       if (session) {
         await app.prisma.interviewSession.deleteMany({
           where: { id: session.id },
         })
       }
-      // console.log('[TEST END] Follow-up limit test finished.')
     }
   })
 })
