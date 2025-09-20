@@ -45,7 +45,6 @@
     {{"name":"string","score":1,"reason":"string"}}
   ],
   "feedback": "string",
+  "tail_rationale": "string|null",
   "tail_decision": "create|skip",
-  "tail_question": "string|null",
-  "tail_rationale": "string|null"
 }}

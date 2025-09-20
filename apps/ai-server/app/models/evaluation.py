@@ -24,9 +24,8 @@ class AnswerEvaluationResult(BaseModel):
     red_flags: List[str] = Field(default_factory=list, max_items=5)  #  지원자를 더 주의깊게 살펴야한다는 신호
     criterion_scores: List[CriterionScore] = Field(default_factory=list, description="각 기준별 점수")
     feedback: str = Field(..., description="300±50자 내외의 답변별 피드백")
+    tail_rationale: Optional[str] = Field(None, description="꼬리질문 생성 판단 근거")
     tail_decision: TailDecision = Field(..., description="create|skip")
-    tail_rationale: Optional[str] = Field(None, description="꼬리질문 생성 근거")
-    tail_question: Optional[str] = Field(None, description="create일 때 생성된 꼬리질문")
 
 
 class AnswerEvaluationRequest(BaseModel):

@@ -85,7 +85,6 @@ def evaluate_answer(
 
     # tail 필드 기본값 보정
     parsed.setdefault("tail_decision", "skip")
-    parsed.setdefault("tail_question", None)
     parsed.setdefault("tail_rationale", None)
 
     eval_result = AnswerEvaluationResult.model_validate(parsed)
