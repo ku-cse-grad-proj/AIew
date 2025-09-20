@@ -57,7 +57,7 @@ export default function InterviewerPannel({
     <section
       className={`w-full h-full flex flex-col p-24 bg-neutral-card rounded-[20px] shadow-box ${className}`}
     >
-      <InterviewHeader title={'배달의 민족 intervie'} />
+      <InterviewHeader title={'배달의 민족 interview'} />
       <div className="w-full min-h-0 flex-1 flex flex-col gap-16">
         <Interviewer>
           {!isSpeaking && (
