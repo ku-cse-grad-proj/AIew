@@ -29,10 +29,10 @@ export class TTSService {
     const { googleTTS, log } = this.fastify
 
     // 기본값과 사용자 옵션을 병합
-    const synthesisInput = { text }
+    const input = { text }
     const voice = {
-      languageCode: options.languageCode || 'en-US',
-      name: options.voiceName || 'en-US-Standard-C', // 예시 목소리
+      languageCode: options.languageCode || 'ko-KR',
+      name: options.voiceName || 'ko-KR-Chirp3-HD-Achernar', // 예시 목소리
     }
     const audioConfig = {
       audioEncoding: 'MP3' as const,
@@ -40,11 +40,7 @@ export class TTSService {
       pitch: options.pitch || 0,
     }
 
-    const request = {
-      input: synthesisInput,
-      voice: voice,
-      audioConfig: audioConfig,
-    }
+    const request = { input, voice, audioConfig }
 
     try {
       log.info(`Requesting TTS for text: "${text.substring(0, 30)}..."`)
