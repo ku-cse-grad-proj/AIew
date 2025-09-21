@@ -32,7 +32,7 @@ export class TTSService {
     const input = { text }
     const voice = {
       languageCode: options.languageCode || 'ko-KR',
-      name: options.voiceName || 'ko-KR-Chirp3-HD-Achernar', // 예시 목소리
+      name: options.voiceName || 'ko-KR-Standard-C',
     }
     const audioConfig = {
       audioEncoding: 'MP3' as const,
