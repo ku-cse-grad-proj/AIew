@@ -4,10 +4,11 @@ import fp from 'fastify-plugin'
 import {
   AiQuestionRequest,
   AnswerEvaluationRequest,
-  EvaluationResult,
+  AnswerEvaluationResult,
   FollowUp,
   FollowupRequest,
   QuestionGenerateResponse,
+  SessionEvaluationResult,
   ShownQuestion,
   UserAnswer,
 } from '@/types/ai.types'
@@ -89,10 +90,27 @@ export class AiClientService {
   async evaluateAnswer(
     data: AnswerEvaluationRequest,
     sessionId: string,
-  ): Promise<EvaluationResult> {
-    const response = await this.client.post<EvaluationResult>(
+  ): Promise<AnswerEvaluationResult> {
+    const response = await this.client.post<AnswerEvaluationResult>(
       '/api/v1/evaluation/answer-evaluating',
       data,
+      {
+        headers: {
+          'X-Session-Id': sessionId,
+        },
+      },
+    )
+    return response.data
+  }
+
+  /**
+   * 전체 면접 세션에 대한 평가를 AI 서버에 요청합니다.
+   * @param sessionId - 현재 면접 세션 ID
+   */
+  async evaluateSession(sessionId: string): Promise<SessionEvaluationResult> {
+    const response = await this.client.post<SessionEvaluationResult>(
+      '/api/v1/evaluation/session-evaluating',
+      null, // 요청 본문이 없음
       {
         headers: {
           'X-Session-Id': sessionId,
