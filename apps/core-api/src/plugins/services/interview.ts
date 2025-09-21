@@ -752,7 +752,9 @@ export class InterviewService {
     log.info(`[${sessionId}] Next question logged to AI memory.`)
 
     // 꼬리 질문 음성 생성
+    console.time('tts')
     const audioBase64 = await ttsService.generate(newFollowupStep.question)
+    console.timeEnd('tts')
 
     io.to(sessionId).emit('server:next-question', {
       step: newFollowupStep,
@@ -822,7 +824,9 @@ export class InterviewService {
       log.info(`[${sessionId}] Next question logged to AI memory.`)
 
       // 다음 메인 질문 음성 생성
+      console.time('tts')
       const audioBase64 = await ttsService.generate(nextStep.question)
+      console.timeEnd('tts')
 
       io.to(sessionId).emit('server:next-question', {
         step: nextStep,

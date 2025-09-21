@@ -152,10 +152,11 @@ export default fp(
               { question: questionPayloadForAi },
               sessionId,
             )
-
+            console.time('tts')
             const audioBase64 = await fastify.ttsService.generate(
               currentQuestion.question,
             )
+            console.timeEnd('tts')
 
             socket.emit('server:next-question', {
               step: currentQuestion,
