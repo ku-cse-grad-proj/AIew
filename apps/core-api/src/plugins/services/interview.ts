@@ -702,9 +702,23 @@ export class InterviewService {
     evaluation: AnswerEvaluationResult,
   ) {
     const { prisma, log, io, ttsService } = this.fastify
+
+    // 꼬리질문의 '뿌리'가 되는 메인 질문을 찾음
+    const rootQuestionStep = parentStep.parentStepId
+      ? await prisma.interviewStep.findUnique({
+          where: { id: parentStep.parentStepId },
+        })
+      : parentStep
+
+    if (!rootQuestionStep) {
+      throw new Error(
+        `[${sessionId}] Could not find the root question for step ${parentStep.id}`,
+      )
+    }
+
     log.info(`[${sessionId}] Generating follow-up question...`)
     const followupRequest: FollowupRequest = {
-      question_id: parentStep.aiQuestionId,
+      question_id: rootQuestionStep.aiQuestionId, // 항상 메인 질문의 ID를 사용
       category: parentStep.type,
       question_text: parentStep.question,
       criteria: parentStep.criteria,
@@ -720,7 +734,7 @@ export class InterviewService {
     const newFollowupStep = await prisma.interviewStep.create({
       data: {
         interviewSessionId: sessionId,
-        parentStepId: parentStep.parentStepId ?? parentStep.id, // 항상 메인 질문을 가리킴
+        parentStepId: rootQuestionStep.id, // parentStepId는 항상 메인 질문의 CUID를 가리킴
         aiQuestionId: followupResult.followup_id,
         type: parentStep.type,
         question: followupResult.question,
