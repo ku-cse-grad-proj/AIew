@@ -12,7 +12,7 @@ import {
   AiInterviewQuestion,
   AiQuestionCategory,
   AnswerEvaluationRequest,
-  EvaluationResult,
+  AnswerEvaluationResult,
   FollowUp,
   FollowupRequest,
   QuestionGenerateResponse,
@@ -669,7 +669,10 @@ export class InterviewService {
     return this.aiClient.evaluateAnswer(request, sessionId)
   }
 
-  private async saveEvaluationResult(stepId: string, result: EvaluationResult) {
+  private async saveEvaluationResult(
+    stepId: string,
+    result: AnswerEvaluationResult,
+  ) {
     const { prisma } = this.fastify
     return prisma.interviewStep.update({
       where: { id: stepId },
@@ -696,7 +699,7 @@ export class InterviewService {
     sessionId: string,
     parentStep: InterviewStep,
     answer: string,
-    evaluation: EvaluationResult,
+    evaluation: AnswerEvaluationResult,
   ) {
     const { prisma, log, io, ttsService } = this.fastify
     log.info(`[${sessionId}] Generating follow-up question...`)
@@ -745,7 +748,7 @@ export class InterviewService {
   }
 
   private async handleNextMainQuestion(sessionId: string) {
-    const { prisma, log, io, ttsService } = this.fastify
+    const { prisma, log, io, ttsService, aiClientService } = this.fastify
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
       select: { currentQuestionIndex: true },
@@ -763,11 +766,32 @@ export class InterviewService {
       log.info(
         `[${sessionId}] Last main question answered. Finishing interview.`,
       )
-      await prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: { status: 'COMPLETED' },
-      })
+      // 클라이언트에게 먼저 면접 종료를 알림
       io.to(sessionId).emit('server:interview-finished', { sessionId })
+
+      // 백그라운드에서 세션 평가 및 DB 업데이트 진행
+      try {
+        const sessionEvaluation =
+          await aiClientService.evaluateSession(sessionId)
+        await prisma.interviewSession.update({
+          where: { id: sessionId },
+          data: {
+            status: 'COMPLETED',
+            finalFeedback: sessionEvaluation.session_feedback,
+          },
+        })
+        log.info(`[${sessionId}] Session evaluation saved successfully.`)
+      } catch (error) {
+        log.error(`[${sessionId}] Error during session evaluation:`, { error })
+        // 실패하더라도 세션 상태는 COMPLETED로 유지하되, 에러 로깅
+        await prisma.interviewSession.update({
+          where: { id: sessionId },
+          data: {
+            status: 'COMPLETED',
+            finalFeedback: 'Error: Failed to generate session feedback.',
+          },
+        })
+      }
     } else {
       log.info(
         `[${sessionId}] Moving to next main question index: ${nextIndex}`,
