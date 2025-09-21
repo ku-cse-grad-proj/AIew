@@ -74,7 +74,7 @@ model InterviewStep {
   type           QuestionType // 질문 유형 (기술, 인성, 맞춤)
   question       String       // AI가 생성한 질문 내용
   answer         String?      // 사용자의 답변 내용
-  score          Int?         // AI가 평가한 총점 (0-100)
+  score          Int?         // AI가 평가한 총점 (1~5)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 

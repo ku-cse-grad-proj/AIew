@@ -664,6 +664,7 @@ export class InterviewService {
         strengths: result.strengths,
         improvements: result.improvements,
         redFlags: result.red_flags,
+        feedback: result.feedback,
         criterionEvaluations: {
           createMany: {
             data: result.criterion_scores.map((c) => ({
