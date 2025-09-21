@@ -89,6 +89,7 @@ model InterviewStep {
   strengths              String[]  // AI가 평가한 강점 목록
   improvements           String[]  // AI가 평가한 개선점 목록
   redFlags               String[]  // AI가 발견한 위험 신호 목록
+  feedback               String?   // AI가 생성한 답변별 텍스트 피드백
 
   // --- 관계 정의 ---
 
