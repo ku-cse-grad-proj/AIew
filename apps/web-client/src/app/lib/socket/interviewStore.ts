@@ -15,6 +15,7 @@ type CurrentQuestion = {
   text?: string
   audioBase64?: string
   isFollowUp?: boolean
+  order: number
 }
 
 type ServerError = { code: string; message: string } | null
@@ -119,6 +120,12 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
             }
           }
 
+          //순번 정의
+          const order = nextQuestions.reduce(
+            (count, bundle) => count + 1 + bundle.followUps.length,
+            0,
+          )
+
           return {
             questions: nextQuestions,
             finished: false,
@@ -127,6 +134,7 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
               text: questionText,
               audioBase64: nq.audioBase64,
               isFollowUp: nq.isFollowUp ?? false,
+              order,
             },
           }
         })
