@@ -169,6 +169,18 @@ export class AiClientService {
       },
     })
   }
+
+  /**
+   * 특정 세션의 AI 서버 메모리를 초기화합니다.
+   * @param sessionId - 초기화할 면접 세션 ID
+   */
+  async resetMemory(sessionId: string): Promise<void> {
+    await this.client.delete('/api/v1/memory-debug/reset', {
+      headers: {
+        'X-Session-Id': sessionId,
+      },
+    })
+  }
 }
 
 export default fp(

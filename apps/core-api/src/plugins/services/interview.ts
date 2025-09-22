@@ -370,6 +370,15 @@ export class InterviewService {
 
     if (needsReprocessing) {
       log.info(`[${sessionId}] Re-processing interview due to updated data.`)
+
+      // AI 메모리 초기화 (실패해도 로깅만 하고 계속 진행)
+      try {
+        await this.aiClient.resetMemory(sessionId)
+        log.info(`[${sessionId}] AI memory reset for re-processing.`)
+      } catch (error) {
+        log.error(`[${sessionId}] Failed to reset AI memory:`, { error })
+      }
+
       // 텍스트 데이터 업데이트 및 상태 PENDING으로 변경
       const updatedSession = await prisma.interviewSession.update({
         where: { id: sessionId },
@@ -420,7 +429,7 @@ export class InterviewService {
    * @throws {Error} 404 Not Found - 세션이 존재하지 않을 경우
    */
   public async deleteInterviewSession(sessionId: string, userId: string) {
-    const { prisma } = this.fastify
+    const { prisma, log } = this.fastify
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
     })
@@ -437,6 +446,17 @@ export class InterviewService {
     if (session.status === 'PENDING') {
       throw this.fastify.httpErrors.badRequest(
         'Cannot delete an interview that is currently being processed.',
+      )
+    }
+
+    // DB에서 삭제하기 전에 AI 메모리를 먼저 정리
+    try {
+      await this.aiClient.resetMemory(sessionId)
+      log.info(`[${sessionId}] AI memory reset successfully before deletion.`)
+    } catch (error) {
+      log.error(
+        `[${sessionId}] Failed to reset AI memory before deletion, but proceeding with DB deletion:`,
+        { error },
       )
     }
 
@@ -764,7 +784,7 @@ export class InterviewService {
   }
 
   private async handleNextMainQuestion(sessionId: string) {
-    const { prisma, log, io, ttsService, aiClientService } = this.fastify
+    const { prisma, log, io, ttsService } = this.fastify
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
       select: { currentQuestionIndex: true },
@@ -787,8 +807,7 @@ export class InterviewService {
 
       // 백그라운드에서 세션 평가 및 DB 업데이트 진행
       try {
-        const sessionEvaluation =
-          await aiClientService.evaluateSession(sessionId)
+        const sessionEvaluation = await this.aiClient.evaluateSession(sessionId)
         await prisma.interviewSession.update({
           where: { id: sessionId },
           data: {
@@ -797,6 +816,14 @@ export class InterviewService {
           },
         })
         log.info(`[${sessionId}] Session evaluation saved successfully.`)
+
+        // 최종 평가 후 메모리 초기화
+        try {
+          await this.aiClient.resetMemory(sessionId)
+          log.info(`[${sessionId}] AI memory reset successfully.`)
+        } catch (memError) {
+          log.error(`[${sessionId}] Failed to reset AI memory:`, { memError })
+        }
       } catch (error) {
         log.error(`[${sessionId}] Error during session evaluation:`, { error })
         // 실패하더라도 세션 상태는 COMPLETED로 유지하되, 에러 로깅
