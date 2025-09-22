@@ -18,9 +18,16 @@
 - 남은 메인 질문 수: {remaining_main_questions}
 
 요구사항:
-- 각 평가 기준별로 1~5 점수와 이유를 제시하세요.
-- 총평 점수(1~5), 강점, 개선점, 레드플래그를 핵심 bullet로 하세요.
-- 피드백은 강점, 개선점, 레드플레그, 평가 점수를 모두 고려해서 공백 포함 최소 300자 이상 구체적으로 작성하세요. 
+- 반드시 아래 순서대로 생각하고 작성하세요:
+  - strengths (강점)
+  - improvements (개선점)
+  - red_flags (레드플래그)
+  - criterion_scores (평가 기준별 점수 및 이유)
+  - feedback (300자 이상, 강점/개선점/레드플래그/criterion_scores 반영)
+  - overall_score (총평 점수)
+  - tail_rationale (꼬리질문 필요성 판단 근거)
+  - tail_decision ("create" 또는 "skip")
+- 피드백은 강점, 개선점, 레드플레그, criterion_scores를 모두 고려해서 공백 포함 최소 300자 이상 구체적으로 작성하세요. 
   - 반드시 300자를 넘겨야 하며, 부족할 경우 탈락 처리됩니다.  
   - 이 요구사항을 절대 생략하거나 축약하지 마세요.  
 - 꼬리질문 필요 여부 판단:
@@ -37,7 +44,6 @@
   "question_id": "string",
   "category": "behavioral|technical|tailored",
   "answer_duration_sec": 0,
-  "overall_score": 1,
   "strengths": ["string"],
   "improvements": ["string"],
   "red_flags": ["string"],
@@ -45,6 +51,7 @@
     {{"name":"string","score":1,"reason":"string"}}
   ],
   "feedback": "string",
+  "overall_score": 1,
   "tail_rationale": "string|null",
   "tail_decision": "create|skip",
 }}
