@@ -1,11 +1,11 @@
 'use client'
 
 import CurrentQuestion from './CurrentQuestion'
+import ExitLink from './ExitLink'
 import HintSection from './HintSection'
 import Interviewee from './Interviewee'
 import IntervieweeSection from './IntervieweeSection'
 import IntervieweeTranscript from './IntervieweeTranscript'
-import LeaveButton from './LeaveButton'
 
 import { useSttStore } from '@/app/lib/socket/sttStore'
 
@@ -25,7 +25,7 @@ export default function IntervieweePannel({ onClick, ...props }: Props) {
         </IntervieweeTranscript>
         <HintSection className="flex-3 min-h-0" />
       </div>
-      <LeaveButton />
+      <ExitLink />
     </IntervieweeSection>
   )
 }
