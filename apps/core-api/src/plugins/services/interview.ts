@@ -194,11 +194,14 @@ export class InterviewService {
     const { prisma, log, io } = this.fastify
     log.info(`[${sessionId}] Start processing answer for step ${stepId}...`)
     try {
-      // 첫 답변 제출 시 IN_PROGRESS로 상태 변경
+      // 첫 답변 제출 시 IN_PROGRESS로 상태 변경 및 현재 인덱스 가져오기
       const session = await prisma.interviewSession.findUnique({
         where: { id: sessionId },
-        select: { status: true },
+        select: { status: true, currentQuestionIndex: true },
       })
+      if (!session) {
+        throw new Error(`[${sessionId}] Session not found.`)
+      }
       if (session?.status === 'READY') {
         await prisma.interviewSession.update({
           where: { id: sessionId },
@@ -218,11 +221,20 @@ export class InterviewService {
         },
         sessionId,
       )
-      const evaluationResult = await this.requestEvaluation(
+
+      // 남은 메인 질문 수 계산
+      const totalMainQuestions = await prisma.interviewStep.count({
+        where: { interviewSessionId: sessionId, parentStepId: null },
+      })
+      const remainingMainQuestions =
+        totalMainQuestions - (session.currentQuestionIndex + 1)
+
+      const evaluationResult = await this.requestAnswerEvaluation(
         currentStep,
         answer,
         duration,
         sessionId,
+        remainingMainQuestions,
       )
       await this.saveEvaluationResult(stepId, evaluationResult)
 
@@ -637,11 +649,12 @@ export class InterviewService {
     }
   }
 
-  private async requestEvaluation(
+  private async requestAnswerEvaluation(
     step: InterviewStep,
     answer: string,
     duration: number,
     sessionId: string,
+    remainingMainQuestions: number,
   ) {
     const request: AnswerEvaluationRequest = {
       question_id: step.aiQuestionId,
@@ -651,6 +664,7 @@ export class InterviewService {
       question_text: step.question,
       user_answer: answer,
       answer_duration_sec: duration,
+      remaining_main_questions: remainingMainQuestions,
     }
     return this.aiClient.evaluateAnswer(request, sessionId)
   }
@@ -664,6 +678,7 @@ export class InterviewService {
         strengths: result.strengths,
         improvements: result.improvements,
         redFlags: result.red_flags,
+        feedback: result.feedback,
         criterionEvaluations: {
           createMany: {
             data: result.criterion_scores.map((c) => ({

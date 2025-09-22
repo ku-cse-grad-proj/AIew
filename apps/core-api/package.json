@@ -8,7 +8,7 @@
   },
   "scripts": {
     "prepare": "prisma generate",
-    "test": "vitest run --coverage",
+    "test": "vitest run --coverage && rimraf coverage",
     "test:watch": "vitest --coverage",
     "start": "node dist/server.js",
     "build": "rimraf dist && tsc && tsc-alias",

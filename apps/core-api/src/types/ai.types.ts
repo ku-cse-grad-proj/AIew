@@ -86,9 +86,9 @@ export interface EvaluationResult {
   improvements: string[]
   red_flags: string[]
   criterion_scores: CriterionScore[]
+  feedback: string
   tail_decision: TailDecision
   tail_rationale: string | null
-  tail_question: string | null
 }
 
 /**
