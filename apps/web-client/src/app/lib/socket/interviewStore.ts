@@ -4,9 +4,6 @@ import { create } from 'zustand'
 import { interviewSocket } from './interviewSocket'
 import type { IInterviewSocket } from './types'
 
-// 최소 상태 타입들 (필요 시 프로젝트 타입에 맞춰 확장)
-type Questions = QuestionBundles
-
 type NextQuestionPayload = {
   step: { id: string; question?: string }
   audioBase64?: string
@@ -22,10 +19,12 @@ type CurrentQuestion = {
 
 type ServerError = { code: string; message: string } | null
 
+export type QuestionBundle = { main: string; followUps: string[] }
+
 type InterviewState = {
   sessionId: string
   isConnected: boolean
-  questions: Questions | null
+  questions: QuestionBundle[]
   current?: CurrentQuestion
   finished: boolean
   error: ServerError
@@ -44,7 +43,7 @@ const handlersBound = { value: false }
 export const useInterviewStore = create<InterviewState>((set, get, store) => ({
   sessionId: '',
   isConnected: false,
-  questions: null,
+  questions: [],
   current: undefined,
   finished: false,
   error: null,
@@ -85,19 +84,52 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       })
 
       // 다음 질문 수신 (첫 질문 포함)
-      s.on('server:next-question', (nq: unknown) => {
-        set((state) => ({
-          // 첫 질문일 때 questions 상태 초기화 (필요 시)
-          questions:
-            state.questions === null ? ({} as Questions) : state.questions,
-          finished: false,
-          current: {
-            stepId: (nq as NextQuestionPayload)?.step?.id ?? '',
-            text: (nq as NextQuestionPayload)?.step?.question,
-            audioBase64: (nq as NextQuestionPayload)?.audioBase64,
-            isFollowUp: (nq as NextQuestionPayload)?.isFollowUp ?? false,
-          },
-        }))
+      s.on('server:next-question', (payload: unknown) => {
+        const nq = payload as NextQuestionPayload
+
+        set((state) => {
+          const questionText = nq.step?.question
+          if (!questionText) {
+            throw new Error('서버로부터 잘못된 질문이 전달되었습니다')
+          }
+
+          //Questions 깊은 복사
+          const nextQuestions = state.questions.map((bundle) => ({
+            main: bundle.main,
+            followUps: [...bundle.followUps],
+          }))
+
+          //TODO: questions 초기값 설정하기
+
+          // 메인 질문인 경우
+          if (!nq.isFollowUp) {
+            nextQuestions.push({ main: questionText, followUps: [] })
+          } else {
+            // 꼬리 질문인 경우
+            // 만약 꼬리 질문부터 오는 경우를 대비해 방어적 코딩
+            if (nextQuestions.length === 0) {
+              nextQuestions.push({
+                main: 'Unkown main question',
+                followUps: [questionText],
+              })
+            } else {
+              nextQuestions[nextQuestions.length - 1].followUps.push(
+                questionText,
+              )
+            }
+          }
+
+          return {
+            questions: nextQuestions,
+            finished: false,
+            current: {
+              stepId: nq.step?.id ?? '',
+              text: questionText,
+              audioBase64: nq.audioBase64,
+              isFollowUp: nq.isFollowUp ?? false,
+            },
+          }
+        })
       })
 
       // 종료

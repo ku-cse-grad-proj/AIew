@@ -1,4 +1,9 @@
+'use client'
+
+import Image from 'next/image'
+
 import IntervieweeSection from './IntervieweeSection'
+import QuestionList from './QuestionList'
 
 export default function QuestionPannel({
   className,
@@ -9,16 +14,22 @@ export default function QuestionPannel({
 }) {
   return (
     <IntervieweeSection className={className}>
-      <button type="button" onClick={onClick}>
-        back
+      {/* header */}
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full h-48 flex items-center gap-16"
+      >
+        <Image
+          src={'/icons/toggle_true.svg'}
+          alt={'toggle icon'}
+          width={20}
+          height={20}
+        />
+        <span className="text-[20px]">back</span>
       </button>
-      <ul>
-        <li>Question 1</li>
-        <li>Question 2</li>
-        <li>Question 3</li>
-        <li>Question 4</li>
-        <li>Question 5</li>
-      </ul>
+      {/* body */}
+      <QuestionList />
     </IntervieweeSection>
   )
 }
