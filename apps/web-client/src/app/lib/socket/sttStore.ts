@@ -7,6 +7,7 @@ type sttState = {
   sentences: string
   isMicPaused: boolean
   canStopSession: boolean
+  setSentences: (sentence: string) => void
   connect: (sessionId: string) => Promise<void>
   disconnect: () => void
   pauseMic: () => void
@@ -32,6 +33,8 @@ export const useSttStore = create<sttState>((set, get, store) => ({
   sentences: '',
   isMicPaused: true,
   canStopSession: false,
+
+  setSentences: (sentence: string) => set({ sentences: sentence }),
   pauseMic: () => {
     const track = mediaStream?.getAudioTracks?.()[0]
     if (!track) {

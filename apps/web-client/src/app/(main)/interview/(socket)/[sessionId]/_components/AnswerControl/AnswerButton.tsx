@@ -30,6 +30,7 @@ import { useSttStore } from '@/app/lib/socket/sttStore'
  * 음성은 인식했으나 텍스트로 변환되지 않은 상태일 수도 있습니다.
  *  - 답변이 종료돼 endAt이 기록되면, stt의 canStopSession이 true가 될 때까지 기다립니다.
  *  - useEffect로 해당 값들의 변경을 감지합니다.
+ *  - redo 상태가 아닌지 확인합니다.
  *  - canStopSession이 true가 되면, submitAnswer를 호출해 답변을 제출합니다.
  *  - startAt, endAt을 answerReset을 이용해 null로 초기화합니다.
  *  - stt session을 disconnect합니다.
@@ -49,19 +50,23 @@ export default function AnswerButton({ className }: { className?: string }) {
     })),
   )
 
-  const { startAt, endAt, setStartAt, setEndAt, answerReset } = useAnswerStore(
-    useShallow((state) => ({
-      startAt: state.startAt,
-      endAt: state.endAt,
-      setStartAt: state.setStartAt,
-      setEndAt: state.setEndAt,
-      answerReset: state.reset,
-    })),
-  )
+  const { isRedo, startAt, endAt, setStartAt, setEndAt, answerReset } =
+    useAnswerStore(
+      useShallow((state) => ({
+        isRedo: state.isRedo,
+        startAt: state.startAt,
+        endAt: state.endAt,
+        setStartAt: state.setStartAt,
+        setEndAt: state.setEndAt,
+        answerReset: state.reset,
+      })),
+    )
 
   useEffect(() => {
     if (endAt && sttState.canStopSession) {
+      if (isRedo) return // redo에도 동일한 로직이 존재해 이와 같이 처리
       if (!current) return
+
       const payload = {
         stepId: current.stepId,
         answer: sttState.sentences,
@@ -73,7 +78,7 @@ export default function AnswerButton({ className }: { className?: string }) {
       answerReset()
       sttState.disconnect()
     }
-  }, [endAt, sttState.canStopSession])
+  }, [isRedo, endAt, sttState.canStopSession])
 
   const handleAnswer = async () => {
     //마이크가 꺼져있다면 마이크를 켜서 답변 시작
