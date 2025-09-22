@@ -31,7 +31,7 @@ import { useSttStore } from '@/app/lib/socket/sttStore'
  *  - 답변이 종료돼 endAt이 기록되면, stt의 canStopSession이 true가 될 때까지 기다립니다.
  *  - useEffect로 해당 값들의 변경을 감지합니다.
  *  - canStopSession이 true가 되면, submitAnswer를 호출해 답변을 제출합니다.
- *  - startAt, endAt은 null로 초기화합니다.
+ *  - startAt, endAt을 answerReset을 이용해 null로 초기화합니다.
  *  - stt session을 disconnect합니다.
  *
  * 각 질문마다 위 과정을 반복합니다.
@@ -49,12 +49,13 @@ export default function AnswerButton({ className }: { className?: string }) {
     })),
   )
 
-  const { startAt, endAt, setStartAt, setEndAt } = useAnswerStore(
+  const { startAt, endAt, setStartAt, setEndAt, answerReset } = useAnswerStore(
     useShallow((state) => ({
       startAt: state.startAt,
       endAt: state.endAt,
       setStartAt: state.setStartAt,
       setEndAt: state.setEndAt,
+      answerReset: state.reset,
     })),
   )
 
@@ -69,8 +70,7 @@ export default function AnswerButton({ className }: { className?: string }) {
         endAt,
       }
       submitAnswer(payload)
-      setStartAt(null) //startAt 초기화
-      setEndAt(null) //endAt 초기화
+      answerReset()
       sttState.disconnect()
     }
   }, [endAt, sttState.canStopSession])
