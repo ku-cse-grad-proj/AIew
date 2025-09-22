@@ -1,6 +1,6 @@
-import AnswerControl from './_comonents/AnswerControl/AnswerControl'
-import IntervieweeContainer from './_comonents/IntervieweeContainer/IntervieweeContainer'
-import InterviewerPannel from './_comonents/InterviewerPannel/InterviewerPannel'
+import AnswerControl from './_components/AnswerControl/AnswerControl'
+import IntervieweeContainer from './_components/IntervieweeContainer/IntervieweeContainer'
+import InterviewerPannel from './_components/InterviewerPannel/InterviewerPannel'
 
 export default async function InterviewPage({
   params,
