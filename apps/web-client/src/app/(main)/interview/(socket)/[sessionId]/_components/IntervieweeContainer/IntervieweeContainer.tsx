@@ -15,14 +15,12 @@ export default function IntervieweeContainer({
   return (
     <div className={`relative ${className}`} {...props}>
       {/* 기본 패널 */}
-      <IntervieweePannel onClick={toggleShowList} />
+      <IntervieweePannel onClick={toggleShowList} inert={showList} />
 
       {/* 슬라이드 오버레이 */}
       <div
-        className={`absolute inset-0 rounded-[20px] overflow-hidden ${
-          showList ? 'pointer-events-auto' : 'pointer-events-none'
-        }`}
-        aria-hidden={!showList}
+        className={`absolute inset-0 rounded-[20px] overflow-hidden`}
+        inert={!showList}
       >
         <QuestionPannel
           onClick={toggleShowList}

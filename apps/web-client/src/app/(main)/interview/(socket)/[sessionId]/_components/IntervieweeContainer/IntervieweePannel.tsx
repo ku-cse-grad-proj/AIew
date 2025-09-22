@@ -9,14 +9,14 @@ import LeaveButton from './LeaveButton'
 
 import { useSttStore } from '@/app/lib/socket/sttStore'
 
-export default function IntervieweePannel({
-  onClick,
-}: {
+type Props = React.HTMLProps<HTMLDivElement> & {
   onClick: () => void
-}) {
+}
+
+export default function IntervieweePannel({ onClick, ...props }: Props) {
   const sentences = useSttStore((state) => state.sentences)
   return (
-    <IntervieweeSection>
+    <IntervieweeSection {...props}>
       <CurrentQuestion onClick={onClick} />
       <div className="flex-1 min-h-0 flex flex-col gap-24 pt-12 pb-24">
         <Interviewee />
