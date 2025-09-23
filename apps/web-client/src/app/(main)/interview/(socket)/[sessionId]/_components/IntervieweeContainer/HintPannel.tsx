@@ -19,7 +19,9 @@ const Dt = ({ children }: { children: ReactNode }) => {
 
 const Dd = ({ children }: { children: ReactNode }) => {
   return (
-    <dd className="flex-1 flex gap-4 text-[12px] leading-[12px]">{children}</dd>
+    <dd className="flex-1 min-h-0 flex gap-4 text-[12px] leading-[12px]">
+      {children}
+    </dd>
   )
 }
 
@@ -40,7 +42,7 @@ export default function HintPannel({
 
   return (
     <div
-      className={`w-full h-full p-24 shadow-box bg-white rounded-[20px] relative ${className}`}
+      className={`w-full h-full p-24 shadow-box bg-white rounded-[20px] relative overflow-y-auto ${className}`}
     >
       <button
         type="button"
@@ -66,7 +68,9 @@ export default function HintPannel({
         </Entry>
         <Entry>
           <Dt>rationale</Dt>
-          <Dd>{current?.rationale}</Dd>
+          <Dd>
+            <p className="leading-[18px]">{current?.rationale}</p>
+          </Dd>
         </Entry>
       </dl>
     </div>

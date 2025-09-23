@@ -24,7 +24,7 @@ export default function IntervieweePannel({ onClick, ...props }: Props) {
           {sentences}
         </IntervieweeTranscript>
 
-        <HintArea className="flex-3 min-h-0">
+        <HintArea className="flex-5 min-h-0">
           <ExitLink />
         </HintArea>
       </div>
