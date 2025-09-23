@@ -32,7 +32,7 @@ export const useSttStore = create<sttState>((set, get, store) => ({
   events: [],
   sentences: '',
   isMicPaused: true,
-  canStopSession: false,
+  canStopSession: true,
 
   setSentences: (sentence: string) => set({ sentences: sentence }),
   pauseMic: () => {
