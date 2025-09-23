@@ -2,6 +2,7 @@
 import { useState } from 'react'
 
 import HintButton from './HintButton'
+import HintPannel from './HintPannel'
 
 export default function HintArea({
   ...props
@@ -20,30 +21,17 @@ export default function HintArea({
         <HintButton onClick={handleShowHint} />
         {props.children}
       </div>
-      <div className="absolute inset-0 overflow-hidden" inert={!showHint}>
+      {/* HintPannel은 부모 padding을 무시해야 함 */}
+      <div
+        className="-mx-24 -mb-24 absolute inset-0 overflow-hidden rounded-[20px]"
+        inert={!showHint}
+      >
         <HintPannel
           onClick={handleShowHint}
           className={`transition-transform duration-300 ease-in-out will-change-transform
             ${showHint ? 'translate-y-0' : 'translate-y-full'}`}
         />
       </div>
-    </div>
-  )
-}
-
-export function HintPannel({
-  className,
-  onClick,
-}: {
-  className?: string
-  onClick?: () => void
-}) {
-  return (
-    <div
-      className={`w-full h-full bg-gray-300 p-16 relative ${className}`}
-      onClick={onClick}
-    >
-      여긴 힌트 영역이에요~
     </div>
   )
 }
