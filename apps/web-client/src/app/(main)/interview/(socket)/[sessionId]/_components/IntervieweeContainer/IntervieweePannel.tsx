@@ -3,7 +3,6 @@
 import CurrentQuestion from './CurrentQuestion'
 import ExitLink from './ExitLink'
 import HintArea from './HintArea'
-import HintButton from './HintButton'
 import Interviewee from './Interviewee'
 import IntervieweeSection from './IntervieweeSection'
 import IntervieweeTranscript from './IntervieweeTranscript'
@@ -26,10 +25,7 @@ export default function IntervieweePannel({ onClick, ...props }: Props) {
         </IntervieweeTranscript>
 
         <HintArea className="flex-3 min-h-0">
-          <div className="w-full h-full flex flex-col items-start justify-between">
-            <HintButton />
-            <ExitLink />
-          </div>
+          <ExitLink />
         </HintArea>
       </div>
     </IntervieweeSection>
