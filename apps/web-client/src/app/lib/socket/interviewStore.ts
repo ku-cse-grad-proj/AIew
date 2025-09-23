@@ -5,7 +5,13 @@ import { interviewSocket } from './interviewSocket'
 import type { IInterviewSocket } from './types'
 
 type NextQuestionPayload = {
-  step: { id: string; question?: string }
+  step: {
+    id: string
+    question?: string
+    type: string
+    criteria: string[]
+    rationale: string
+  }
   audioBase64?: string
   isFollowUp?: boolean
 }
@@ -16,6 +22,9 @@ type CurrentQuestion = {
   audioBase64?: string
   isFollowUp?: boolean
   order: number
+  type: string
+  criteria: string[]
+  rationale: string
 }
 
 type ServerError = { code: string; message: string } | null
@@ -153,6 +162,9 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
               audioBase64: nq.audioBase64,
               isFollowUp: nq.isFollowUp ?? false,
               order,
+              type: nq.step.type,
+              criteria: nq.step.criteria,
+              rationale: nq.step.rationale,
             },
           }
         })

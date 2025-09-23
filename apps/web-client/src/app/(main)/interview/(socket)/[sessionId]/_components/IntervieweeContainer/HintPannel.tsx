@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 
 import Cancel from '@/../public/icons/cancel.svg'
+import { useInterviewStore } from '@/app/lib/socket/interviewStore'
 
 const Entry = ({ children }: { children: ReactNode }) => {
   return <div className="w-full flex">{children}</div>
@@ -17,7 +18,15 @@ const Dt = ({ children }: { children: ReactNode }) => {
 }
 
 const Dd = ({ children }: { children: ReactNode }) => {
-  return <dd className="flex-1 text-[12px]">{children}</dd>
+  return (
+    <dd className="flex-1 flex gap-4 text-[12px] leading-[12px]">{children}</dd>
+  )
+}
+
+const Tag = ({ children }: { children: ReactNode }) => {
+  return (
+    <span className="p-8 bg-neutral-background rounded-[8px]">{children}</span>
+  )
 }
 
 export default function HintPannel({
@@ -27,6 +36,8 @@ export default function HintPannel({
   className?: string
   onClick?: () => void
 }) {
+  const current = useInterviewStore((state) => state.current)
+
   return (
     <div
       className={`w-full h-full p-24 shadow-box bg-white rounded-[20px] relative ${className}`}
@@ -41,18 +52,21 @@ export default function HintPannel({
       <dl className="w-full h-full flex flex-col justify-between ">
         <Entry>
           <Dt>type</Dt>
-          <Dd>TECHNICAL</Dd>
+          <Dd>
+            <Tag>{current?.type}</Tag>
+          </Dd>
         </Entry>
         <Entry>
           <Dt>criteria</Dt>
-          <Dd>성능 최적화, 접근성</Dd>
+          <Dd>
+            {current?.criteria.map((item, i) => (
+              <Tag key={i}>{item}</Tag>
+            ))}
+          </Dd>
         </Entry>
         <Entry>
           <Dt>rationale</Dt>
-          <Dd>
-            사용자의 답변에서 구체적인 사례와 도구에 대한 설명이 부족하므로,
-            이를 보완하기 위해 구체적인 예시를 요구합니다.
-          </Dd>
+          <Dd>{current?.rationale}</Dd>
         </Entry>
       </dl>
     </div>
