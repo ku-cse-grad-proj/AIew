@@ -12,9 +12,11 @@ import { useSttStore } from '@/app/lib/socket/sttStore'
 export default function InterviewerPannel({
   sessionId,
   className,
+  title,
 }: {
   sessionId: string
   className?: string
+  title: string
 }) {
   const currentQuestion = useInterviewStore((state) => state.current)
 
@@ -57,7 +59,7 @@ export default function InterviewerPannel({
     <section
       className={`w-full h-full flex flex-col p-24 bg-neutral-card rounded-[20px] shadow-box ${className}`}
     >
-      <InterviewHeader title={'배달의 민족 interview'} />
+      <InterviewHeader title={title} />
       <div className="w-full min-h-0 flex-1 flex flex-col gap-16">
         <Interviewer>
           {!isSpeaking && (

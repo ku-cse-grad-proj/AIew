@@ -28,7 +28,11 @@ export default async function InterviewPage({
 
   return (
     <article className="w-full h-full grid grid-cols-[2fr_1fr] grid-rows-[7fr_1fr] gap-24">
-      <InterviewerPannel sessionId={sessionId} className="min-w-0 min-h-0" />
+      <InterviewerPannel
+        title={interview.title}
+        sessionId={sessionId}
+        className="min-w-0 min-h-0"
+      />
       <IntervieweeContainer className="min-w-0 min-h-0 col-start-2 row-start-1 row-end-3" />
       <AnswerControl className="min-w-0 min-h-0" />
     </article>
