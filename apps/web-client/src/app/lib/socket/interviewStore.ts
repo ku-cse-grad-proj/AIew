@@ -4,8 +4,23 @@ import { create } from 'zustand'
 import { interviewSocket } from './interviewSocket'
 import type { IInterviewSocket } from './types'
 
+export const QUESTION_TYPES = {
+  PERSONALITY: '인성',
+  TECHNICAL: '기술',
+  TAILORED: '맞춤',
+} as const
+
+export type QuestionType = keyof typeof QUESTION_TYPES
+export type QuestionTypeLabel = (typeof QUESTION_TYPES)[QuestionType]
+
 type NextQuestionPayload = {
-  step: { id: string; question?: string }
+  step: {
+    id: string
+    question?: string
+    type: QuestionType
+    criteria: string[]
+    rationale: string
+  }
   audioBase64?: string
   isFollowUp?: boolean
 }
@@ -16,6 +31,9 @@ type CurrentQuestion = {
   audioBase64?: string
   isFollowUp?: boolean
   order: number
+  type: QuestionTypeLabel
+  criteria: string[]
+  rationale: string
 }
 
 type ServerError = { code: string; message: string } | null
@@ -28,15 +46,18 @@ type InterviewState = {
   questions: QuestionBundle[]
   current?: CurrentQuestion
   finished: boolean
+  elapsedSec: number
   error: ServerError
 
   // actions
   connect: (sessionId: string, s?: IInterviewSocket) => void
   disconnect: (s?: IInterviewSocket) => void
+  emitElapsedSec: (s?: IInterviewSocket) => void
   submitAnswer: (
     payload: { stepId: string; answer: string; duration: number },
     s?: IInterviewSocket,
   ) => void
+  setElapsedSec: (sec: number) => void
 }
 
 // 핸들러 중복 바인딩 방지용 플래그
@@ -47,9 +68,12 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
   questions: [],
   current: undefined,
   finished: false,
+  elapsedSec: 0,
   error: null,
 
   disconnect: (s = interviewSocket) => {
+    get().emitElapsedSec()
+    console.log('interview disconnect', get().elapsedSec)
     s.disconnect()
     set(store.getInitialState()) //store, 초기값으로 설정
     handlersBound.value = false // removeAllListeners() 했으므로 재바인딩 허용
@@ -58,7 +82,17 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
   // 5) 답변 제출
   submitAnswer: (payload, s = interviewSocket) => {
     s.emit('client:submit-answer', payload)
+    get().emitElapsedSec() //답변 제출 시점의 경과 시간 전송
   },
+
+  emitElapsedSec: (s = interviewSocket) => {
+    s.emit('client:submit-elapsedSec', {
+      sessionId: get().sessionId,
+      elapsedSec: get().elapsedSec,
+    })
+  },
+
+  setElapsedSec: (sec) => set({ elapsedSec: sec }),
 
   connect: (sessionId, s = interviewSocket) => {
     const url = process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:3000'
@@ -82,6 +116,8 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       s.on('server:questions-ready', ({ sessionId: readySessionId }) => {
         // 클라이언트가 준비되었음을 서버에 알림 (핸드셰이크)
         s.emit('client:ready', { sessionId: readySessionId })
+        //TODO: 저장된 elapsedSec가 있으면 반영
+        // set({ elapsedSec: 120 })
       })
 
       // 다음 질문 수신 (첫 질문 포함)
@@ -135,6 +171,9 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
               audioBase64: nq.audioBase64,
               isFollowUp: nq.isFollowUp ?? false,
               order,
+              type: QUESTION_TYPES[nq.step.type],
+              criteria: nq.step.criteria,
+              rationale: nq.step.rationale,
             },
           }
         })

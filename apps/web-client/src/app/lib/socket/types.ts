@@ -13,6 +13,7 @@ export type ServerEvent =
 export type ClientEvent =
   | 'client:join-room'
   | 'client:submit-answer'
+  | 'client:submit-elapsedSec'
   | 'client:ready'
 
 export interface IInterviewSocket {
