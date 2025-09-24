@@ -4,11 +4,20 @@ import { create } from 'zustand'
 import { interviewSocket } from './interviewSocket'
 import type { IInterviewSocket } from './types'
 
+export const QUESTION_TYPES = {
+  PERSONALITY: '인성',
+  TECHNICAL: '기술',
+  TAILORED: '맞춤',
+} as const
+
+export type QuestionType = keyof typeof QUESTION_TYPES
+export type QuestionTypeLabel = (typeof QUESTION_TYPES)[QuestionType]
+
 type NextQuestionPayload = {
   step: {
     id: string
     question?: string
-    type: string
+    type: QuestionType
     criteria: string[]
     rationale: string
   }
@@ -22,7 +31,7 @@ type CurrentQuestion = {
   audioBase64?: string
   isFollowUp?: boolean
   order: number
-  type: string
+  type: QuestionTypeLabel
   criteria: string[]
   rationale: string
 }
@@ -162,7 +171,7 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
               audioBase64: nq.audioBase64,
               isFollowUp: nq.isFollowUp ?? false,
               order,
-              type: nq.step.type,
+              type: QUESTION_TYPES[nq.step.type],
               criteria: nq.step.criteria,
               rationale: nq.step.rationale,
             },
