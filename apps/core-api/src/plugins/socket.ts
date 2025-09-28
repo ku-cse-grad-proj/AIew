@@ -129,17 +129,21 @@ export default fp(
           let currentQuestion: InterviewStep | null = null
 
           if (session.status === 'IN_PROGRESS') {
-            // 진행 중인 경우, 현재 인덱스의 메인 질문을 찾음
-            const mainQuestions = await fastify.prisma.interviewStep.findMany({
-              where: { interviewSessionId: sessionId, parentStepId: null },
-              orderBy: { aiQuestionId: 'asc' },
+            // 진행 중인 경우, 답변이 없는 질문을 찾음 (메인/꼬리 모두 포함)
+            currentQuestion = await fastify.prisma.interviewStep.findFirst({
+              where: {
+                interviewSessionId: sessionId,
+                answer: null,
+              },
+              orderBy: {
+                aiQuestionId: 'asc',
+              },
             })
-            currentQuestion = mainQuestions[session.currentQuestionIndex]
           } else if (session.status === 'READY') {
             // 준비 상태인 경우, 첫 번째 질문을 찾음
             currentQuestion = await fastify.prisma.interviewStep.findFirst({
               where: { interviewSessionId: sessionId },
-              orderBy: { createdAt: 'asc' },
+              orderBy: { aiQuestionId: 'asc' },
             })
           }
 
