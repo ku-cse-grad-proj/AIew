@@ -23,7 +23,7 @@ import {
 
 import {
   AiQuestionCategory,
-  EvaluationResult,
+  AnswerEvaluationResult,
   FollowUp,
   QuestionGenerateResponse,
   TailDecision,
@@ -88,10 +88,13 @@ class WebSocketTestClient {
   }
 
   submitAnswer(stepId: string, answer: string) {
+    const now = Date.now()
     this.client.emit('client:submit-answer', {
       stepId,
       answer,
       duration: 30, // fixed duration for tests
+      startAt: now - 30000,
+      endAt: now,
     })
   }
 
@@ -176,13 +179,13 @@ describe('WebSocket interview flow', () => {
     )
     vi.spyOn(app.aiClientService, 'logUserAnswer').mockResolvedValue(undefined)
     vi.spyOn(app.aiClientService, 'evaluateAnswer').mockImplementation(
-      async (req): Promise<EvaluationResult> => {
+      async (req): Promise<AnswerEvaluationResult> => {
         // console.log(`[MOCK] evaluateAnswer called for ${req.question_id}`)
         return {
           question_id: req.question_id,
           category: req.category,
+          feedback: 'Good answer, but could be more detailed.',
           tail_decision: TailDecision.CREATE, // Always create a follow-up
-          tail_question: `Follow-up for ${req.question_id}`,
           tail_rationale: 'Drill down',
           overall_score: 50,
           strengths: [],
@@ -227,15 +230,20 @@ describe('WebSocket interview flow', () => {
       await wsClient.waitForEvent('server:room-joined')
 
       // Start listening for questions-ready and trigger the process
-      const readyPromise = wsClient.waitForEvent<{ sessionId: string }>(
-        'server:questions-ready',
-      )
+      const readyPromise = wsClient.waitForEvent<{
+        sessionId: string
+        elapsedSec: number
+        answeredSteps: InterviewStep[]
+      }>('server:questions-ready')
+
       await app.interviewService.saveQuestionsAndNotifyClient(
         session.id,
         mockGeneratedQuestions,
       )
-      const { sessionId } = await readyPromise
+      const { sessionId, elapsedSec, answeredSteps } = await readyPromise
       expect(sessionId).toBe(session.id)
+      expect(elapsedSec).toBe(0)
+      expect(answeredSteps).toEqual([])
 
       // New handshake step: client sends ready, waits for the first question
       const firstQuestionPromise = wsClient.waitForEvent<{

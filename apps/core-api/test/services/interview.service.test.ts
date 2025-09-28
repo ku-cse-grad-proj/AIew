@@ -202,6 +202,8 @@ describe('InterviewService Unit Tests', () => {
       expect(app.io.to(session.id).emit).toHaveBeenCalledWith(
         'server:questions-ready',
         {
+          answeredSteps: [],
+          elapsedSec: 0,
           sessionId: session.id,
         },
       )
