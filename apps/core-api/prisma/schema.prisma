@@ -86,6 +86,8 @@ model InterviewStep {
 
   // ++ 추가: 답변 및 평가에 대한 상세 정보
   answerDurationSec      Int?      // 실제 사용자 답변 시간 (초)
+  answerStartedAt        DateTime? // 답변 시작 시간
+  answerEndedAt          DateTime? // 답변 종료 시간
   strengths              String[]  // AI가 평가한 강점 목록
   improvements           String[]  // AI가 평가한 개선점 목록
   redFlags               String[]  // AI가 발견한 위험 신호 목록
