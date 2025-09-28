@@ -166,13 +166,16 @@ export class InterviewService {
       log.info(`[${sessionId}] Questions saved successfully.`)
 
       // 상태를 READY로 업데이트하고, 클라이언트에게 준비되었음을 알립니다.
-      // 이것이 questions-ready 이벤트의 유일한 발생 지점이 됩니다.
       await prisma.interviewSession.update({
         where: { id: sessionId },
         data: { status: 'READY' },
       })
       log.info(`[${sessionId}] Notifying client that questions are ready.`)
-      io.to(sessionId).emit('server:questions-ready', { sessionId })
+      io.to(sessionId).emit('server:questions-ready', {
+        sessionId,
+        elapsedSec: 0,
+        answeredSteps: [],
+      })
     } catch (error) {
       log.error(`[${sessionId}] Error in saveQuestionsAndNotifyClient:`, {
         error,
@@ -191,6 +194,8 @@ export class InterviewService {
     stepId: string,
     answer: string,
     duration: number,
+    startAt: Date,
+    endAt: Date,
   ) {
     const { prisma, log, io } = this.fastify
     log.info(`[${sessionId}] Start processing answer for step ${stepId}...`)
@@ -212,7 +217,12 @@ export class InterviewService {
 
       const currentStep = await prisma.interviewStep.update({
         where: { id: stepId },
-        data: { answer, answerDurationSec: duration },
+        data: {
+          answer,
+          answerDurationSec: duration,
+          answerStartedAt: startAt,
+          answerEndedAt: endAt,
+        },
       })
       await this.aiClient.logUserAnswer(
         {

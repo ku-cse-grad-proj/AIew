@@ -11,6 +11,7 @@ declare module 'fastify' {
 declare module 'socket.io' {
   interface Socket {
     user: User
+    sessionId?: string // 소켓 객체에 세션 ID 저장
   }
 }
 
@@ -70,10 +71,11 @@ export default fp(
         try {
           const session = await fastify.prisma.interviewSession.findFirst({
             where: { id: sessionId, userId: socket.user.id },
-            select: { id: true, status: true },
+            select: { id: true, status: true, totalTimeSec: true },
           })
 
           if (session) {
+            socket.sessionId = sessionId // 소켓에 세션 ID 저장
             await socket.join(sessionId)
             fastify.log.info(
               `Socket ${socket.id} joined room: ${sessionId} for user ${socket.user.id}`,
@@ -89,9 +91,23 @@ export default fp(
               session.status === 'COMPLETED' // TODO: 완료 상태로 들어올 때 처리
             ) {
               fastify.log.info(
-                `[${sessionId}] Questions are already ready. Notifying re-joined client ${socket.id}.`,
+                `[${sessionId}] Session status is ${session.status}. Notifying client ${socket.id}.`,
               )
-              socket.emit('server:questions-ready', { sessionId })
+              const answeredSteps = await fastify.prisma.interviewStep.findMany(
+                {
+                  where: {
+                    interviewSessionId: sessionId,
+                    answer: { not: null },
+                  },
+                  orderBy: { aiQuestionId: 'asc' },
+                },
+              )
+
+              socket.emit('server:questions-ready', {
+                sessionId,
+                elapsedSec: session.totalTimeSec ?? 0,
+                answeredSteps,
+              })
             } else if (session.status === 'FAILED') {
               socket.emit('server:error', {
                 code: 'INTERVIEW_SETUP_FAILED',
@@ -193,6 +209,8 @@ export default fp(
           stepId: string
           answer: string
           duration: number
+          startAt: number
+          endAt: number
         }) => {
           try {
             const step = await fastify.prisma.interviewStep.findUnique({
@@ -207,6 +225,8 @@ export default fp(
               payload.stepId,
               payload.answer,
               payload.duration,
+              new Date(payload.startAt),
+              new Date(payload.endAt),
             )
           } catch (error) {
             fastify.log.error(
@@ -221,8 +241,36 @@ export default fp(
         },
       )
 
-      socket.on('disconnect', () => {
+      socket.on(
+        'client:submit-elapsedSec',
+        async ({
+          sessionId,
+          elapsedSec,
+        }: {
+          sessionId: string
+          elapsedSec: number
+        }) => {
+          try {
+            await fastify.prisma.interviewSession.update({
+              where: { id: sessionId, userId: socket.user.id },
+              data: { totalTimeSec: elapsedSec },
+            })
+          } catch (error) {
+            fastify.log.error(
+              `[${sessionId}] Failed to update elapsed time:`,
+              error,
+            )
+          }
+        },
+      )
+
+      socket.on('disconnect', async () => {
         fastify.log.info(`Socket disconnected: ${socket.id}`)
+        // 연결 종료 시에도 elapsedSec 업데이트 시도
+        if (socket.sessionId) {
+          // 이 부분은 클라이언트에서 보내주는 마지막 시간을 놓칠 경우를 대비
+          // 클라이언트의 `disconnect` 핸들러에서 `emitElapsedSec`을 호출하는 것이 더 정확
+        }
       })
     }
 
