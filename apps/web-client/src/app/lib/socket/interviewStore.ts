@@ -27,7 +27,7 @@ type NextQuestionPayload = {
 }
 
 type QuestionReadyPayload = {
-  answeredSteps: QuestionBundle
+  answeredSteps: { question: string; tailSteps: { question: string }[] }[]
   elapsedSec: number
   sessionId: string
 }
@@ -124,7 +124,14 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       s.on('server:questions-ready', (qr: QuestionReadyPayload) => {
         // 클라이언트가 준비되었음을 서버에 알림 (핸드셰이크)
         s.emit('client:ready', { sessionId: qr.sessionId })
-        set({ elapsedSec: qr.elapsedSec })
+        set({
+          elapsedSec: qr.elapsedSec,
+          //answeredSteps to QuestionBundle type
+          questions: qr.answeredSteps.map((main) => ({
+            main: main.question,
+            followUps: main.tailSteps.map((followUp) => followUp.question),
+          })),
+        })
       })
 
       // 다음 질문 수신 (첫 질문 포함)
