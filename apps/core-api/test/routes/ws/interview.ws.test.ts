@@ -173,6 +173,16 @@ describe('WebSocket interview flow', () => {
     // Mock TTS Service to prevent actual API calls
     vi.spyOn(app.ttsService, 'generate').mockResolvedValue('fake-audio-base64')
 
+    // Mock STT Service to prevent actual API calls in CI
+    vi.spyOn(app.interviewService, 'generateSttToken').mockResolvedValue({
+      data: { value: 'fake-stt-token' },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      // eslint-disable-next-line
+      config: {} as any,
+    })
+
     // Mock all necessary AI client methods
     vi.spyOn(app.aiClientService, 'logShownQuestion').mockResolvedValue(
       undefined,
