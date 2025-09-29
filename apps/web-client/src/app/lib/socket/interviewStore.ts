@@ -23,6 +23,7 @@ type NextQuestionPayload = {
   }
   audioBase64?: string
   isFollowUp?: boolean
+  sttToken: string
 }
 
 type CurrentQuestion = {
@@ -34,6 +35,7 @@ type CurrentQuestion = {
   type: QuestionTypeLabel
   criteria: string[]
   rationale: string
+  sttToken: string
 }
 
 type ServerError = { code: string; message: string } | null
@@ -174,6 +176,7 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
               type: QUESTION_TYPES[nq.step.type],
               criteria: nq.step.criteria,
               rationale: nq.step.rationale,
+              sttToken: nq.sttToken,
             },
           }
         })
