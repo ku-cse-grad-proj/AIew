@@ -9,6 +9,9 @@ import { FastifyInstance, RequestGenericInterface, RouteHandler } from 'fastify'
 import { Tag } from '@/configs/swagger-option'
 import SchemaId from '@/utils/schema-id'
 
+/**
+ * @deprecated
+ */
 const controller: FastifyPluginAsyncTypebox = async (
   fastify: FastifyInstance,
 ) => {
@@ -112,6 +115,7 @@ const controller: FastifyPluginAsyncTypebox = async (
     onRequest: [server.authenticate],
     handler: handler,
     schema: {
+      deprecated: true,
       tags: [Tag.Interview],
       summary: 'OpenAI STT 임시 토큰 발급',
       description:

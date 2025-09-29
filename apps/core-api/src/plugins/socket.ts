@@ -156,6 +156,12 @@ export default fp(
               { question: questionPayloadForAi },
               sessionId,
             )
+
+            const sttToken = await fastify.interviewService.generateSttToken(
+              sessionId,
+              socket.user.id,
+            )
+
             console.time('tts')
             const audioBase64 = await fastify.ttsService.generate(
               currentQuestion.question,
@@ -166,6 +172,7 @@ export default fp(
               step: currentQuestion,
               isFollowUp: !!currentQuestion.parentStepId, // 꼬리질문 여부 확인
               audioBase64,
+              sttToken: sttToken.data.value,
             })
           }
           // 다른 상태(COMPLETED, FAILED 등)에서는 아무것도 보내지 않음

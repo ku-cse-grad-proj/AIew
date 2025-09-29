@@ -2,6 +2,7 @@ import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createId } from '@paralleldrive/cuid2'
 import { InterviewSession, InterviewStep, QuestionType } from '@prisma/client'
 import { Static } from '@sinclair/typebox'
+import axios, { AxiosResponse } from 'axios'
 import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
@@ -275,6 +276,73 @@ export class InterviewService {
       })
     }
     log.info(`[${sessionId}] Finished processing answer for step ${stepId}.`)
+  }
+
+  /**
+   * OpenAI Realtime Transcription을 위한 임시 토큰을 발급합니다.
+   * @throws {Error} 403 Forbidden - 소유자가 아닐 경우
+   * @throws {Error} 404 Not Found - 세션이 존재하지 않을 경우
+   * @throws {Error} 500 Internal Server Error - OpenAI API 통신 실패
+   */
+  public async generateSttToken(
+    sessionId: string,
+    userId: string,
+  ): Promise<AxiosResponse> {
+    const { prisma, log } = this.fastify
+
+    // 세션 소유권 확인
+    const session = await prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+    })
+
+    if (!session) {
+      throw this.fastify.httpErrors.notFound(
+        `Interview session with ID '${sessionId}' not found.`,
+      )
+    }
+
+    if (session.userId !== userId) {
+      throw this.fastify.httpErrors.forbidden(
+        'You are not authorized to access this interview session.',
+      )
+    }
+
+    //session 설정
+    //turn_detection: semantic_vad가 가장 좋은 성능을 보임
+    const sessionConfig = {
+      session: {
+        type: 'transcription',
+        audio: {
+          input: {
+            transcription: {
+              model: 'gpt-4o-transcribe',
+              language: 'ko',
+            },
+            turn_detection: {
+              type: 'semantic_vad',
+            },
+          },
+        },
+      },
+    }
+
+    try {
+      // 소유권이 확인되면 토큰 발급 진행
+      const response = await axios.post<{ data: { value: string } }>(
+        'https://api.openai.com/v1/realtime/client_secrets',
+        sessionConfig,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      return response
+    } catch (error) {
+      log.error(error, `[${sessionId}] Failed to get STT token from OpenAI.`)
+      throw new Error('Failed to generate STT token.')
+    }
   }
 
   /**
@@ -771,7 +839,15 @@ export class InterviewService {
     )
     log.info(`[${sessionId}] Next question logged to AI memory.`)
 
-    // 꼬리 질문 음성 생성
+    // STT 토큰 및 오디오 생성
+    const session = await prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      select: { userId: true },
+    })
+    if (!session) {
+      throw new Error(`[${sessionId}] Session not found to generate STT token.`)
+    }
+    const sttToken = await this.generateSttToken(sessionId, session.userId)
     console.time('tts')
     const audioBase64 = await ttsService.generate(newFollowupStep.question)
     console.timeEnd('tts')
@@ -780,6 +856,7 @@ export class InterviewService {
       step: newFollowupStep,
       isFollowUp: true,
       audioBase64,
+      sttToken: sttToken.data.value,
     })
   }
 
@@ -787,7 +864,7 @@ export class InterviewService {
     const { prisma, log, io, ttsService } = this.fastify
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
-      select: { currentQuestionIndex: true },
+      select: { currentQuestionIndex: true, userId: true },
     })
     if (!session) throw new Error(`Session not found for id: ${sessionId}`)
 
@@ -850,7 +927,8 @@ export class InterviewService {
       )
       log.info(`[${sessionId}] Next question logged to AI memory.`)
 
-      // 다음 메인 질문 음성 생성
+      // STT 토큰 및 오디오 생성
+      const sttToken = await this.generateSttToken(sessionId, session.userId)
       console.time('tts')
       const audioBase64 = await ttsService.generate(nextStep.question)
       console.timeEnd('tts')
@@ -859,6 +937,7 @@ export class InterviewService {
         step: nextStep,
         isFollowUp: false,
         audioBase64,
+        sttToken: sttToken.data.value,
       })
     }
   }
