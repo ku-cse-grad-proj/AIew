@@ -97,9 +97,16 @@ export default fp(
                 {
                   where: {
                     interviewSessionId: sessionId,
+                    parentStepId: null, // 메인 질문만,
                     answer: { not: null },
                   },
                   orderBy: { aiQuestionId: 'asc' },
+                  include: {
+                    tailSteps: {
+                      where: { answer: { not: null } },
+                      orderBy: { aiQuestionId: 'asc' },
+                    },
+                  },
                 },
               )
 
