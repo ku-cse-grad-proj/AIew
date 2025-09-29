@@ -27,7 +27,7 @@ export default function InterviewerPannel({
   useEffect(() => {
     if (!sessionId || !currentQuestion) return
 
-    useSttStore.getState().connect(sessionId)
+    useSttStore.getState().connect(sessionId, currentQuestion.sttToken)
 
     if (currentQuestion?.audioBase64) {
       const audio = new Audio(

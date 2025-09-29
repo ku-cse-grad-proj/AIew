@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 
-import { privateFetch } from '../fetch'
 type sttState = {
   isSessionActive: boolean
   events: RealtimeEvent[]
@@ -8,7 +7,7 @@ type sttState = {
   isMicPaused: boolean
   canStopSession: boolean
   setSentences: (sentence: string) => void
-  connect: (sessionId: string) => Promise<void>
+  connect: (sessionId: string, sttToken: string) => Promise<void>
   disconnect: () => void
   pauseMic: () => void
   resumeMic: () => void
@@ -89,7 +88,7 @@ export const useSttStore = create<sttState>((set, get, store) => ({
     set(store.getInitialState())
   },
 
-  connect: async (sessionId: string) => {
+  connect: async (sessionId: string, sttToken: string) => {
     if (isConnecting) {
       console.log('stt 연결 중입니다')
       return
@@ -100,15 +99,13 @@ export const useSttStore = create<sttState>((set, get, store) => ({
     //만약 session이 존재하면 연결을 끊는다
     if (peerConnection || dataChannel) get().disconnect()
 
-    //Back에서 EPHEMERAL_KEY를 발급 받는다.
-    const response = await privateFetch(
-      process.env.NEXT_PUBLIC_API_BASE +
-        '/interviews/' +
-        sessionId +
-        '/stt-token',
-    )
-    const { data } = await response.json()
-    const EPHEMERAL_KEY = data.value
+    if (!sttToken) {
+      console.error(
+        'sttToken이 없습니다. stt 서비스를 이용하기 위해 token값이 필요합니다',
+      )
+      throw Error('sttToken 값이 없습니다')
+    }
+    const EPHEMERAL_KEY = sttToken
 
     // Create a peer connection
     const pc = new RTCPeerConnection()
