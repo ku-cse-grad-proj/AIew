@@ -26,6 +26,12 @@ type NextQuestionPayload = {
   sttToken: string
 }
 
+type QuestionReadyPayload = {
+  answeredSteps: QuestionBundle
+  elapsedSec: number
+  sessionId: string
+}
+
 type CurrentQuestion = {
   stepId: string
   text?: string
@@ -115,11 +121,10 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       // 서버로부터 질문 생성 완료 신호 수신
       // eslint-disable-next-line
       // @ts-ignore
-      s.on('server:questions-ready', ({ sessionId: readySessionId }) => {
+      s.on('server:questions-ready', (qr: QuestionReadyPayload) => {
         // 클라이언트가 준비되었음을 서버에 알림 (핸드셰이크)
-        s.emit('client:ready', { sessionId: readySessionId })
-        //TODO: 저장된 elapsedSec가 있으면 반영
-        // set({ elapsedSec: 120 })
+        s.emit('client:ready', { sessionId: qr.sessionId })
+        set({ elapsedSec: qr.elapsedSec })
       })
 
       // 다음 질문 수신 (첫 질문 포함)
