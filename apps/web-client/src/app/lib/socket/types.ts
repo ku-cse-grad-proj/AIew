@@ -15,6 +15,8 @@ export type ClientEvent =
   | 'client:submit-answer'
   | 'client:submit-elapsedSec'
   | 'client:ready'
+  | 'client:upload-chunk'
+  | 'client:upload-finish'
 
 export interface IInterviewSocket {
   connect(url: string, sessionId: string): void
