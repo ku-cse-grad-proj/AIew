@@ -210,6 +210,37 @@ export default fp(
         }
       })
 
+      //file을 chunk 단위로 받은 후 해당 chunks를 모아 File 생성
+      let chunks: Buffer[] = []
+
+      socket.on(
+        'client:upload-chunk',
+        (p: { index: number; chunk: ArrayBuffer }) => {
+          chunks[p.index] = Buffer.from(new Uint8Array(p.chunk))
+        },
+      )
+
+      socket.on('client:upload-finish', async (p: { type: string }) => {
+        // 인덱스 누락 체크 & 정렬
+        const ordered = chunks.filter(Boolean)
+        const big = Buffer.concat(ordered)
+        const blob = new Blob([big], p) // Node 18+
+        const filename = `record-${crypto.randomUUID()}.${p.type.startsWith('video/mp4') ? 'mp4' : 'webm'}`
+        const file = new File([blob], filename, {
+          type: p.type,
+          lastModified: Date.now(),
+        }) // undici/File 또는 전역 지원
+
+        console.dir({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+        })
+        chunks = [] // 메모리 해제
+        //TODO:: ai 서버로 보내기
+      })
+
       socket.on(
         'client:submit-answer',
         async (payload: {
