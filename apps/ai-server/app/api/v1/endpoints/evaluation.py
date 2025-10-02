@@ -3,14 +3,12 @@ from langchain.memory import ConversationBufferMemory
 
 from app.api.v1.endpoints.memory_debug import MemoryDep
 from app.models.evaluation import (
-    AnswerEvaluationRequest, 
+    AnswerEvaluationRequest,
     AnswerEvaluationResult,
     SessionEvaluationResult,
 )
-from app.services.answer_evaluator import (
-    evaluate_answer as evaluate_answer_service,
-    evaluate_session as evaluate_session_service
-)
+from app.services.answer_evaluator import evaluate_answer as evaluate_answer_service
+from app.services.answer_evaluator import evaluate_session as evaluate_session_service
 
 router = APIRouter()
 
@@ -21,8 +19,7 @@ def evaluate_answer(
 ):
     return evaluate_answer_service(req, memory)
 
+
 @router.post("/session-evaluating", response_model=SessionEvaluationResult)
-def evaluate_session(
-    memory: ConversationBufferMemory = Depends(MemoryDep)
-):
+def evaluate_session(memory: ConversationBufferMemory = Depends(MemoryDep)):
     return evaluate_session_service(memory)

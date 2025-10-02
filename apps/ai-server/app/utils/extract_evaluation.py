@@ -1,6 +1,7 @@
 import json
-from typing import Dict, List
 from statistics import mean
+from typing import Dict, List
+
 from langchain.memory import ConversationBufferMemory
 
 
@@ -27,7 +28,7 @@ def extract_evaluation(memory: ConversationBufferMemory) -> tuple[float, str]:
 
                     if qid is None:
                         continue
-                        
+
                     qa = {
                         "question_id": qid,
                         "overall_score": score,
@@ -46,12 +47,12 @@ def extract_evaluation(memory: ConversationBufferMemory) -> tuple[float, str]:
                     )
                     conversation_blocks.append(block)
 
-                    last_human = None # Reset after processing
+                    last_human = None  # Reset after processing
 
                 except json.JSONDecodeError:
                     continue
-    
-    avg_score = round(mean(scores), 2) 
+
+    avg_score = round(mean(scores), 2)
     conversation_text = "\n\n".join(conversation_blocks)
 
     return float(avg_score), conversation_text

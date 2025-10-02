@@ -1,16 +1,16 @@
 import cv2
 from fer import FER
-import numpy as np
 
 # 모델 초기화 (모듈 import 시 한 번만)
 emotion_detector = FER(mtcnn=True)
+
 
 def video_analysis(path: str, target_samples: int = 100):
     """
     영상 파일 경로를 입력받아 FER 분석 실행.
     약 target_samples 개의 프레임을 균등하게 샘플링하여 감정 분석 수행.
-    
-    반환: 
+
+    반환:
         results = [{frame, time, happy, sad, ...}, ...]
         taken = 분석된 프레임 개수
     """

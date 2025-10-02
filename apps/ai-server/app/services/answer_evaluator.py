@@ -1,4 +1,6 @@
-import json, os, re, ast
+import json
+import os
+import re
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -9,7 +11,7 @@ from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
 
 from app.models.evaluation import (
-    AnswerEvaluationRequest, 
+    AnswerEvaluationRequest,
     AnswerEvaluationResult,
     SessionEvaluationResult,
 )
@@ -24,12 +26,15 @@ PROMPT_PATH = (
 ).resolve()
 
 SESSION_PROMPT_PATH = (
-    Path(__file__).resolve().parent.parent / "config/prompt/session_evaluation_prompt.txt"
+    Path(__file__).resolve().parent.parent
+    / "config/prompt/session_evaluation_prompt.txt"
 ).resolve()
+
 
 def _load_prompt_template(path: Path) -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
+
 
 def _strip_json(text: str) -> str:
     m = re.search(r"```json(.*?)```", text, re.DOTALL)
@@ -38,6 +43,7 @@ def _strip_json(text: str) -> str:
     text = text.strip()
     i, j = text.find("{"), text.rfind("}")
     return text[i : j + 1] if i != -1 and j != -1 and j > i else text
+
 
 def evaluate_answer(
     req: AnswerEvaluationRequest, memory: Optional[ConversationBufferMemory] = None
@@ -93,9 +99,8 @@ def evaluate_answer(
 
     return eval_result
 
-def evaluate_session(
-    memory: ConversationBufferMemory
-) -> SessionEvaluationResult:
+
+def evaluate_session(memory: ConversationBufferMemory) -> SessionEvaluationResult:
     avg_score, conversation_text = extract_evaluation(memory)
 
     raw_prompt = _load_prompt_template(SESSION_PROMPT_PATH)
@@ -104,10 +109,7 @@ def evaluate_session(
     llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, temperature=0.2, model="gpt-4o")
     chain: Runnable = prompt_template | llm
 
-    vars = {
-        "conversation": conversation_text,
-        "avg_score": avg_score
-    }
+    vars = {"conversation": conversation_text, "avg_score": avg_score}
 
     result = chain.invoke(vars)
     content = result.content if hasattr(result, "content") else str(result)
@@ -124,5 +126,5 @@ def evaluate_session(
     eval_result = SessionEvaluationResult.model_validate(parsed)
     if memory is not None:
         log_evaluation(memory, eval_result.model_dump())
-    
+
     return eval_result

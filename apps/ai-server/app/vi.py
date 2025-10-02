@@ -1,11 +1,12 @@
-import matplotlib.pyplot as plt
-import pandas as pd
 import json
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
 # 한글 폰트 설정 (맑은 고딕 또는 AppleGothic)
-plt.rcParams['font.family'] = 'Malgun Gothic'  # Windows
+plt.rcParams["font.family"] = "Malgun Gothic"  # Windows
 # plt.rcParams['font.family'] = 'AppleGothic'  # macOS
-plt.rcParams['axes.unicode_minus'] = False     # 마이너스 기호 깨짐 방지
+plt.rcParams["axes.unicode_minus"] = False  # 마이너스 기호 깨짐 방지
 
 # 데이터 로드
 result_dir = "C:/AIew/apps/ai-server/app/result"
