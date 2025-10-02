@@ -5,7 +5,7 @@ import MainLink from './MainLink'
 const LINKS = [
   { href: '/dashboard', label: 'dashboard' },
   { href: '/interview', label: 'interview' },
-  { href: '/setting', label: 'setting' },
+  { href: '/reports', label: 'report' },
 ] as const
 
 export default function Nav({ className }: { className?: string }) {
