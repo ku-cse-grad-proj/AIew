@@ -104,12 +104,13 @@ export default function Interviewee() {
 
     let index = 0
 
-    rec.ondataavailable = (e) => {
+    rec.ondataavailable = async (e) => {
       if (e.data && e.data.size > 0) {
         chunksRef.current.push(e.data)
         console.log(e.data.size)
+        const arrayBuffer = await e.data.arrayBuffer()
         interviewSocket.emit('client:upload-chunk', {
-          chunk: e.data,
+          chunk: arrayBuffer,
           index: index++,
         })
       }
