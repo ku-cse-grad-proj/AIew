@@ -1,7 +1,10 @@
-from app.models.emotion_analysis import EmotionGroupScore, EmotionGroupResult
-from langchain.memory import ConversationBufferMemory
-from typing import List, Dict
 import ast
+from typing import Dict, List
+
+from langchain.memory import ConversationBufferMemory
+
+from app.models.emotion import EmotionGroupResult, EmotionGroupScore
+
 
 class EmotionAnalysisService:
     def __init__(self, memory: ConversationBufferMemory, session_id: str):
@@ -20,8 +23,14 @@ class EmotionAnalysisService:
                     for item in parsed.get("results", []):
                         # 필수 키가 모두 있는지 확인
                         required_keys = [
-                            "frame", "time", "happy", "sad",
-                            "neutral", "angry", "fear", "surprise"
+                            "frame",
+                            "time",
+                            "happy",
+                            "sad",
+                            "neutral",
+                            "angry",
+                            "fear",
+                            "surprise",
                         ]
                         if all(k in item for k in required_keys):
                             frames.append(item)
