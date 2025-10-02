@@ -345,6 +345,15 @@ export default fp(
 
       socket.on('disconnect', async () => {
         fastify.log.info(`Socket disconnected: ${socket.id}`)
+
+        // 업로드 중이던 청크 정리
+        if (socket.uploadChunks && socket.uploadChunks.length > 0) {
+          fastify.log.warn(
+            `Socket ${socket.id} disconnected with ${socket.uploadChunks.length} unfinished chunks. Clearing memory.`,
+          )
+          socket.uploadChunks = []
+        }
+
         // 연결 종료 시에도 elapsedSec 업데이트 시도
         if (socket.sessionId) {
           // 이 부분은 클라이언트에서 보내주는 마지막 시간을 놓칠 경우를 대비
