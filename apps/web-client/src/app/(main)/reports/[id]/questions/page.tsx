@@ -3,6 +3,8 @@ import ListSection from './_components/ListSection'
 import ResultWrapper from './_components/ResultWrapper'
 import { QuestionFeedback, QuestionInfo, QuestionList } from './_types'
 
+import { QUESTION_TYPES, QuestionType } from '@/app/_types'
+
 // main이든 tail이든 필요한 필드만 뽑아 QuestionInfo로 변환
 const toInfo = (s: {
   id: string
@@ -15,7 +17,7 @@ const toInfo = (s: {
 }): QuestionInfo => ({
   id: s.id,
   question: s.question,
-  type: s.type,
+  type: QUESTION_TYPES[s.type as QuestionType],
   rationale: s.rationale,
   criteria: s.criteria,
   answer: s.answer,

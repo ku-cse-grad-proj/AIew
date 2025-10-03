@@ -1,3 +1,5 @@
+import { QuestionTypeLabel } from '@/app/_types'
+
 export type QuestionItem = {
   id: string
   question: string
@@ -8,7 +10,7 @@ export type QuestionList = QuestionItem & {
 }
 
 export type QuestionInfo = QuestionItem & {
-  type: string
+  type: QuestionTypeLabel
   rationale: string
   criteria: string[]
   answer: string
