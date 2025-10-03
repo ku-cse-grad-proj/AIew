@@ -1,6 +1,6 @@
-import ResultSection from './_components/InfoSection'
+import InfoSection from './_components/InfoSection'
 import ListSection from './_components/ListSection'
-import InfoSection from './_components/ResultSection'
+import ResultWrapper from './_components/ResultWrapper'
 import { QuestionList } from './_types'
 
 export default function QuestionsReportPage() {
@@ -26,7 +26,7 @@ export default function QuestionsReportPage() {
         className={`col-start-2 row-start-1 row-end-3 ${cardStyle}`}
         questionList={questionList}
       />
-      <ResultSection className={`${cardStyle}`} />
+      <ResultWrapper className={``} />
     </section>
   )
 }
