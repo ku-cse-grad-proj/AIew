@@ -36,21 +36,10 @@ export default function InfoSection({
         />
         <DefinitionItem
           term="evaluatoin criteria"
-          description={
-            info.rationale +
-            '과거 프로젝트에서 직면했던 문제 중 하나를 구체적으로 설명하고, 그 문제를 해결하기 위해 어떤 창의적인 방법을 사용했는지, 그리고 팀원들과의 협력 과정에서 어떤 역할을 했는지 자세히 이야기해 주세요.'
-          }
+          description={info.rationale}
           tags={info.criteria}
         />
-        <DefinitionItem
-          term="answer"
-          description={
-            info.answer +
-            '과거 프로젝트에서 직면했던 문제 중 하나를 구체적으로 설명하고, 그 문제를 해결하기 위해 어떤 창의적인 방법을 사용했는지, 그리고 팀원들과의 협력 과정에서 어떤 역할을 했는지 자세히 이야기해 주세요.' +
-            '과거 프로젝트에서 직면했던 문제 중 하나를 구체적으로 설명하고, 그 문제를 해결하기 위해 어떤 창의적인 방법을 사용했는지, 그리고 팀원들과의 협력 과정에서 어떤 역할을 했는지 자세히 이야기해 주세요.' +
-            '과거 프로젝트에서 직면했던 문제 중 하나를 구체적으로 설명하고, 그 문제를 해결하기 위해 어떤 창의적인 방법을 사용했는지, 그리고 팀원들과의 협력 과정에서 어떤 역할을 했는지 자세히 이야기해 주세요.'
-          }
-        />
+        <DefinitionItem term="answer" description={info.answer} />
       </dl>
     </section>
   )
