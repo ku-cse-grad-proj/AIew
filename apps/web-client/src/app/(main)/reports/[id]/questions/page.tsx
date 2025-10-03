@@ -1,9 +1,29 @@
 import InfoSection from './_components/InfoSection'
 import ListSection from './_components/ListSection'
 import ResultWrapper from './_components/ResultWrapper'
-import { QuestionList } from './_types'
+import { QuestionInfo, QuestionList } from './_types'
+
+// main이든 tail이든 필요한 필드만 뽑아 QuestionInfo로 변환
+const toInfo = (s: {
+  id: string
+  question: string
+  type: string
+  rationale: string
+  criteria: string[]
+  answer: string
+  score: number | null
+}): QuestionInfo => ({
+  id: s.id,
+  question: s.question,
+  type: s.type,
+  rationale: s.rationale,
+  criteria: s.criteria,
+  answer: s.answer,
+  score: s.score ?? 1,
+})
 
 export default function QuestionsReportPage() {
+  const title = '배달의 민족 interview'
   const questions = getQuestions()
 
   //List에 사용될 데이터 추출
@@ -16,21 +36,31 @@ export default function QuestionsReportPage() {
     })),
   }))
 
+  //Info에 사용될 데이터 추출
+  const questionInfos: QuestionInfo[] = questions.flatMap((main) => [
+    toInfo(main),
+    ...main.tailSteps.map(toInfo),
+  ])
+
   const cardStyle = 'w-full h-full bg-neutral-card rounded-[20px] shadow-box'
   return (
     <section
       className={`w-full h-full pt-24 grid grid-cols-[7fr_3fr] grid-rows-[7fr_8fr] gap-24`}
     >
-      <InfoSection className={`${cardStyle}`} />
+      <InfoSection
+        questionReview={{ title, questionInfos }}
+        className={`min-h-0 ${cardStyle}`}
+      />
       <ListSection
-        className={`col-start-2 row-start-1 row-end-3 ${cardStyle}`}
+        className={`col-start-2 row-start-1 row-end-3 min-h-0 ${cardStyle}`}
         questionList={questionList}
       />
-      <ResultWrapper className={``} />
+      <ResultWrapper className={`min-h-0`} />
     </section>
   )
 }
 
+//TODO:: 실제 data로 변경
 function getQuestions() {
   return [
     {

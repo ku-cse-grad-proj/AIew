@@ -6,3 +6,16 @@ export type QuestionItem = {
 export type QuestionList = QuestionItem & {
   followUps: QuestionItem[]
 }
+
+export type QuestionInfo = QuestionItem & {
+  type: string
+  rationale: string
+  criteria: string[]
+  answer: string
+  score: number
+}
+
+export type QuestionReview = {
+  title: string
+  questionInfos: QuestionInfo[]
+}
