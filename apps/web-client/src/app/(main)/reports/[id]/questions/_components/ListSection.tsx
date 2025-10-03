@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { useParams, usePathname, useSearchParams } from 'next/navigation'
 import { ReactNode } from 'react'
 
 import { QuestionItem, QuestionList } from '../_types'
+
+import CancelIcon from '@/../public/icons/cancel.svg'
 
 export default function ListSection({
   className,
@@ -13,9 +15,20 @@ export default function ListSection({
   className?: string
   questionList: QuestionList[]
 }) {
+  const params = useParams()
+  const reportId = params.id
   return (
-    <section className={`w-full h-full ${className}`}>
-      <ul className="w-full h-full p-16 overflow-auto">
+    <section className={`w-full h-full flex flex-col ${className}`}>
+      <div className="pt-16 pr-16 pb-8 flex justify-end">
+        {/* TODO:: tooltip 추가하기 */}
+        <Link
+          href={`/reports/${reportId}`}
+          className="inline-flex p-8 bg-neutral-background rounded-[16px]"
+        >
+          <CancelIcon width={24} height={24} />
+        </Link>
+      </div>
+      <ul className="w-full flex-1 min-h-0 px-16 pb-16  overflow-auto">
         {questionList.map((main: QuestionList, i) => (
           <li key={main.id} className="pl-8 py-8">
             <ItemLink questionItem={main} isDefault={i === 0}>
