@@ -4,14 +4,7 @@ import { create } from 'zustand'
 import { interviewSocket } from './interviewSocket'
 import type { IInterviewSocket } from './types'
 
-export const QUESTION_TYPES = {
-  PERSONALITY: '인성',
-  TECHNICAL: '기술',
-  TAILORED: '맞춤',
-} as const
-
-export type QuestionType = keyof typeof QUESTION_TYPES
-export type QuestionTypeLabel = (typeof QUESTION_TYPES)[QuestionType]
+import { QUESTION_TYPES, QuestionType, QuestionTypeLabel } from '@/app/_types'
 
 type NextQuestionPayload = {
   step: {
