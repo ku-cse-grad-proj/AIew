@@ -19,3 +19,10 @@ export type QuestionReview = {
   title: string
   questionInfos: QuestionInfo[]
 }
+
+export type QuestionFeedback = {
+  id: string
+  redFlags: string[]
+  improvements: string[]
+  feedback: string
+}

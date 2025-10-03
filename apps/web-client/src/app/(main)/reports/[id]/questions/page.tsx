@@ -1,7 +1,7 @@
 import InfoSection from './_components/InfoSection'
 import ListSection from './_components/ListSection'
 import ResultWrapper from './_components/ResultWrapper'
-import { QuestionInfo, QuestionList } from './_types'
+import { QuestionFeedback, QuestionInfo, QuestionList } from './_types'
 
 // main이든 tail이든 필요한 필드만 뽑아 QuestionInfo로 변환
 const toInfo = (s: {
@@ -20,6 +20,18 @@ const toInfo = (s: {
   criteria: s.criteria,
   answer: s.answer,
   score: s.score ?? 1,
+})
+
+const toFeedback = (q: {
+  id: string
+  redFlags: string[]
+  improvements: string[]
+  feedback: string | null
+}): QuestionFeedback => ({
+  id: q.id,
+  redFlags: q.redFlags,
+  improvements: q.improvements,
+  feedback: q.feedback ?? '',
 })
 
 export default function QuestionsReportPage() {
@@ -42,6 +54,12 @@ export default function QuestionsReportPage() {
     ...main.tailSteps.map(toInfo),
   ])
 
+  //Feedback에 사용될 데이터 추출
+  const feedbacks: QuestionFeedback[] = questions.flatMap((main) => [
+    toFeedback(main),
+    ...main.tailSteps.map(toFeedback),
+  ])
+
   const cardStyle = 'w-full h-full bg-neutral-card rounded-[20px] shadow-box'
   return (
     <section
@@ -55,7 +73,7 @@ export default function QuestionsReportPage() {
         className={`col-start-2 row-start-1 row-end-3 min-h-0 ${cardStyle}`}
         questionList={questionList}
       />
-      <ResultWrapper className={`min-h-0`} />
+      <ResultWrapper feedbacks={feedbacks} className={`min-h-0`} />
     </section>
   )
 }

@@ -2,24 +2,32 @@
 
 import { useState } from 'react'
 
+import { QuestionFeedback } from '../_types'
+
+import FeedbackSection from './FeedbackSection'
 import ResultSection from './ResultSection'
 
-export default function ResultWrapper({ className }: { className?: string }) {
+export default function ResultWrapper({
+  className,
+  feedbacks,
+}: {
+  className?: string
+  feedbacks: QuestionFeedback[]
+}) {
   const [showEmotional, setShowEmotional] = useState(false)
   return (
     <div className={`relative ${className}`}>
-      <ResultSection
+      <FeedbackSection
+        feedbacks={feedbacks}
         showEmotional={showEmotional}
         onClick={() => setShowEmotional(false)}
-      >
-        <h2 className="absolute top-0 pl-24 pt-10 font-medium">feedback</h2>
-      </ResultSection>
+      ></FeedbackSection>
       <ResultSection
         showEmotional={showEmotional}
         onClick={() => setShowEmotional(true)}
         emotional
       >
-        <h2 className="absolute bottom-0 pl-24 pb-10 font-medium">
+        <h2 className="absolute bottom-0 pl-16 pb-10 font-medium">
           emotional feedback
         </h2>
       </ResultSection>
