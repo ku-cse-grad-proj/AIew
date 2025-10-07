@@ -1,5 +1,7 @@
+import DeckLayout from '../../_components/DeckLayout'
+
+import FeedbackSection from './_components/FeedbackSection'
 import InfoSection from './_components/InfoSection'
-import ResultWrapper from './_components/ResultWrapper'
 import { QuestionFeedback, QuestionInfo } from './_types'
 
 import { QUESTION_TYPES, QuestionType } from '@/app/_types'
@@ -58,7 +60,16 @@ export default function QuestionsReportPage() {
         questionReview={{ title, questionInfos }}
         className={`flex-7 min-h-0 ${cardStyle}`}
       />
-      <ResultWrapper feedbacks={feedbacks} className={`flex-8 min-h-0`} />
+      <DeckLayout className={`flex-8 min-h-0`}>
+        {/* top card */}
+        <FeedbackSection feedbacks={feedbacks} />
+        {/* bottom card */}
+        <div>
+          <h2 className="absolute bottom-0 pl-16 pb-10 font-medium">
+            emotional feedback
+          </h2>
+        </div>
+      </DeckLayout>
     </div>
   )
 }

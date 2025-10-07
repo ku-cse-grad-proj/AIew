@@ -5,29 +5,20 @@ import { useSearchParams } from 'next/navigation'
 import { QuestionFeedback } from '../_types'
 
 import DefinitionItem from './DefinitionItem'
-import ResultSection from './ResultSection'
 
 import RedFlagIcon from '@/../public/icons/error.svg'
 
 export default function FeedbackSection({
   feedbacks,
-  showEmotional,
-  onClick,
 }: {
   feedbacks: QuestionFeedback[]
-  showEmotional: boolean
-  onClick: () => void
 }) {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const feedback: QuestionFeedback =
     feedbacks.find((feedback) => feedback.id === id) ?? feedbacks[0]
   return (
-    <ResultSection
-      showEmotional={showEmotional}
-      onClick={onClick}
-      className="flex flex-col px-16 py-10"
-    >
+    <section className="w-full h-full flex flex-col px-16 py-10">
       <h2 className="font-medium">feedback</h2>
 
       {/* redFlags가 존재할 때에만 redFlag 표시 */}
@@ -48,7 +39,7 @@ export default function FeedbackSection({
         />
         <DefinitionItem term="feedback" description={feedback.feedback} />
       </dl>
-    </ResultSection>
+    </section>
   )
 }
 
