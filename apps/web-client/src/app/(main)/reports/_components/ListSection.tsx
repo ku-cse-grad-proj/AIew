@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useParams, usePathname, useSearchParams } from 'next/navigation'
 import { ReactNode } from 'react'
 
-import { QuestionItem, QuestionList } from '../_types'
+import { QuestionItem, QuestionList } from '../[id]/questions/_types'
 
 import CancelIcon from '@/../public/icons/cancel.svg'
 
@@ -64,9 +64,12 @@ function ItemLink({
 
   const id = searchParams.get('id')
   const isActive = questionItem.id === id || (isDefault && !id)
+  const questionPathname = pathname.includes('questions')
+    ? pathname
+    : pathname + '/questions'
   return (
     <Link
-      href={pathname + '?id=' + questionItem.id}
+      href={questionPathname + '?id=' + questionItem.id}
       className={`block text-[14px] ${isActive ? 'font-medium' : 'text-neutral-subtext'}`}
     >
       {children}

@@ -1,64 +1,28 @@
-import InfoSection from './_components/InfoSection'
-import ResultWrapper from './_components/ResultWrapper'
-import { QuestionFeedback, QuestionInfo } from './_types'
+import { ReactNode } from 'react'
 
-import { QUESTION_TYPES, QuestionType } from '@/app/_types'
+import { QuestionList } from './[id]/questions/_types'
+import ListSection from './_components/ListSection'
 
-// main이든 tail이든 필요한 필드만 뽑아 QuestionInfo로 변환
-const toInfo = (s: {
-  id: string
-  question: string
-  type: string
-  rationale: string
-  criteria: string[]
-  answer: string
-  score: number | null
-}): QuestionInfo => ({
-  id: s.id,
-  question: s.question,
-  type: QUESTION_TYPES[s.type as QuestionType],
-  rationale: s.rationale,
-  criteria: s.criteria,
-  answer: s.answer,
-  score: s.score ?? 1,
-})
-
-const toFeedback = (q: {
-  id: string
-  redFlags: string[]
-  improvements: string[]
-  feedback: string | null
-}): QuestionFeedback => ({
-  id: q.id,
-  redFlags: q.redFlags,
-  improvements: q.improvements,
-  feedback: q.feedback ?? '',
-})
-
-export default function QuestionsReportPage() {
-  const title = '배달의 민족 interview'
+export default function ReportLayout({ children }: { children: ReactNode }) {
   const questions = getQuestions()
 
-  //Info에 사용될 데이터 추출
-  const questionInfos: QuestionInfo[] = questions.flatMap((main) => [
-    toInfo(main),
-    ...main.tailSteps.map(toInfo),
-  ])
-
-  //Feedback에 사용될 데이터 추출
-  const feedbacks: QuestionFeedback[] = questions.flatMap((main) => [
-    toFeedback(main),
-    ...main.tailSteps.map(toFeedback),
-  ])
-
+  //List에 사용될 데이터 추출
+  const questionList: QuestionList[] = questions.map((main) => ({
+    id: main.id,
+    question: main.question,
+    followUps: main.tailSteps.map((step) => ({
+      id: step.id,
+      question: step.question,
+    })),
+  }))
   const cardStyle = 'w-full h-full bg-neutral-card rounded-[20px] shadow-box'
   return (
-    <div className={`w-full h-full flex flex-col gap-24`}>
-      <InfoSection
-        questionReview={{ title, questionInfos }}
-        className={`flex-7 min-h-0 ${cardStyle}`}
+    <div className="w-full h-full flex p-24 gap-24">
+      <div className="flex-7">{children}</div>
+      <ListSection
+        className={`flex-3 min-h-0 ${cardStyle}`}
+        questionList={questionList}
       />
-      <ResultWrapper feedbacks={feedbacks} className={`flex-8 min-h-0`} />
     </div>
   )
 }
