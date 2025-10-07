@@ -7,6 +7,7 @@ import { ReactNode } from 'react'
 import { QuestionItem, QuestionList } from '../[id]/questions/_types'
 
 import CancelIcon from '@/../public/icons/cancel.svg'
+import InfoIcon from '@/../public/icons/info.svg'
 
 export default function ListSection({
   className,
@@ -17,16 +18,27 @@ export default function ListSection({
 }) {
   const params = useParams()
   const reportId = params.id
+
+  const searchParams = useSearchParams()
+  const questionId = searchParams.get('id')
+  const isReport = questionId == null
+
   return (
     <section className={`w-full h-full flex flex-col ${className}`}>
-      <div className="pt-16 pr-16 pb-8 flex justify-end">
-        {/* TODO:: tooltip 추가하기 */}
-        <Link
-          href={`/reports/${reportId}`}
-          className="inline-flex p-8 bg-neutral-background rounded-[16px]"
-        >
-          <CancelIcon width={24} height={24} />
-        </Link>
+      <div className="w-full min-h-64 pt-16 px-16 pb-8 flex items-center justify-between relative">
+        {isReport ? (
+          <>
+            <h2 className="text-[20px] font-medium">Questions</h2>
+            <InfoIcon width={24} height={24} />
+          </>
+        ) : (
+          <Link
+            href={`/reports/${reportId}`}
+            className="inline-flex p-8 bg-neutral-background rounded-[16px] absolute right-16"
+          >
+            <CancelIcon width={24} height={24} />
+          </Link>
+        )}
       </div>
       <ul className="w-full flex-1 min-h-0 px-16 pb-16  overflow-auto">
         {questionList.map((main: QuestionList, i) => (
