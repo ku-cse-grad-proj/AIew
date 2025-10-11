@@ -13,14 +13,11 @@ def preprocess_text(text: str) -> str:
 
     while i < len(lines):
         line = lines[i].strip()
-
-        # 빈 줄은 문단 구분 기호로 치환
         if not line:
             processed_text += "\n"
             i += 1
             continue
 
-        # 다음 줄 존재 여부 확인
         next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
 
         # 조건1: 종결 부호로 끝나지 않음 (문장 중간)
@@ -37,10 +34,9 @@ def preprocess_text(text: str) -> str:
             r"^[ㄱ-ㅎㅏ-ㅣ]", next_line
         )
 
-        # 이어 붙이기
         if next_line and (cond1 or cond2 or cond3):
             processed_text += line + " "
-            i += 1  # 다음 줄은 이어졌으므로 건너뜀
+            i += 1
         else:
             processed_text += line
             i += 1
