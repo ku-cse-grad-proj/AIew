@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { MetricsInfo } from '../_types'
 
-import MetricCard from './MetricCard'
+import MetricButton from './MetricButton'
 import {
   CountDetail,
   DateDetail,
@@ -33,7 +33,7 @@ export default function MetricsPannel({
       className={`grid grid-rows-2 grid-cols-2 gap-24 relative ${className}`}
     >
       {/* score */}
-      <MetricCard
+      <MetricButton
         onClick={() => setShowDetail('score')}
         inert={isDetailOpen}
         className="flex flex-col justify-center items-center gap-4"
@@ -41,21 +41,21 @@ export default function MetricsPannel({
         content={`${metricsInfo.score}`}
       />
       {/* duration */}
-      <MetricCard
+      <MetricButton
         onClick={() => setShowDetail('duration')}
         inert={isDetailOpen}
         title="duration"
         content={`${metricsInfo.duration} min`}
       />
       {/* count */}
-      <MetricCard
+      <MetricButton
         onClick={() => setShowDetail('count')}
         inert={isDetailOpen}
         title="questions count"
         content={`${metricsInfo.count}`}
       />
       {/* date */}
-      <MetricCard
+      <MetricButton
         onClick={() => setShowDetail('date')}
         inert={isDetailOpen}
         title="date"

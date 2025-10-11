@@ -1,17 +1,17 @@
 'use client'
 import { ButtonHTMLAttributes } from 'react'
 
-interface MetricCardProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface MetricButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   title?: string
   content?: string
 }
 
-export default function MetricCard({
+export default function MetricButton({
   title,
   content,
   className,
   ...props
-}: MetricCardProps) {
+}: MetricButtonProps) {
   const cardStyle =
     'w-full h-full rounded-[10px] bg-neutral-background transition-all transition-shadow duration-300 ease-in-out hover:shadow-box hover:scale-[1.03]'
   return (
