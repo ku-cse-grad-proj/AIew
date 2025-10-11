@@ -2,13 +2,22 @@
 
 import { useState } from 'react'
 
+import { MetricsInfo } from '../_types'
+
 import MetricCard from './MetricCard'
 
 import Cancel from '@/../public/icons/cancel.svg'
+import { extractDate, formatDateTime } from '@/app/lib/util'
 
 type mode = 'score' | 'duration' | 'date' | 'count' | null
 
-export default function MetricsPannel({ className }: { className?: string }) {
+export default function MetricsPannel({
+  className,
+  metricsInfo,
+}: {
+  className?: string
+  metricsInfo: MetricsInfo
+}) {
   const [showDetail, setShowDetail] = useState<mode>(null)
 
   const isDetailOpen = showDetail !== null
@@ -22,25 +31,25 @@ export default function MetricsPannel({ className }: { className?: string }) {
         inert={isDetailOpen}
         className="flex flex-col justify-center items-center gap-4"
         title="avg score"
-        content="3.4"
+        content={`${metricsInfo.score}`}
       />
       <MetricCard
         onClick={() => setShowDetail('duration')}
         inert={isDetailOpen}
         title="duration"
-        content="58 min"
+        content={`${metricsInfo.duration} min`}
       />
       <MetricCard
         onClick={() => setShowDetail('count')}
         inert={isDetailOpen}
         title="questions count"
-        content="15"
+        content={`${metricsInfo.count}`}
       />
       <MetricCard
         onClick={() => setShowDetail('date')}
         inert={isDetailOpen}
         title="date"
-        content="2025.10.11."
+        content={extractDate(metricsInfo.finishDate)}
       />
 
       <div
@@ -56,17 +65,23 @@ export default function MetricsPannel({ className }: { className?: string }) {
         >
           <Cancel width={20} height={20} />
         </button>
-        {showDetail === 'score' && <ScoreDetail />}
-        {showDetail === 'duration' && <DurationDetail />}
-        {showDetail === 'count' && <CountDetail />}
-        {showDetail === 'date' && <DateDetail />}
+        {showDetail === 'score' && <ScoreDetail scores={metricsInfo.scores} />}
+        {showDetail === 'duration' && (
+          <DurationDetail durations={metricsInfo.durations} />
+        )}
+        {showDetail === 'count' && <CountDetail counts={metricsInfo.counts} />}
+        {showDetail === 'date' && (
+          <DateDetail
+            startDate={metricsInfo.startDate}
+            finishDate={metricsInfo.finishDate}
+          />
+        )}
       </div>
     </div>
   )
 }
 
-function ScoreDetail() {
-  const scores = [3.4, 2.9, 5.0, 3.1, 3.2]
+function ScoreDetail({ scores }: { scores: number[] }) {
   return (
     <div className="w-full h-full flex flex-col">
       <h3 className="text-[20px] text-medium">avg score</h3>
@@ -86,8 +101,7 @@ function ScoreDetail() {
   )
 }
 
-function DurationDetail() {
-  const durations = [29, 10, 15, 18, 16]
+function DurationDetail({ durations }: { durations: number[] }) {
   return (
     <div className="w-full h-full flex flex-col">
       <h3 className="text-[20px] text-medium">duration</h3>
@@ -107,8 +121,7 @@ function DurationDetail() {
   )
 }
 
-function CountDetail() {
-  const counts = [2, 3, 5, 2, 3]
+function CountDetail({ counts }: { counts: number[] }) {
   return (
     <div className="w-full h-full flex flex-col">
       <h3 className="text-[20px] text-medium">question count</h3>
@@ -128,7 +141,13 @@ function CountDetail() {
   )
 }
 
-function DateDetail() {
+function DateDetail({
+  startDate,
+  finishDate,
+}: {
+  startDate: string
+  finishDate: string
+}) {
   return (
     <div className="w-full h-full flex flex-col">
       <h3 className="text-[20px] text-medium">date</h3>
@@ -136,13 +155,13 @@ function DateDetail() {
         <div className="flex-1 flex flex-col">
           <dt className="">start date</dt>
           <dd className="flex-1 min-h-0 text-[20px] font-mono">
-            2025.10.11. 10:30
+            {formatDateTime(startDate)}
           </dd>
         </div>
         <div className="flex-1 flex flex-col">
           <dt className="">finish date</dt>
           <dd className="flex-1 min-h-0 text-[20px] font-mono">
-            2025.10.12. 13:23
+            {formatDateTime(finishDate)}
           </dd>
         </div>
       </dl>
