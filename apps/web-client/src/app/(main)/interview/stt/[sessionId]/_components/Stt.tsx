@@ -1,4 +1,5 @@
 'use client'
+import { env } from 'next-runtime-env'
 import { useEffect, useRef, useState } from 'react'
 
 import Card from '../../../_components/Card'
@@ -27,12 +28,11 @@ export default function Stt({ sessionId }: { sessionId: string }) {
   const [canStopSession, setCanStopSession] = useState(true)
 
   async function startSession() {
+    const CORE_API_URL = env('NEXT_PUBLIC_CORE_API_URL')
+    const API_PREFIX = env('NEXT_PUBLIC_API_PREFIX')
     //Back에서 EPHEMERAL_KEY를 발급 받는다.
     const response = await privateFetch(
-      process.env.NEXT_PUBLIC_API_BASE +
-        '/interviews/' +
-        sessionId +
-        '/stt-token',
+      `${CORE_API_URL}/${API_PREFIX}/interviews/${sessionId}/stt-token`,
     )
     const { data } = await response.json()
     const EPHEMERAL_KEY = data.value

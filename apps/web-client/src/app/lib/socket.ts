@@ -1,5 +1,6 @@
 // lib/socket.ts
 'use client'
+import { env } from 'next-runtime-env'
 import { io, Socket } from 'socket.io-client'
 
 let socket: Socket | null = null
@@ -14,13 +15,13 @@ export function getSocket(): Socket {
   if (socket) return socket
 
   try {
+    // 런타임 환경변수 사용
+    const socketUrl = env('NEXT_PUBLIC_SOCKET_URL') //?? 'http://localhost:3000'
+
     //cookie로 소켓 인증 설정
-    const newSocket = io(
-      process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:3000',
-      {
-        withCredentials: true,
-      },
-    )
+    const newSocket = io(socketUrl, {
+      withCredentials: true,
+    })
 
     newSocket.on('connect', () => {
       console.log('[socket] connected', newSocket.id)

@@ -1,4 +1,5 @@
 'use client'
+import { env } from 'next-runtime-env'
 import { create } from 'zustand'
 
 import { interviewSocket } from './interviewSocket'
@@ -96,7 +97,7 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
   setElapsedSec: (sec) => set({ elapsedSec: sec }),
 
   connect: (sessionId, s = interviewSocket) => {
-    const url = process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:3000'
+    const url = env('NEXT_PUBLIC_SOCKET_URL') ?? ''
 
     // 1) 연결 수립 (+ 연결 시 방 참가는 socket 구현이 처리)
     s.connect(url, sessionId)

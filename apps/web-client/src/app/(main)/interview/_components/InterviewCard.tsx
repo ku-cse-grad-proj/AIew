@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { env } from 'next-runtime-env'
 import { useEffect, useState } from 'react'
 
 import EditDeleteButtons from './EditDeleteButtons'
@@ -23,8 +24,10 @@ export default function InterviewCard({
 
     const interval = setInterval(async () => {
       try {
+        const CORE_API_URL = env('NEXT_PUBLIC_CORE_API_URL')
+        const API_PREFIX = env('NEXT_PUBLIC_API_PREFIX')
         const res = await privateFetch(
-          `${process.env.NEXT_PUBLIC_API_BASE}/interviews/${interview.id}`,
+          `${CORE_API_URL}/${API_PREFIX}/interviews/${interview.id}`,
           { cache: 'no-store' }, // 항상 fresh fetch
         )
         const updated = await res.json()
