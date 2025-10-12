@@ -10,8 +10,9 @@ export default async function CreateInterviewPage({
   const { sessionId } = await params
 
   const fetchInterview = async () => {
+    const { CORE_API_URL, API_PREFIX } = process.env
     const response = await privateFetch(
-      process.env.NEXT_PUBLIC_API_BASE + '/interviews/' + sessionId,
+      `${CORE_API_URL}/${API_PREFIX}/interviews/${sessionId}`,
     )
     return await response.json()
   }

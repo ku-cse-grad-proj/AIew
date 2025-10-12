@@ -3,7 +3,8 @@ import Nav from './Nav'
 import { privateFetch } from '@/app/lib/fetch'
 
 export default async function MainHeader() {
-  const res = await privateFetch(process.env.NEXT_PUBLIC_API_BASE + '/me')
+  const { CORE_API_URL, API_PREFIX } = process.env
+  const res = await privateFetch(`${CORE_API_URL}/${API_PREFIX}/me`)
   const me = res.ok ? await res.json() : null
   const src = me?.pic_url ?? 'profile.svg'
 

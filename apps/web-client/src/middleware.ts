@@ -35,7 +35,8 @@ export async function middleware(req: NextRequest) {
  * 실패 시 로그인 페이지로 리디렉션
  */
 async function tryRefresh(req: NextRequest) {
-  const refreshRes = await fetch('http://localhost:3000/api/v1/refresh', {
+  const { CORE_API_URL, API_PREFIX } = process.env
+  const refreshRes = await fetch(`${CORE_API_URL}/${API_PREFIX}/refresh`, {
     method: 'POST',
     headers: {
       // 서버 사이드에서 fetch를 할 때는 브라우저가 아니므로 쿠키를 수동으로 담아줘야 함

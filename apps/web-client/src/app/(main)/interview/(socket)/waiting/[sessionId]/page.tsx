@@ -12,8 +12,9 @@ export default async function WaitingPage({
   params: Promise<{ sessionId: string }>
 }) {
   const { sessionId } = await params
+  const { CORE_API_URL, API_PREFIX } = process.env
   const response = await privateFetch(
-    process.env.NEXT_PUBLIC_API_BASE + '/interviews/' + sessionId,
+    `${CORE_API_URL}/${API_PREFIX}/interviews/${sessionId}`,
     { cache: 'no-store' },
   )
   const interview: Interview = await response.json()

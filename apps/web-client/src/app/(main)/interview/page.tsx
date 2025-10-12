@@ -5,8 +5,9 @@ import Carousel from './_components/Carousel'
 import { privateFetch } from '@/app/lib/fetch'
 
 export default async function InterviewPage() {
+  const { CORE_API_URL, API_PREFIX } = process.env
   const response = await privateFetch(
-    process.env.NEXT_PUBLIC_API_BASE + '/interviews',
+    `${CORE_API_URL}/${API_PREFIX}/interviews`,
   )
   const cards: Interview[] = await response.json()
 

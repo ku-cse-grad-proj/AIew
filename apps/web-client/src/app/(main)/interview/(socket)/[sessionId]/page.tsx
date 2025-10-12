@@ -13,8 +13,9 @@ export default async function InterviewPage({
 }) {
   const { sessionId } = await params
 
+  const { CORE_API_URL, API_PREFIX } = process.env
   const response = await privateFetch(
-    process.env.NEXT_PUBLIC_API_BASE + `/interviews/${sessionId}`,
+    `${CORE_API_URL}/${API_PREFIX}/interviews/${sessionId}`,
   )
   if (!response.ok) {
     return (

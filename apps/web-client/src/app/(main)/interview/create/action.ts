@@ -42,13 +42,11 @@ export async function createInterview(formData: FormData) {
 
   appendFiles(formData, newFormData)
 
-  const res = await privateFetch(
-    `${process.env.NEXT_PUBLIC_API_BASE}/interviews`,
-    {
-      method: 'POST',
-      body: newFormData,
-    },
-  )
+  const { CORE_API_URL, API_PREFIX } = process.env
+  const res = await privateFetch(`${CORE_API_URL}/${API_PREFIX}/interviews`, {
+    method: 'POST',
+    body: newFormData,
+  })
 
   if (!res.ok) {
     throw new Error('면접 생성에 실패했습니다.')
@@ -90,8 +88,9 @@ export async function patchInterview(formData: FormData, interview: Interview) {
     redirectToWaiting(interview.id)
   }
 
+  const { CORE_API_URL, API_PREFIX } = process.env
   const res = await privateFetch(
-    `${process.env.NEXT_PUBLIC_API_BASE}/interviews/${interview.id}`,
+    `${CORE_API_URL}/${API_PREFIX}/interviews/${interview.id}`,
     { method: 'PATCH', body: newFormData },
   )
   if (!res.ok) throw new Error('면접 수정에 실패했습니다.')
