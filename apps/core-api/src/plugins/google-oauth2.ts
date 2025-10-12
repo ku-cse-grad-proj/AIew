@@ -23,7 +23,7 @@ const googleOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
       auth: oauthPlugin.GOOGLE_CONFIGURATION,
     },
     startRedirectPath: redirectPath,
-    callbackUri: `http://localhost:3000${callbackPath}`, // 127.0.0.1 에서 시도시 실패
+    callbackUri: `${process.env.OAUTH_CALLBACK_BASE_URL}${callbackPath}`,
   })
 }
 

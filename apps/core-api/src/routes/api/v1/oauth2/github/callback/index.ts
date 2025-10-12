@@ -127,10 +127,10 @@ const controller: FastifyPluginAsyncTypebox = async (fastify) => {
           sameSite: 'lax',
           maxAge: 7 * 24 * 60 * 60, // 7일
         })
-        .redirect('http://localhost:4000/auth/callback')
+        .redirect(`${process.env.API_BASE_URL}/auth/callback`)
     } catch (error) {
       server.log.error(error)
-      reply.redirect('http://localhost:4000/login-failed')
+      reply.redirect(`${process.env.API_BASE_URL}/login-failed`)
     }
   }
 

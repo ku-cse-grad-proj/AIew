@@ -23,7 +23,7 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
       auth: oauthPlugin.GITHUB_CONFIGURATION,
     },
     startRedirectPath: redirectPath,
-    callbackUri: `http://localhost:3000${callbackPath}`,
+    callbackUri: `${process.env.OAUTH_CALLBACK_BASE_URL}${callbackPath}`,
   })
 }
 

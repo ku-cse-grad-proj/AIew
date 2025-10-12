@@ -33,7 +33,7 @@ export default fp(
   async (fastify) => {
     const io = new Server(fastify.server, {
       cors: {
-        origin: process.env.WEB_CLIENT_URL || 'http://localhost:4000',
+        origin: process.env.API_BASE_URL || 'http://localhost:4000',
         credentials: true,
       },
     })
