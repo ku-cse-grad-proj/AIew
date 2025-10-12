@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import localFont from 'next/font/local'
+import { PublicEnvScript } from 'next-runtime-env'
 
 const pretendard = localFont({
   src: '../fonts/PretendardVariable.woff2',
@@ -21,6 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${pretendard.variable}`}>
+      <head>
+        <PublicEnvScript />
+      </head>
       <body className={`${pretendard.className}`}>{children}</body>
     </html>
   )
