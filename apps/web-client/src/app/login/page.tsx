@@ -3,6 +3,9 @@ import Google from '../../../public/google.svg'
 
 import LoginButton from './component/LoginButton'
 
+// 런타임에 환경변수를 읽기 위해 dynamic rendering 강제
+export const dynamic = 'force-dynamic'
+
 export default function Login() {
   return (
     <div className="h-full flex flex-col justify-center items-center gap-48">
