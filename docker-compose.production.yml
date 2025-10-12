@@ -1,0 +1,36 @@
+# 프로덕션 환경용 오버라이드
+services:
+  core-api:
+    image: ghcr.io/ku-cse-grad-proj/aiew/core-api:latest
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+
+  ai-server:
+    image: ghcr.io/ku-cse-grad-proj/aiew/ai-server:latest
+    env_file:
+      - .env.production
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  web-client:
+    image: ghcr.io/ku-cse-grad-proj/aiew/web-client:latest
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+
+  nginx:
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
