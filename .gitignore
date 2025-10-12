@@ -12,3 +12,7 @@ GEMINI.md
 
 # OS
 .DS_Store
+
+*.pem
+.env.production
+.env.local
