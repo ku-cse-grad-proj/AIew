@@ -120,6 +120,9 @@ jobs:
             # Restart services
             docker compose -f docker-compose.base.yml -f docker-compose.production.yml up -d
 
+            # Restart Nginx (설정 파일 변경 적용)
+            docker compose -f docker-compose.base.yml -f docker-compose.production.yml restart nginx
+
             # Clean up old images
             docker image prune -af
 
