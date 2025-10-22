@@ -1,7 +1,8 @@
 import { ReactNode } from 'react'
 
-import { QuestionList } from './[id]/questions/_types'
-import ListSection from './_components/ListSection'
+import ListSection from '../_components/ListSection'
+
+import { QuestionList } from './questions/_types'
 
 export default function ReportLayout({ children }: { children: ReactNode }) {
   const questions = getQuestions()
