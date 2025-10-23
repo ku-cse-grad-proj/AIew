@@ -29,6 +29,7 @@ services:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
+      - /var/www/certbot:/var/www/certbot:ro # Certbot webroot (인증서 갱신용)
     logging:
       driver: 'json-file'
       options:
