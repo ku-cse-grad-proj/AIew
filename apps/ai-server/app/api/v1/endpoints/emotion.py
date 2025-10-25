@@ -13,15 +13,18 @@ from app.utils.video_analysis import video_analysis
 router = APIRouter()
 
 
-@router.post("/upload-video")
+@router.post(
+    "/upload-video",
+    response_model=EmotionGroupResult,
+    tags=["Emotion"],
+    summary="영상 업로드 및 감정 분석",
+)
 async def upload_video(
-    file: UploadFile = File(...),
-    memory: ConversationBufferMemory = Depends(MemoryDep),
     x_session_id: str = Header(...),
-):
-    """
-    영상 파일 업로드 → 영상 분석 → 메모리에 결과 저장 + 결과 JSON 파일 저장
-    """
+    file: UploadFile = File(..., description="분석할 영상 파일"),
+    memory: ConversationBufferMemory = Depends(MemoryDep),
+) -> EmotionGroupResult:
+    # 임시 파일 생성: 확장자를 유지하며 임시 파일을 생성합니다.
     suffix = os.path.splitext(file.filename or "")[-1] or ".mp4"
     tmp_fd, tmp_path = tempfile.mkstemp(suffix=suffix)
 
