@@ -1,6 +1,6 @@
 'use client'
 
-import { HTMLAttributes } from 'react'
+import { HTMLAttributes, useEffect } from 'react'
 
 import { usePopover } from './Popover'
 
@@ -8,6 +8,14 @@ import Cancel from '@/../public/icons/cancel.svg'
 
 export default function PopoverContent(props: HTMLAttributes<HTMLDivElement>) {
   const { isOpen, setIsOpen } = usePopover()
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const closePopover = () => {
     setIsOpen(false)
