@@ -3,16 +3,27 @@ from pydantic import BaseModel, Field
 from langchain.memory import ConversationBufferMemory
 
 from app.core.memory import get_memory
-from app.services.memory_logger import log_shown_question, log_user_answer
-
+from app.services.memory_logger import (
+    log_shown_question, 
+    log_user_answer
+)
 
 router = APIRouter()
 
-def MemoryDep(x_session_id: str = Header(default=None)) -> ConversationBufferMemory:
-    """X-Session-Id 헤더로 세션별 메모리 주입"""
+
+def MemoryDep(
+    x_session_id: str = Header(default=None)
+) -> ConversationBufferMemory:
+    """
+    X-Session-Id 헤더로 세션별 메모리 주입
+    """
     if not x_session_id:
-        raise HTTPException(status_code=400, detail="X-Session-Id header required")
+        raise HTTPException(
+            status_code=400, 
+            detail="X-Session-Id header required"
+        )
     return get_memory(x_session_id)
+
 
 class ShownQuestion(BaseModel):
     question: dict
@@ -32,6 +43,7 @@ class ShownQuestion(BaseModel):
             }
         }
     }
+
 
 class UserAnswer(BaseModel):
     question_id: str = Field(..., pattern=r"^q\d+(-fu\d+)?$")
@@ -53,7 +65,11 @@ def post_question_shown(
     payload: ShownQuestion, 
     memory: ConversationBufferMemory = Depends(MemoryDep)
 ):
-    log_shown_question(memory, payload.question)
+    
+    log_shown_question(
+        memory, 
+        payload.question
+    )
     return  {"ok": True}
 
 @router.post("/log/user-answer")
@@ -61,6 +77,7 @@ def post_user_answer(
     payload: UserAnswer, 
     memory: ConversationBufferMemory = Depends(MemoryDep)
 ):
+    
     log_user_answer(
         memory, 
         payload.question_id, 
