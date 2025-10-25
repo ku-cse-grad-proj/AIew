@@ -1,19 +1,16 @@
 import cv2
 from fer import FER
-import numpy as np
 
 # 모델 초기화 (모듈 import 시 한 번만)
 emotion_detector = FER(mtcnn=True)
 
-def video_analysis(path: str, target_samples: int = 100):
-    """
-    영상 파일 경로를 입력받아 FER 분석 실행.
-    약 target_samples 개의 프레임을 균등하게 샘플링하여 감정 분석 수행.
+TARGET_SAMPLES = 100
+
+def video_analysis(
+    path: str = "", 
+    target_samples: int = TARGET_SAMPLES
+):
     
-    반환: 
-        results = [{frame, time, happy, sad, ...}, ...]
-        taken = 분석된 프레임 개수
-    """
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
         raise ValueError(f"Cannot open video file: {path}")
@@ -23,7 +20,7 @@ def video_analysis(path: str, target_samples: int = 100):
     sample_rate = max(1, total_frames // target_samples)  # 최소 1로 보장
 
     results = []
-    frame_idx, taken = 0, 0
+    frame_idx = 0
 
     fer_labels = ["happy", "sad", "neutral", "angry", "fear", "surprise"]
 
@@ -45,7 +42,6 @@ def video_analysis(path: str, target_samples: int = 100):
             for label in fer_labels:
                 result[label] = round(float(emotions.get(label, 0.0)), 3)
             results.append(result)
-        taken += 1
 
     cap.release()
-    return results, taken
+    return results
