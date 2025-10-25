@@ -19,13 +19,15 @@ router = APIRouter()
 
 
 @router.post(
-    "/answer-evaluating", 
-    response_model=AnswerEvaluationResult
+    "/evaluate-answer", 
+    response_model=AnswerEvaluationResult,
+    tags=["Evaluation"],
+    summary="Evaluate User Answer"
 )
 def evaluate_answer(
     req: AnswerEvaluationRequest, 
     memory: ConversationBufferMemory = Depends(MemoryDep)
-):
+) -> AnswerEvaluationResult:
     
     return evaluate_answer_service(
         req, 
@@ -34,11 +36,13 @@ def evaluate_answer(
 
 
 @router.post(
-    "/session-evaluating", 
-    response_model=SessionEvaluationResult
+    "/evaluate-session", 
+    response_model=SessionEvaluationResult,
+    tags=["Evaluation"],
+    summary="Evaluate Entire Session"
 )
 def evaluate_session(
     memory: ConversationBufferMemory = Depends(MemoryDep)
-):
+) -> SessionEvaluationResult:
     
     return evaluate_session_service(memory)

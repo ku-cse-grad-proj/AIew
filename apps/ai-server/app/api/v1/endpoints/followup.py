@@ -15,8 +15,10 @@ router = APIRouter()
 
 
 @router.post(
-    "/followup-generating", 
-    response_model=Followup
+    "/generate-followup", 
+    response_model=Followup,
+    tags=["Question"],
+    summary="Generate Follow-up Question"
 )
 def generate_followup(
     req: FollowupRequest, 

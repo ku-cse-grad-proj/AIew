@@ -17,11 +17,12 @@ from app.core.memory import get_memory
 router = APIRouter()
 
 
-# 세션별 메모리 주입 (X-Session-Id 헤더 사용)
 def MemoryDep(
     x_session_id: str = Header(default=None)
 ) -> ConversationBufferMemory:
-    
+    """
+    세션별 메모리 주입 (X-Session-Id 헤더 사용)
+    """
     if not x_session_id:
         raise HTTPException(
             status_code=400, 
@@ -41,13 +42,15 @@ class MemoryDump(BaseModel):
 
 
 @router.get(
-    "/dump", 
-    response_model=MemoryDump
+    "/session-memory-dump", 
+    response_model=MemoryDump,
+    tags=["Session Log"],
+    summary="Get Memory Dump"
 )
 def get_memory_dump(
     memory: ConversationBufferMemory = Depends(MemoryDep),
     x_session_id: str = Header(default=None),
-):
+) -> MemoryDump:
     
     vars = memory.load_memory_variables({"input": ""})
     history_str = vars.get("history", "")
@@ -71,10 +74,14 @@ def get_memory_dump(
         messages=messages_out
     )
 
-@router.delete("/reset")
+@router.delete(
+    "/session-memory-reset",
+    tags=["Session Log"],
+    summary="Reset Session Memory"
+)
 def reset_memory(
     memory: ConversationBufferMemory = Depends(MemoryDep)
-):
+) -> dict:
     
     memory.clear()
     return {

@@ -60,11 +60,15 @@ class UserAnswer(BaseModel):
         }
     }
 
-@router.post("/log/question-shown")
+@router.post(
+    "/log/question-shown",
+    tags=["Session Log"],
+    summary="Log Shown Question"
+)
 def post_question_shown(
     payload: ShownQuestion, 
     memory: ConversationBufferMemory = Depends(MemoryDep)
-):
+) -> dict:
     
     log_shown_question(
         memory, 
@@ -72,11 +76,15 @@ def post_question_shown(
     )
     return  {"ok": True}
 
-@router.post("/log/user-answer")
+@router.post(
+    "/log/user-answer",
+    tags=["Session Log"],
+    summary="Log User Answer"
+)
 def post_user_answer(
     payload: UserAnswer, 
     memory: ConversationBufferMemory = Depends(MemoryDep)
-):
+) -> dict:
     
     log_user_answer(
         memory, 

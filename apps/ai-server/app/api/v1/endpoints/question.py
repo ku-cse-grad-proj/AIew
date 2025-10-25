@@ -13,13 +13,15 @@ from app.services.question_generator import generate_questions
 router = APIRouter()
 
 @router.post(
-    "/question-generating", 
-    response_model=List[InterviewQuestion]
+    "/generate-question", 
+    response_model=List[InterviewQuestion],
+    tags=["Question"],
+    summary="Generate Interview Questions"
 )
 def generate_question(
         req: QuestionRequest, 
         memory: ConversationBufferMemory = Depends(MemoryDep)
-):
+) -> List[InterviewQuestion]:
     
     data = generate_questions(
         req.user_info, 

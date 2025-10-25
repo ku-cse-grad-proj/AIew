@@ -10,7 +10,10 @@ from app.api.v1.endpoints import (
     emotion,
 )
 
-app = FastAPI()
+app = FastAPI(
+    title="AIew",
+    version="1.0.0"
+)
 
 app.include_router(session_log.router, prefix="/api/v1/session-log", tags=["Session Log"])
 app.include_router(pdf.router, prefix="/api/v1/pdf", tags=["PDF"])
