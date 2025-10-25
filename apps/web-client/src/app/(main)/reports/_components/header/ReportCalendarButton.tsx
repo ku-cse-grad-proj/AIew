@@ -33,8 +33,8 @@ export default function ReportCalendarButton() {
         <Calender />
         {rangeLabel && <span className="">{rangeLabel}</span>}
       </PopoverTriggeButton>
-      <PopoverContent className="flex flex-col absolute bg-neutral-card right-0 mt-4 p-16 gap-8 rounded-[10px] shadow-box z-100">
-        <label htmlFor="from" className="text-[14px] text-neutral-subtext">
+      <PopoverContent className={`${styles.popoverContent}`}>
+        <label htmlFor="from" className={styles.labelText}>
           from
           <input
             type="date"
@@ -46,7 +46,7 @@ export default function ReportCalendarButton() {
             className={`${dateInputView}`}
           />
         </label>
-        <label htmlFor="to" className="text-[14px] text-neutral-subtext">
+        <label htmlFor="to" className={styles.labelText}>
           to
           <input
             type="date"
