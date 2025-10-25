@@ -12,8 +12,17 @@ from app.api.v1.endpoints.memory_debug import MemoryDep
 router = APIRouter() 
 
 
-@router.post("/pdf-text-parsing", response_model=PDFUploadResponse)
-async def parse_pdf_text(file: UploadFile = File(...), memory: ConversationBufferMemory = Depends(MemoryDep), ):
+@router.post(
+    "/documents", 
+    response_model=PDFUploadResponse,
+    tags=["PDF"],
+    summary="Upload and Parse PDF Document"
+)
+async def parse_pdf_text(
+    file: UploadFile = File(...), 
+    memory: ConversationBufferMemory = Depends(MemoryDep)
+) -> PDFUploadResponse:
+    
     file_bytes = await file.read()
 
     digital = is_digital_pdf(file_bytes)
