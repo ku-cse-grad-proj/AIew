@@ -16,6 +16,7 @@ class EmotionAnalysisService:
         memory: ConversationBufferMemory = None, 
         session_id: str = ""
     ):
+        
         self.memory = memory
         self.session_id = session_id
 
@@ -24,6 +25,7 @@ class EmotionAnalysisService:
         file_name: str = "", 
         results: List[Dict] = []
     ):
+        
         payload: Dict[str, Any] = {
             "filename": file_name, 
             "results": results
