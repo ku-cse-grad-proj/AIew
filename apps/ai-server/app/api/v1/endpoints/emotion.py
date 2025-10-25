@@ -6,7 +6,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, File, Header, UploadFile
 from langchain.memory import ConversationBufferMemory
 
-from app.api.v1.endpoints.momory_debug import MemoryDep
+from app.api.v1.endpoints.memory_debug import MemoryDep
 from app.models.emotion import EmotionGroupResult, EmotionGroupScore
 from app.utils.video_analysis import video_analysis
 
@@ -17,13 +17,14 @@ router = APIRouter()
     "/upload-video",
     response_model=EmotionGroupResult,
     tags=["Emotion"],
-    summary="영상 업로드 및 감정 분석",
+    summary="Upload Video for Emotion Analysis",
 )
 async def upload_video(
     x_session_id: str = Header(...),
-    file: UploadFile = File(..., description="분석할 영상 파일"),
+    file: UploadFile = File(..., description="Video file to be analyzed"),
     memory: ConversationBufferMemory = Depends(MemoryDep),
 ) -> EmotionGroupResult:
+    
     # 임시 파일 생성: 확장자를 유지하며 임시 파일을 생성합니다.
     suffix = os.path.splitext(file.filename or "")[-1] or ".mp4"
     tmp_fd, tmp_path = tempfile.mkstemp(suffix=suffix)
