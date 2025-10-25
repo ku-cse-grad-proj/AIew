@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
 
+import styles from './header.module.css'
+
 import Calender from '@/../public/icons/calendar.svg'
 import Cancel from '@/../public/icons/cancel.svg'
 
@@ -24,13 +26,12 @@ export default function ReportCalendarButton() {
           ? ` ~ ${toDate}`
           : null
 
-  const dateInputView =
-    'border border-1 border-neutral-gray rounded-[10px] w-full h-40 px-8'
+  const dateInputView = `${styles.outline} w-full h-40 px-8`
 
   return (
     <div className="relative">
       <button
-        className="min-w-40 min-h-40 inline-flex px-8 gap-8 justify-center items-center border border-1 border-neutral-gray rounded-[10px]"
+        className={`min-w-40 min-h-40 inline-flex px-8 gap-8 justify-center items-center ${styles.outline}`}
         onClick={() => setIsOpen(true)}
       >
         <Calender />

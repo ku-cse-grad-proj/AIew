@@ -1,6 +1,6 @@
-import ReportCalendarButton from './_components/ReportCalendarButton'
-import ReportSearchInput from './_components/ReportSearchInput'
-import ReportSelect from './_components/ReportSelect'
+import ReportCalendarButton from './_components/header/ReportCalendarButton'
+import ReportSearchInput from './_components/header/ReportSearchInput'
+import ReportSelect from './_components/header/ReportSelect'
 
 export default function ReportsPage() {
   return (

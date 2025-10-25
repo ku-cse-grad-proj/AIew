@@ -1,3 +1,5 @@
+import styles from './header.module.css'
+
 import Search from '@/../public/icons/search.svg'
 
 export default function ReportSearchInput() {
@@ -7,7 +9,7 @@ export default function ReportSearchInput() {
       <input
         type="text"
         name="search"
-        className="min-w-264 h-40 pl-28 border border-1 border-neutral-gray rounded-[10px] placeholder:text-neutral-subtext"
+        className={`min-w-264 h-40 pl-28 placeholder:text-neutral-subtext ${styles.outline}`}
         placeholder="search"
       />
     </div>

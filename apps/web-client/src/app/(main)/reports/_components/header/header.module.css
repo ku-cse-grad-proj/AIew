@@ -1,0 +1,5 @@
+@reference "../../../../globals.css";
+
+.outline {
+  @apply border border-1 border-neutral-gray rounded-[10px];
+}
