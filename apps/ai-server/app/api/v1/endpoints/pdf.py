@@ -15,12 +15,12 @@ router = APIRouter()
 
 
 @router.post(
-    "/PDF", 
+    "/parse-pdf", 
     response_model=PDFUploadResponse,
     tags=["PDF"],
     summary="Upload PDF and extract preprocessed text"
 )
-async def create_document_and_parse_text(
+async def parse_pdf(
     x_session_id: str = Header(...),
     file: UploadFile = File(..., description="PDF file to be parsed"), 
     memory: ConversationBufferMemory = Depends(MemoryDep),
