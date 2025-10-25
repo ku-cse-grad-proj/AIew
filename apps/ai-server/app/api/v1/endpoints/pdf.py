@@ -1,63 +1,44 @@
-import json
-
 from fastapi import (
     APIRouter, 
     File, 
     UploadFile, 
-    Depends
+    Depends,
+    Header
 )
 from langchain.memory import ConversationBufferMemory
 
-from app.api.v1.endpoints.memory_debug import MemoryDep
+from app.api.v1.endpoints.memory_debug import MemoryDep 
 from app.models.pdf import PDFUploadResponse
-from app.services.ocr_parser import extract_text_from_image_pdf
-from app.services.pdf_parser import extract_text_from_digital_pdf
-from app.services.preprocessor import preprocess_text
-from app.utils.file_check import is_digital_pdf
+from app.services.pdf_processor import PDFAnalysisService
 
-router = APIRouter()
+router = APIRouter() 
 
 
 @router.post(
-    "/documents", 
+    "/PDF", 
     response_model=PDFUploadResponse,
     tags=["PDF"],
-    summary="Upload and Parse PDF Document"
+    summary="Upload PDF and extract preprocessed text"
 )
-async def parse_pdf_text(
-    file: UploadFile = File(...), 
-    memory: ConversationBufferMemory = Depends(MemoryDep)
+async def create_document_and_parse_text(
+    x_session_id: str = Header(...),
+    file: UploadFile = File(..., description="PDF file to be parsed"), 
+    memory: ConversationBufferMemory = Depends(MemoryDep),
 ) -> PDFUploadResponse:
     
     file_bytes = await file.read()
-
-    digital = is_digital_pdf(file_bytes)
-    extracted_text = (
-        extract_text_from_digital_pdf(file_bytes)
-        if digital else
-        extract_text_from_image_pdf(file_bytes)
+    
+    service = PDFAnalysisService(
+        memory=memory, 
+        session_id=x_session_id
     )
     
-    preprocessed_sentences = preprocess_text(extracted_text)
-
-    try:
-        preview = ""
-        if isinstance(extracted_text, str):
-            preview = extracted_text[:400] + ("…" if len(extracted_text) > 400 else "")
-        memory.save_context(
-            {"input": "[PDF_PARSE]"},
-            {"output": json.dumps({
-                "filename": file.filename,
-                "digital": digital,
-                "chars": len(extracted_text) if isinstance(extracted_text, str) else None,
-                "sentences": len(preprocessed_sentences) if isinstance(preprocessed_sentences, list) else None,
-                "preview": preview
-            }, ensure_ascii=False)}
-        )
-    except Exception:
-        pass
+    results = service.process_and_persist(
+        file_bytes=file_bytes, 
+        file_name=file.filename
+    )
 
     return PDFUploadResponse(
-        filename=file.filename, 
-        extracted_text=preprocessed_sentences
+        filename=file.filename,
+        extracted_text=results
     )
