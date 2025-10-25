@@ -14,12 +14,7 @@ from app.services.followup_generator import generate_followups
 router = APIRouter()
 
 
-@router.post(
-    "/generate-followup", 
-    response_model=Followup,
-    tags=["Question"],
-    summary="Generate Follow-up Question"
-)
+@router.post("/followup-generating", response_model=Followup)
 def generate_followup(
     req: FollowupRequest, 
     memory: ConversationBufferMemory = Depends(MemoryDep)

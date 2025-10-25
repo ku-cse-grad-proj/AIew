@@ -44,5 +44,5 @@ def evaluate_answer(
 def evaluate_session(
     memory: ConversationBufferMemory = Depends(MemoryDep)
 ) -> SessionEvaluationResult:
-    
+
     return evaluate_session_service(memory)

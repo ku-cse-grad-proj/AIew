@@ -68,12 +68,8 @@ class UserAnswer(BaseModel):
 def post_question_shown(
     payload: ShownQuestion, 
     memory: ConversationBufferMemory = Depends(MemoryDep)
-) -> dict:
-    
-    log_shown_question(
-        memory, 
-        payload.question
-    )
+):
+    log_shown_question(memory, payload.question)
     return  {"ok": True}
 
 @router.post(
@@ -84,8 +80,7 @@ def post_question_shown(
 def post_user_answer(
     payload: UserAnswer, 
     memory: ConversationBufferMemory = Depends(MemoryDep)
-) -> dict:
-    
+):
     log_user_answer(
         memory, 
         payload.question_id, 

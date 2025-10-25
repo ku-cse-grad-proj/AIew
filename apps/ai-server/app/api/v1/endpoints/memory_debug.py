@@ -23,6 +23,7 @@ def MemoryDep(
     """
     세션별 메모리 주입 (X-Session-Id 헤더 사용)
     """
+
     if not x_session_id:
         raise HTTPException(
             status_code=400, 
@@ -82,7 +83,7 @@ def get_memory_dump(
 def reset_memory(
     memory: ConversationBufferMemory = Depends(MemoryDep)
 ) -> dict:
-    
+
     memory.clear()
     return {
         "ok": True, 
