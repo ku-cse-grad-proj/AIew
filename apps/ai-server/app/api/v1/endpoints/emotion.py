@@ -1,14 +1,26 @@
 import json
 import os
 import tempfile
-from typing import Any, Dict
+from typing import (
+    Any, 
+    Dict
+)
 
-from fastapi import APIRouter, Depends, File, Header, UploadFile
+from fastapi import (
+    APIRouter, 
+    Depends, 
+    File, 
+    Header, 
+    UploadFile
+)
 from langchain.memory import ConversationBufferMemory
 
 from app.api.v1.endpoints.memory_debug import MemoryDep
-from app.models.emotion import EmotionGroupResult, EmotionGroupScore
 from app.utils.video_analysis import video_analysis
+from app.models.emotion import (
+    EmotionGroupResult, 
+    EmotionGroupScore
+)
 
 router = APIRouter()
 
@@ -36,7 +48,10 @@ async def upload_video(
         results, taken = video_analysis(tmp_path)
 
         if results:
-            payload: Dict[str, Any] = {"filename": file.filename, "results": results}
+            payload: Dict[str, Any] = {
+                "filename": file.filename, 
+                "results": results
+            }
             memory.chat_memory.add_user_message(
                 "[FACE_ANALYSIS]" + json.dumps(payload, ensure_ascii=False)
             )
