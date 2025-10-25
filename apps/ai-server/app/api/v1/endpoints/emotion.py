@@ -26,10 +26,10 @@ router = APIRouter()
 
 
 @router.post(
-    "/upload-video",
+    "/emotion-analyzing",
     response_model=EmotionGroupResult,
     tags=["Emotion"],
-    summary="Upload Video for Emotion Analysis",
+    summary="Upload Video and Analysis Emotion",
 )
 async def upload_video(
     x_session_id: str = Header(...),
