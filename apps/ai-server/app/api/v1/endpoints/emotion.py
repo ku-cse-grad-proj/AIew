@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, Header, UploadFile
 from langchain.memory import ConversationBufferMemory
 
 from app.core.memory import get_memory
+from app.models.emotion import EmotionGroupResult, EmotionGroupScore
 from app.utils.video_analysis import video_analysis
 
 router = APIRouter()
@@ -40,20 +41,10 @@ async def upload_video(
                 "[FACE_ANALYSIS]" + json.dumps(payload, ensure_ascii=False)
             )
 
-            output_dir = os.path.join("C:/AIew/apps/ai-server/app/result")
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir, exist_ok=True)
-
-            output_path = os.path.join(output_dir, f"{file.filename}.json")
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, indent=2)
-
-        return {
-            "status": "ok",
-            "frames_processed": taken,
-            "items_logged": len(results),
-            "filename": file.filename,
-        }
+        return EmotionGroupResult(
+            file_name=file.filename,
+            results=[EmotionGroupScore(**item) for item in results],
+        )
 
     finally:
         try:
