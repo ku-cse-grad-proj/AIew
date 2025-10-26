@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
+import { useDebouncedCallback } from 'use-debounce'
 import { useShallow } from 'zustand/shallow'
 
 import styles from './header.module.css'
@@ -33,17 +34,20 @@ export default function ReportSearchInput() {
     }
   }, [searchParams, setSearchValue])
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchValue(value)
-    const params = new URLSearchParams(searchParams)
-    params.delete('title')
-    params.delete('company')
-    if (value) {
-      params.set(searchType, value)
-    }
-    replace(`${pathname}?${params.toString()}`)
-  }
+  const handleSearch = useDebouncedCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+      setSearchValue(value)
+      const params = new URLSearchParams(searchParams)
+      params.delete('title')
+      params.delete('company')
+      if (value) {
+        params.set(searchType, value)
+      }
+      replace(`${pathname}?${params.toString()}`)
+    },
+    500,
+  )
 
   return (
     <div className="relative">
