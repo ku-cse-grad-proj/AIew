@@ -1,49 +1,12 @@
-import Link from 'next/link'
-
-import ReportCalendarButton from './_components/header/ReportCalendarButton'
-import ReportFilterButton from './_components/header/ReportFilterButton'
-import ReportInfo from './_components/header/ReportInfo'
-import ReportSearchInput from './_components/header/ReportSearchInput'
-import ReportSearchSelect from './_components/header/ReportSearchSelect'
-
-import Graph from '@/../public/icons/graph.svg'
+import ReportHeader from './_components/header/ReportHeader'
 
 export default function ReportsPage() {
-  const reportInfos = [
-    { title: 'total reports count', description: '32' },
-    { title: 'average score', description: '3.7' },
-    { title: 'average duratoin', description: '48 min' },
-    { title: 'total reports count', description: '32' },
-  ]
   return (
-    <article>
-      <div className="w-full bg-neutral-card rounded-[20px] p-24 shadow-box">
-        <div className="flex justify-between">
-          <div className="flex gap-8">
-            <ReportSearchSelect />
-            <ReportSearchInput />
-          </div>
-          <div className="flex gap-8">
-            <ReportCalendarButton />
-            <ReportFilterButton />
-            <Link
-              href={'/reports'}
-              className="bg-primary inline-flex items-center px-16 rounded-[10px] h-40 gap-8"
-            >
-              <Graph width={20} height={20} />
-              <span className="text-neutral-background">show graph</span>
-            </Link>
-          </div>
-        </div>
-        <dl className="w-full flex justify-between gap-16 pt-16">
-          {reportInfos.map((info, i) => (
-            <ReportInfo
-              key={i}
-              title={info.title}
-              description={info.description}
-            />
-          ))}
-        </dl>
+    <article className="w-full h-full flex flex-col items-center gap-24">
+      <ReportHeader />
+      <section className="w-full flex-1 min-h-0 bg-neutral-card rounded-[20px] shadow-box"></section>
+      <div className="w-300 h-48 bg-neutral-card rounded-[20px] shadow-box">
+        pagination
       </div>
     </article>
   )
