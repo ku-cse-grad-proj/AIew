@@ -21,7 +21,7 @@ sudo tee /etc/ssh/sshd_config.d/99-security.conf > /dev/null <<EOF
 # 비밀번호 인증 완전 차단 (키 인증만 허용)
 PasswordAuthentication no
 ChallengeResponseAuthentication no
-UsePAM no
+UsePAM yes
 
 # Root 로그인 차단
 PermitRootLogin no
@@ -59,7 +59,15 @@ fi
 
 # SSH 서비스 재시작
 echo "4. SSH 서비스 재시작..."
-sudo systemctl restart sshd
+# Ubuntu는 ssh.service, CentOS/RHEL은 sshd.service 사용
+if systemctl list-units --type=service --all | grep -q "ssh.service"; then
+    sudo systemctl restart ssh
+elif systemctl list-units --type=service --all | grep -q "sshd.service"; then
+    sudo systemctl restart sshd
+else
+    echo "⚠️  SSH 서비스를 찾을 수 없습니다. 수동으로 재시작하세요."
+    exit 1
+fi
 
 echo ""
 echo "=========================================="

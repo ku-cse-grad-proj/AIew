@@ -40,8 +40,10 @@ ClientAliveInterval 300            # 5분마다 연결 확인
 ClientAliveCountMax 2              # 무응답 2회면 연결 종료
 
 # 설정 확인 및 재시작
-sudo sshd -t
-sudo systemctl restart sshd
+sudo sshd -T
+sudo systemctl restart ssh  # Ubuntu
+# 또는
+# sudo systemctl restart sshd  # CentOS/RHEL
 ```
 
 ⚠️ **중요:** 변경 전 반드시 SSH 키가 제대로 설정되어 있는지 확인하세요!
