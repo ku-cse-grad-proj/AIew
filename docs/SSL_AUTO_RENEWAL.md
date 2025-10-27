@@ -12,13 +12,17 @@ chmod +x nginx/renew-cert.sh
 # 2. 로그 디렉토리 생성
 sudo mkdir -p /var/log
 
-# 3. Cron Job 설정
+# 3. sudo NOPASSWD 권한 설정 (certbot용)
+echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/certbot" | sudo tee /etc/sudoers.d/certbot-renewal
+sudo chmod 440 /etc/sudoers.d/certbot-renewal
+
+# 4. Cron Job 설정
 crontab -e
 # 다음 라인 추가:
 # 0 3 * * * ~/aiew/nginx/renew-cert.sh >> /var/log/certbot-renewal.log 2>&1
 
-# 4. 갱신 테스트 (dry-run)
-sudo certbot renew --dry-run --webroot --webroot-path=/var/www/certbot
+# 5. 갱신 테스트
+./nginx/renew-cert.sh
 ```
 
 ## 상세 설정
@@ -32,7 +36,22 @@ cd ~/aiew
 chmod +x nginx/renew-cert.sh
 ```
 
-### 2. Cron Job 설정
+### 2. sudo NOPASSWD 권한 설정
+
+Cron에서 certbot을 sudo로 실행하기 위해 비밀번호 없이 실행 가능하도록 설정:
+
+```bash
+# certbot 명령만 NOPASSWD 허용
+echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/certbot" | sudo tee /etc/sudoers.d/certbot-renewal
+sudo chmod 440 /etc/sudoers.d/certbot-renewal
+
+# 설정 확인
+sudo -l | grep certbot
+```
+
+⚠️ **보안 참고:** certbot 명령만 비밀번호 없이 실행 가능하도록 제한했습니다.
+
+### 3. Cron Job 설정
 
 #### Crontab 사용 (권장)
 
@@ -48,7 +67,7 @@ crontab -e
 
 더 모던한 방법이지만 설정이 복잡합니다. 간단한 작업이므로 crontab 추천.
 
-### 3. 수동 갱신 테스트
+### 4. 수동 갱신 테스트
 
 실제 갱신 전에 dry-run으로 테스트:
 
@@ -60,7 +79,7 @@ sudo certbot renew --dry-run --webroot --webroot-path=/var/www/certbot
 ./nginx/renew-cert.sh
 ```
 
-### 4. 로그 확인
+### 5. 로그 확인
 
 ```bash
 # Cron 실행 로그 확인
@@ -70,7 +89,7 @@ tail -f /var/log/certbot-renewal.log
 sudo tail -f /var/log/letsencrypt/letsencrypt.log
 ```
 
-### 5. 인증서 만료일 확인
+### 6. 인증서 만료일 확인
 
 ```bash
 # 현재 인증서 만료일 확인
