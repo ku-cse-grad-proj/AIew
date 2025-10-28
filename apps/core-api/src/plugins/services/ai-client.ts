@@ -5,6 +5,7 @@ import {
   AiQuestionRequest,
   AnswerEvaluationRequest,
   AnswerEvaluationResult,
+  EmotionAnalysisResult,
   FollowUp,
   FollowupRequest,
   QuestionGenerateResponse,
@@ -180,6 +181,31 @@ export class AiClientService {
         'X-Session-Id': sessionId,
       },
     })
+  }
+
+  /**
+   * 답변 영상 파일을 AI 서버로 보내 감정 분석을 요청합니다.
+   * @param file - 영상 파일 (File 객체)
+   * @param sessionId - 현재 면접 세션 ID
+   */
+  async analyzeEmotion(
+    file: File,
+    sessionId: string,
+  ): Promise<EmotionAnalysisResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await this.client.post<EmotionAnalysisResult>(
+      '/api/v1/emotion/emotion-analyzing',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'X-Session-Id': sessionId,
+        },
+      },
+    )
+    return response.data
   }
 }
 

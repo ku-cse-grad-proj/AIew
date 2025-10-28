@@ -182,3 +182,27 @@ export interface MemoryDump {
   history_str: string
   messages: MemoryMessage[]
 }
+
+// --- 감정 분석 관련 타입 ---
+
+/**
+ * AI 서버의 프레임별 감정 점수 객체 타입
+ */
+export interface EmotionGroupScore {
+  frame: number // 프레임 번호
+  time: number // 해당 프레임의 시간(초)
+  happy: number // happy 감정 확률 (0.0~1.0)
+  sad: number // sad 감정 확률 (0.0~1.0)
+  neutral: number // neutral 감정 확률 (0.0~1.0)
+  angry: number // angry 감정 확률 (0.0~1.0)
+  fear: number // fear 감정 확률 (0.0~1.0)
+  surprise: number // surprise 감정 확률 (0.0~1.0)
+}
+
+/**
+ * AI 서버의 /emotion-analyzing 엔드포인트 응답 객체 타입
+ */
+export interface EmotionAnalysisResult {
+  file_name: string // 분석된 영상 파일명
+  results: EmotionGroupScore[] // 프레임별 감정 분석 결과
+}
