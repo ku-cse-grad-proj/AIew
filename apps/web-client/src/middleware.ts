@@ -9,7 +9,11 @@ export async function middleware(req: NextRequest) {
   const { pathname } = new URL(req.url)
 
   //auth 검사 필요 없는 page 및 api
-  if (pathname.startsWith('/login') || pathname.startsWith('/api/v1/refresh')) {
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/api/v1/refresh') ||
+    pathname.startsWith('/mock-api')
+  ) {
     return NextResponse.next()
   }
   const accessToken = req.cookies.get('accessToken')?.value
