@@ -1,14 +1,15 @@
 import ReportHeader from './_components/header/ReportHeader'
+import Pagination from './_components/pagination/Pagination'
 import ReportTable from './_components/ReportTable'
 
-export default function ReportsPage() {
+export default async function ReportsPage() {
+  // const totalPages = await fetchReportPages(query)
+  const totalPages = 49
   return (
     <article className="w-full h-full flex flex-col items-center gap-24">
       <ReportHeader />
       <ReportTable />
-      <div className="w-300 h-48 bg-neutral-card rounded-[20px] shadow-box">
-        pagination
-      </div>
+      {totalPages > 1 && <Pagination totalPages={totalPages} />}
     </article>
   )
 }
