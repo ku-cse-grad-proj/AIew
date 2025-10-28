@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Dots from '@/../public/icons/dots.svg'
 
 export default function ReportTable() {
-  const rowStyle = 'w-full min-h-24 grid grid-cols-[3fr_3fr_4fr_2fr_1fr_1fr]'
+  const rowStyle = 'w-full min-h-40 grid grid-cols-[3fr_3fr_4fr_2fr_1fr_1fr]'
   return (
     <section className="w-full min-h-24 flex-1 flex flex-col bg-neutral-card rounded-[20px] shadow-box">
       <div className="w-full flex border-b border-neutral-gray max-h-40 py-8 px-16">
@@ -21,24 +21,28 @@ export default function ReportTable() {
       </div>
 
       <div className="flex-1 w-full min-h-0 flex flex-col justify-around px-8 overflow-y-auto">
-        {data.map((item) => (
-          <div
-            key={item.id}
-            className="w-full flex items-center px-8 rounded-[10px] hover:bg-gray-200"
-          >
-            <Link className={`${rowStyle} py-8`} href={`/reports/${item.id}`}>
-              <div>{item.title}</div>
-              <div>{item.company}</div>
-              <div>{item.job}</div>
-              <div>{item.date}</div>
-              <div>{item.score}</div>
-              <div>{item.duration}</div>
-            </Link>
-            <button>
-              <Dots width={20} height={20} />
-            </button>
-          </div>
-        ))}
+        {Array.from({ length: 10 }, (_, i) => data[i] || {}).map((item, i) =>
+          item.id ? (
+            <div
+              key={i}
+              className="w-full flex items-center px-8 rounded-[10px] hover:bg-gray-200"
+            >
+              <Link className={`${rowStyle} py-8`} href={`/reports/${item.id}`}>
+                <div>{item.title}</div>
+                <div>{item.company}</div>
+                <div>{item.job}</div>
+                <div>{item.date}</div>
+                <div>{item.score}</div>
+                <div>{item.duration}</div>
+              </Link>
+              <button>
+                <Dots width={20} height={20} />
+              </button>
+            </div>
+          ) : (
+            <div key={i} className="w-full min-h-40 py-8"></div>
+          ),
+        )}
       </div>
     </section>
   )
@@ -108,31 +112,31 @@ const data = [
     score: 3.2,
     duration: '58 min',
   },
-  {
-    id: 8,
-    title: '카카오엔터 interview',
-    company: '카카오엔터테인먼트',
-    job: 'web developer > frontend',
-    date: '2025-10-13',
-    score: 4.0,
-    duration: '53 min',
-  },
-  {
-    id: 9,
-    title: '삼성 SDS interview',
-    company: '삼성 SDS',
-    job: 'web developer > fullstack',
-    date: '2025-10-12',
-    score: 3.6,
-    duration: '46 min',
-  },
-  {
-    id: 10,
-    title: 'LG CNS interview',
-    company: 'LG CNS',
-    job: 'web developer > frontend',
-    date: '2025-10-11',
-    score: 4.2,
-    duration: '54 min',
-  },
+  // {
+  //   id: 8,
+  //   title: '카카오엔터 interview',
+  //   company: '카카오엔터테인먼트',
+  //   job: 'web developer > frontend',
+  //   date: '2025-10-13',
+  //   score: 4.0,
+  //   duration: '53 min',
+  // },
+  // {
+  //   id: 9,
+  //   title: '삼성 SDS interview',
+  //   company: '삼성 SDS',
+  //   job: 'web developer > fullstack',
+  //   date: '2025-10-12',
+  //   score: 3.6,
+  //   duration: '46 min',
+  // },
+  // {
+  //   id: 10,
+  //   title: 'LG CNS interview',
+  //   company: 'LG CNS',
+  //   job: 'web developer > frontend',
+  //   date: '2025-10-11',
+  //   score: 4.2,
+  //   duration: '54 min',
+  // },
 ]
