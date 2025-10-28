@@ -1,9 +1,12 @@
+import { Suspense } from 'react'
+
 import ReportHeader from './_components/header/ReportHeader'
 import Pagination from './_components/pagination/Pagination'
 import ReportTable from './_components/table/ReportTable'
+import ReportTableSkeleton from './_components/table/ReportTableSkeleton'
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
-type Query = [string, string][]
+export type Query = [string, string][]
 
 export default async function ReportsPage({
   searchParams,
@@ -20,7 +23,9 @@ export default async function ReportsPage({
   return (
     <article className="w-full h-full flex flex-col items-center gap-24">
       <ReportHeader />
-      <ReportTable />
+      <Suspense key={query.toString()} fallback={<ReportTableSkeleton />}>
+        <ReportTable query={query} />
+      </Suspense>
       {totalPages > 1 && <Pagination totalPages={totalPages} />}
     </article>
   )
