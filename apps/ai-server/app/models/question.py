@@ -64,6 +64,7 @@ class QuestionResponse(BaseModel):
     rationale: str = Field(None, description="질문 생선 전 근거")
     question_text: str = Field(..., description="질문 본문")
     estimated_answer_time_sec: int = Field(None, ge=10, le=600, description="예상 답변 시간(초)")
+   
     model_config = {
         "json_schema_extra": {
             "example": {
