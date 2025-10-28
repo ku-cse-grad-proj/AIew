@@ -1,39 +1,26 @@
-from typing import List, Optional
-
-from pydantic import BaseModel, Field
-
+from typing import (
+    List, 
+    Optional
+)
+from pydantic import (
+    BaseModel, 
+    Field
+)
 
 class FollowupRequest(BaseModel):
     question_id: str = Field(..., description="부모 메인 질문 ID (예: q1)")
     category: str = Field(..., description="behavioral|technical|tailored")
     question_text: str = Field(..., description="부모 질문 본문")
-    criteria: List[str] = Field(
-        default_factory=list, description="평가 기준(부족한 부분을 파고듦)"
-    )
+    criteria: List[str] = Field(default_factory=list, description="평가 기준(부족한 부분을 파고듦)")
     skills: List[str] = Field(default_factory=list, description="측정 역량 태그")
     user_answer: str = Field(..., description="사용자 답변 전문")
-    evaluation_summary: Optional[str] = Field(
-        None, description="이전 평가 요약(강점/개선점/레드플래그 요약 텍스트)"
-    )
+    evaluation_summary: Optional[str] = Field(None, description="이전 평가 요약(강점/개선점/레드플래그 요약 텍스트)")
     remaining_time_sec: Optional[int] = Field(None, description="남은 면접 시간(초)")
-    remaining_main_questions: Optional[int] = Field(
-        None, description="남은 메인 질문 수"
-    )
-    depth: int = Field(
-        1, ge=1, le=3, description="꼬리질문 추궁 강도(1=가벼움, 3=깊게)"
-    )
-    use_tailored_category: bool = Field(
-        False,
-        description="True면 꼬리질문 category를 항상 'tailored'로 간주하여 프롬프트에 전달",
-    )
-    auto_sequence: bool = Field(
-        True, description="True면 기존 꼬리질문 수를 기준으로 fu 번호 자동 증가"
-    )
-    next_followup_index: Optional[int] = Field(
-        None,
-        ge=1,
-        description="수동으로 fu 인덱스 지정(q3-fu{index}). auto_sequence=True면 무시",
-    )
+    remaining_main_questions: Optional[int] = Field(None, description="남은 메인 질문 수")
+    depth: int = Field(1, ge=1, le=3, description="꼬리질문 추궁 강도(1=가벼움, 3=깊게)")
+    use_tailored_category: bool = Field(False, description="True면 꼬리질문 category를 항상 'tailored'로 간주하여 프롬프트에 전달")
+    auto_sequence: bool = Field(True, description="True면 기존 꼬리질문 수를 기준으로 fu 번호 자동 증가")
+    next_followup_index: Optional[int] = Field(None, ge=1, description="수동으로 fu 인덱스 지정(q3-fu{index}). auto_sequence=True면 무시")
 
     model_config = {
         "json_schema_extra": {
@@ -53,17 +40,23 @@ class FollowupRequest(BaseModel):
         }
     }
 
-
-class Followup(BaseModel):
+class FollowupResponse(BaseModel):
     followup_id: str = Field(..., description="꼬리질문 ID (예: q1-fu1)")
     parent_question_id: str = Field(..., description="부모 메인 질문 ID")
-    focus_criteria: List[str] = Field(
-        default_factory=list, description="파고들 포커스 기준"
-    )
+    focus_criteria: List[str] = Field(default_factory=list, description="파고들 포커스 기준")
     rationale: str = Field(..., description="꼬리질문 생성 근거")
-    question_text: str = Field(..., alias="question", description="꼬리질문 본문")
-    expected_answer_time_sec: int = Field(
-        45, ge=15, le=180, description="예상 답변 시간(초)"
-    )
+    question_text: str = Field(..., description="꼬리질문 본문")
+    expected_answer_time_sec: int = Field(45, ge=15, le=180, description="예상 답변 시간(초)")
 
-    model_config = {"populate_by_name": True}
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "followup_id": "q3-fu1",
+                "parent_question_id": "q3",
+                "focus_criteria": ["성능 개선", "캐싱 전략"],       
+                "rationale": "사용자가 API 성능 최적화에 대해 구체적인 기술과 방법론을 언급했으나, 캐싱 전략과 네트워크 최적화에 대한 상세한 설명이 부족했습니다. 따라서 이 꼬리질문을 통해 해당 부분을 집중적으로 파고들어 사용자의 깊은 이해도를 평가하고자 합니다.",
+                "question_text": "캐싱 전략을 구체적으로 설명해주시겠어요? 어떤 데이터를 캐싱했고, 캐싱 정책은 어떻게 설정했나요?",
+                "expected_answer_time_sec": 60,
+            }
+        }
+    }
