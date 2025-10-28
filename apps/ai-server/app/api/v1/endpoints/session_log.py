@@ -62,7 +62,7 @@ class UserAnswer(BaseModel):
 
 @router.post(
     "/log/question-shown",
-    tags=["Session Log"],
+    tags=["Session"],
     summary="Log Shown Question"
 )
 def post_question_shown(
@@ -78,7 +78,7 @@ def post_question_shown(
 
 @router.post(
     "/log/user-answer",
-    tags=["Session Log"],
+    tags=["Session"],
     summary="Log User Answer"
 )
 def post_user_answer(

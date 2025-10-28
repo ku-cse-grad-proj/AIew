@@ -48,7 +48,7 @@ class MemoryDump(BaseModel):
 @router.get(
     "/session-memory-dump", 
     response_model=MemoryDump,
-    tags=["Session Log"],
+    tags=["Session"],
     summary="Get Memory Dump"
 )
 def get_memory_dump(
@@ -80,7 +80,7 @@ def get_memory_dump(
 
 @router.delete(
     "/session-memory-reset",
-    tags=["Session Log"],
+    tags=["Session"],
     summary="Reset Session Memory"
 )
 def reset_memory(
