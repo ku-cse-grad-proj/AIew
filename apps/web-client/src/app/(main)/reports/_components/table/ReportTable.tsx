@@ -26,10 +26,12 @@ export default async function ReportTable({ query }: { query: Query }) {
                 >
                   <div>{item.title}</div>
                   <div>{item.company}</div>
-                  <div>{item.job}</div>
+                  <div>
+                    {item.jobTitle} {'>'} {item.jobSpec}
+                  </div>
                   <div>{item.date}</div>
                   <div>{item.score}</div>
-                  <div>{item.duration}</div>
+                  <div>{item.duration} min</div>
                 </Link>
                 <button>
                   <Dots width={20} height={20} />

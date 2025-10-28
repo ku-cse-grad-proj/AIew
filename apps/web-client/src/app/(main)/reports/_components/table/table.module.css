@@ -1,7 +1,7 @@
 @reference "../../../../globals.css";
 
 .row {
-  @apply w-full min-h-24 grid grid-cols-[3fr_3fr_4fr_2fr_1fr_1fr];
+  @apply w-full min-h-24 grid grid-cols-[3fr_3fr_3fr_2fr_1fr_1fr];
 }
 
 .table {
