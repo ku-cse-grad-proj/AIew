@@ -1,6 +1,6 @@
 import ReportHeader from './_components/header/ReportHeader'
 import Pagination from './_components/pagination/Pagination'
-import ReportTable from './_components/ReportTable'
+import ReportTable from './_components/table/ReportTable'
 
 export default async function ReportsPage() {
   // const totalPages = await fetchReportPages(query)
