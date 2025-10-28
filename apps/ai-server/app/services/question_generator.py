@@ -2,8 +2,7 @@ import json
 from typing import (
     Any,
     Dict, 
-    List,
-    Field
+    List
 )
 
 from langchain.memory import ConversationBufferMemory
@@ -71,8 +70,8 @@ class QuestionGeneratorService:
 
     def generate_questions(
         self,
-        user_info: UserInfo = Field(...),
-        constraints: QuestionConstraints = Field(...),
+        user_info: UserInfo = ...,
+        constraints: QuestionConstraints = ...,
         memory: ConversationBufferMemory = None,
     ) -> List[Dict[str, Any]]:
         
