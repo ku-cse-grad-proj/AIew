@@ -14,15 +14,19 @@ export default async function ReportsPage({
   searchParams: SearchParams
 }) {
   const params = await searchParams
+
   //URLSearchParmas의 생성자 type에 parmas 맞게 변환
   const query = Object.entries(params).filter(
     (_, value) => value != null,
   ) as Query
-  const totalPages = await fetchReportsCount(query)
+
+  const queryWithoutPage = query.filter(([key]) => key !== 'page')
+
+  const totalPages = await fetchReportsCount(queryWithoutPage)
 
   return (
     <article className="w-full h-full flex flex-col items-center gap-24">
-      <ReportHeader />
+      <ReportHeader query={queryWithoutPage} />
       <Suspense key={query.toString()} fallback={<ReportTableSkeleton />}>
         <ReportTable query={query} />
       </Suspense>
