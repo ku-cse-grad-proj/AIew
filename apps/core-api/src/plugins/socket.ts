@@ -238,49 +238,93 @@ export default fp(
         },
       )
 
-      socket.on('client:upload-finish', async (p: { type: string }) => {
-        try {
-          if (!socket.uploadChunks || socket.uploadChunks.length === 0) {
-            return socket.emit('server:error', {
-              message: 'No chunks to process.',
+      socket.on(
+        'client:upload-finish',
+        async (p: { type: string; stepId: string }) => {
+          try {
+            if (!socket.uploadChunks || socket.uploadChunks.length === 0) {
+              return socket.emit('server:error', {
+                message: 'No chunks to process.',
+              })
+            }
+
+            if (!p.stepId) {
+              return socket.emit('server:error', {
+                message: 'stepId is required for emotion analysis.',
+              })
+            }
+
+            // 인덱스 누락 체크 & 정렬
+            const ordered = socket.uploadChunks.filter(Boolean)
+            if (ordered.length !== socket.uploadChunks.length) {
+              fastify.log.warn(
+                `Missing chunks detected for socket ${socket.id}. Expected: ${socket.uploadChunks.length}, Got: ${ordered.length}`,
+              )
+            }
+
+            const big = Buffer.concat(ordered)
+            const blob = new Blob([big], { type: p.type })
+            const filename = `record-${crypto.randomUUID()}.${p.type.startsWith('video/mp4') ? 'mp4' : 'webm'}`
+            const file = new File([blob], filename, {
+              type: p.type,
+              lastModified: Date.now(),
             })
-          }
 
-          // 인덱스 누락 체크 & 정렬
-          const ordered = socket.uploadChunks.filter(Boolean)
-          if (ordered.length !== socket.uploadChunks.length) {
-            fastify.log.warn(
-              `Missing chunks detected for socket ${socket.id}. Expected: ${socket.uploadChunks.length}, Got: ${ordered.length}`,
+            fastify.log.info(
+              `[${socket.sessionId}] Video file created: ${filename} (${file.size} bytes)`,
             )
+            socket.uploadChunks = [] // 메모리 해제
+
+            // 감정 분석 요청
+            if (!socket.sessionId) {
+              throw new Error('Session ID not found in socket context.')
+            }
+
+            fastify.log.info(
+              `[${socket.sessionId}] Starting emotion analysis for step ${p.stepId}...`,
+            )
+            const emotionResult = await fastify.aiClientService.analyzeEmotion(
+              file,
+              socket.sessionId,
+            )
+
+            // DB에 감정 분석 결과 저장
+            await fastify.prisma.emotionAnalysis.create({
+              data: {
+                interviewStepId: p.stepId,
+                frames: {
+                  createMany: {
+                    data: emotionResult.results.map((frame) => ({
+                      frame: frame.frame,
+                      time: frame.time,
+                      happy: frame.happy,
+                      sad: frame.sad,
+                      neutral: frame.neutral,
+                      angry: frame.angry,
+                      fear: frame.fear,
+                      surprise: frame.surprise,
+                    })),
+                  },
+                },
+              },
+            })
+
+            fastify.log.info(
+              `[${socket.sessionId}] Emotion analysis completed and saved for step ${p.stepId}.`,
+            )
+          } catch (error) {
+            fastify.log.error(
+              `Error finalizing upload for socket ${socket.id}:`,
+              error,
+            )
+            socket.emit('server:error', {
+              code: 'EMOTION_ANALYSIS_FAILED',
+              message: 'Failed to analyze video emotion.',
+            })
+            socket.uploadChunks = [] // 에러 시에도 메모리 해제
           }
-
-          const big = Buffer.concat(ordered)
-          const blob = new Blob([big], p) // Node 18+
-          const filename = `record-${crypto.randomUUID()}.${p.type.startsWith('video/mp4') ? 'mp4' : 'webm'}`
-          const file = new File([blob], filename, {
-            type: p.type,
-            lastModified: Date.now(),
-          }) // undici/File 또는 전역 지원
-
-          console.dir({
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified,
-          })
-          socket.uploadChunks = [] // 메모리 해제
-          //TODO:: ai 서버로 보내기
-        } catch (error) {
-          fastify.log.error(
-            `Error finalizing upload for socket ${socket.id}:`,
-            error,
-          )
-          socket.emit('server:error', {
-            message: 'Failed to finalize upload.',
-          })
-          socket.uploadChunks = [] // 에러 시에도 메모리 해제
-        }
-      })
+        },
+      )
 
       socket.on(
         'client:submit-answer',
