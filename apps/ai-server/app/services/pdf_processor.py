@@ -2,7 +2,6 @@ import json
 from typing import (
     Any, 
     Dict, 
-    List
 )
 
 from langchain.memory import ConversationBufferMemory
@@ -13,6 +12,7 @@ from app.utils.pdf_utils import (
     extract_text_from_image_pdf,
     preprocess_text
 )
+from app.services.memory_logger import log_pdf_parsing
 
 
 class PDFAnalysisService:
@@ -24,23 +24,6 @@ class PDFAnalysisService:
         
         self.memory = memory
         self.session_id = session_id
-    
-    def _save_results_to_memory(
-        self, 
-        file_name: str = "", 
-        preprocessed_text: str = "", 
-        is_digital: bool = True
-    ):
-        
-        payload: Dict[str, Any] = {
-            "filename": file_name,
-            "digital": is_digital,
-            "preprocessed_text": preprocessed_text
-        }
-
-        self.memory.chat_memory.add_user_message(
-            "[PDF_PARSE]" + json.dumps(payload, ensure_ascii=False)
-        )
 
     def process_and_persist(
         self, 
@@ -55,12 +38,17 @@ class PDFAnalysisService:
             extract_text_from_image_pdf(file_bytes)
         )
         
-        preprocessed_sentences = preprocess_text(extracted_text)
+        preprocessed_text = preprocess_text(extracted_text)
         
-        self._save_results_to_memory(
-            file_name, 
-            is_digital,
-            preprocessed_sentences
+        parsed_data: Dict[str, Any] = {
+            "filename": file_name,
+            "digital": is_digital,
+            "preprocessed_text": preprocessed_text
+        }
+        
+        log_pdf_parsing(
+            memory=self.memory,
+            parsed_data=parsed_data
         )
             
-        return preprocessed_sentences
+        return preprocessed_text
