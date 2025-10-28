@@ -20,7 +20,9 @@ def load_prompt_template(path: Path) -> str:
 _JSON_FENCE_RE = re.compile(r"```json(.*?)```", re.DOTALL)
 
 
-def strip_json(text: str) -> str:
+def strip_json(
+    text: str
+) -> str:
     m = _JSON_FENCE_RE.search(text)
     if m:
         return m.group(1).strip()

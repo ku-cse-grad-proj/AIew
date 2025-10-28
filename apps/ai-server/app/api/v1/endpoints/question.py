@@ -1,32 +1,42 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import (
+    APIRouter, 
+    Depends,
+    Header,
+    Body
+)
 from langchain.memory import ConversationBufferMemory
 
 from app.api.v1.endpoints.memory_debug import MemoryDep
 from app.models.question import (
-    InterviewQuestion, 
-    QuestionRequest
+    QuestionRequest,
+    QuestionResponse
 )
-from app.services.question_generator import generate_questions
+from app.services.question_generator import QuestionGeneratorService
 
 router = APIRouter()
 
 
 @router.post(
     "/generate-question", 
-    response_model=List[InterviewQuestion],
+    response_model=List[QuestionResponse],
     tags=["Question"],
     summary="Generate Interview Questions"
 )
 def generate_question(
-        req: QuestionRequest, 
-        memory: ConversationBufferMemory = Depends(MemoryDep)
-) -> List[InterviewQuestion]:
+    x_session_id: str = Header(...),
+    req: QuestionRequest = Body(...), 
+    memory: ConversationBufferMemory = Depends(MemoryDep)
+) -> List[QuestionResponse]:
     
-    data = generate_questions(
+    service = QuestionGeneratorService(
+        memory=memory, 
+        session_id=x_session_id
+    )
+    
+    return service.generate_questions(
         req.user_info, 
         req.constraints, 
-        memory
+        memory=memory
     )
-    return data

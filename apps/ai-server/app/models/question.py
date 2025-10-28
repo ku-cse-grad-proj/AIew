@@ -1,6 +1,9 @@
-from typing import List
 from enum import Enum
-from pydantic import BaseModel, Field
+from typing import List
+from pydantic import (
+    BaseModel, 
+    Field
+)
 
 
 class UserInfo(BaseModel):
@@ -10,12 +13,14 @@ class UserInfo(BaseModel):
     resume_text: str = Field(..., description="자기소개서 텍스트", max_length=20000)
     portfolio_text: str = Field(..., description="포트폴리오 텍스트", max_length=20000)
 
+
 class QuestionConstraints(BaseModel):
     language: str = Field("ko", description="질문 출력 언어: ko")
     n: int = Field(5, ge=5, le=5, description="메인 질문 개수(고정 5)")
     timebox_total_sec: int = Field(None, description="면접 총 시간(초)")
     avoid_question_ids: List[str] = Field(default_factory=list, description="이미 출제된 질문 ID 목록(중복 방지)")
     seed: int = Field(None, description="결정적 생성용 시드(모델 지원 시)")
+
 
 class QuestionRequest(BaseModel):
     user_info: UserInfo
@@ -50,17 +55,16 @@ class QuestionType(str, Enum):
     technical = "technical"     # 기술
     tailored = "tailored"       # 맞춤
 
-class InterviewQuestion(BaseModel):
+
+class QuestionResponse(BaseModel):
     main_question_id: str = Field(..., description="메인 질문 고유 ID (예: q1~q5)")
     category: QuestionType = Field(..., description="질문 유형: behavioral|technical|tailored")
     criteria: List[str] = Field(..., min_items=1, max_items=5, description="평가 기준 키워드 목록")
     skills: List[str] = Field(default_factory=list, max_items=5, description="측정 역량 태그")
-    rationale: str = Field(None, max_length=300, description="질문 선정 근거(한 줄)")
-    question_text: str = Field(..., alias="question", description="질문 본문")
+    rationale: str = Field(None, description="질문 생선 전 근거")
+    question_text: str = Field(..., description="질문 본문")
     estimated_answer_time_sec: int = Field(None, ge=10, le=600, description="예상 답변 시간(초)")
-
     model_config = {
-        "populate_by_name": True,
         "json_schema_extra": {
             "example": {
                 "main_question_id": "q1",
