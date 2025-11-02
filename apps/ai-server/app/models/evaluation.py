@@ -1,6 +1,12 @@
 from enum import Enum
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from typing import (
+    List, 
+    Optional
+)
+from pydantic import (
+    BaseModel, 
+    Field
+)
 
 
 class TailDecision(str, Enum):
@@ -21,7 +27,7 @@ class AnswerEvaluationResult(BaseModel):
     overall_score: int = Field(..., ge=1, le=5, description="총평 1~5")
     strengths: List[str] = Field(default_factory=list, max_items=5)
     improvements: List[str] = Field(default_factory=list, max_items=5)  # 개선점 목록
-    red_flags: List[str] = Field(default_factory=list, max_items=5)  #  지원자를 더 주의깊게 살펴야한다는 신호
+    red_flags: List[str] = Field(default_factory=list, max_items=5)     # 지원자를 더 주의깊게 살펴야한다는 신호
     criterion_scores: List[CriterionScore] = Field(default_factory=list, description="각 기준별 점수")
     feedback: str = Field(..., description="300±50자 내외의 답변별 피드백")
     tail_rationale: Optional[str] = Field(None, description="꼬리질문 생성 여부 판단 근거")
@@ -29,15 +35,15 @@ class AnswerEvaluationResult(BaseModel):
 
 
 class AnswerEvaluationRequest(BaseModel):
-    question_id: str
-    category: str
-    criteria: List[str]
-    skills: List[str] = []
-    question_text: str
-    user_answer: str
-    answer_duration_sec: int
-    remaining_time_sec: Optional[int] = None
-    remaining_main_questions: Optional[int] = None
+    question_id: str = Field(..., description="평가 대상 질문 ID (q1~q5)")
+    category: str = Field(..., description="behavioral|technical")
+    criteria: List[str] = Field(default_factory=list, description="평가 기준 목록")
+    skills: List[str] = Field(default_factory=list, description="관련 기술 스택 목록")
+    question_text: str = Field(..., description="질문 텍스트")
+    user_answer: str = Field(..., description="사용자 답변 텍스트")
+    answer_duration_sec: int = Field(..., ge=0, description="사용자 답변 소요 시간(초)")
+    remaining_time_sec: Optional[int] = Field(None, ge=0, description="남은 전체 시험 시간(초)")
+    remaining_main_questions: Optional[int] = Field(None, ge=0, description="남은 메인 질문 수")
     use_tailored_category: bool = Field(False, description="True면 평가 프롬프트에 전달되는 category를 'tailored'로 강제")
 
     model_config = {

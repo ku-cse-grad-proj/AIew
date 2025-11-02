@@ -1,6 +1,8 @@
 from fastapi import (
     APIRouter, 
-    Depends
+    Depends,
+    Header,
+    Body
 )
 from langchain.memory import ConversationBufferMemory
 
@@ -10,13 +12,12 @@ from app.models.evaluation import (
     AnswerEvaluationResult,
     SessionEvaluationResult,
 )
-from app.services.answer_evaluator import (
-    evaluate_answer as evaluate_answer_service,
-    evaluate_session as evaluate_session_service
-)
+from app.services.answer_evaluator import EvaluationService
 
 router = APIRouter()
 
+
+service = EvaluationService()
 
 @router.post(
     "/evaluate-answer", 
@@ -25,11 +26,12 @@ router = APIRouter()
     summary="Evaluate User Answer"
 )
 def evaluate_answer(
-    req: AnswerEvaluationRequest, 
+    x_session_id: str = Header(...),
+    req: AnswerEvaluationRequest = Body(...), 
     memory: ConversationBufferMemory = Depends(MemoryDep)
 ) -> AnswerEvaluationResult:
     
-    return evaluate_answer_service(
+    return service.evaluate_answer(
         req, 
         memory
     )
@@ -45,4 +47,4 @@ def evaluate_session(
     memory: ConversationBufferMemory = Depends(MemoryDep)
 ) -> SessionEvaluationResult:
 
-    return evaluate_session_service(memory)
+    return service.evaluate_session(memory)
