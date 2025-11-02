@@ -10,7 +10,7 @@ from fastapi import (
 )
 from langchain.memory import ConversationBufferMemory
 
-from app.api.v1.endpoints.memory_debug import MemoryDep
+from app.api.v1.endpoints.memory_debug import MemoryManager
 from app.models.emotion import (
     EmotionGroupResult, 
     EmotionGroupScore
@@ -29,7 +29,7 @@ router = APIRouter()
 async def upload_video(
     x_session_id: str = Header(...),
     file: UploadFile = File(..., description="Video file to be analyzed"),
-    memory: ConversationBufferMemory = Depends(MemoryDep),
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
 ) -> EmotionGroupResult:
 
     # 임시 파일 생성: 확장자를 유지하며 임시 파일을 생성합니다.

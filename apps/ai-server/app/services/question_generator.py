@@ -19,7 +19,7 @@ from app.utils.llm_utils import (
     load_prompt_template,
     strip_json,
 )
-from app.services.memory_logger import log_main_questions
+from app.services.memory_logger import MemoryLogger
 
 PROMPT_PATH = (PROMPT_BASE_DIR / "question_prompt.txt").resolve()
 
@@ -33,6 +33,10 @@ class QuestionGeneratorService:
         
         self.memory = memory
         self.session_id = session_id
+        self.logger = MemoryLogger(
+            memory=memory, 
+            session_id=session_id
+        )
     
     def _normalize_items(
         self,
@@ -117,6 +121,6 @@ class QuestionGeneratorService:
         )
 
         _ = [QuestionResponse.model_validate(i) for i in final]
-        log_main_questions(memory, final)
+        self.logger.log_main_questions(final)
 
         return final

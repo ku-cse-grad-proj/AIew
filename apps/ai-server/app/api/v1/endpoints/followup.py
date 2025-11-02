@@ -8,7 +8,7 @@ from fastapi import (
 )
 from langchain.memory import ConversationBufferMemory
 
-from app.api.v1.endpoints.memory_debug import MemoryDep
+from app.services.memory_logger import MemoryManager
 from app.models.followup import (
     FollowupRequest,
     FollowupResponse
@@ -27,7 +27,7 @@ router = APIRouter()
 def generate_followup(
     x_session_id: str = Header(...),
     req: FollowupRequest = Body(...), 
-    memory: ConversationBufferMemory = Depends(MemoryDep)
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep)
 ) -> List[FollowupResponse]:
     
     service = FollowupGeneratorService(

@@ -19,7 +19,7 @@ from app.utils.llm_utils import (
     load_prompt_template,
     strip_json,
 )
-from app.services.memory_logger import log_tail_question
+from app.services.memory_logger import MemoryLogger
 
 PROMPT_PATH = (PROMPT_BASE_DIR / "followup_prompt.txt").resolve()
 
@@ -33,6 +33,10 @@ class FollowupGeneratorService:
         
         self.memory = memory
         self.session_id = session_id
+        self.logger = MemoryLogger(
+            memory=memory, 
+            session_id=session_id
+        )
         
     def _count_existing_followups(
         self,
@@ -123,6 +127,6 @@ class FollowupGeneratorService:
         norm = self._normalize_items(parsed, req, memory) 
         followup = FollowupResponse.model_validate(norm)
         responses.append(followup)
-        log_tail_question(memory, followup.model_dump())
+        self.logger.log_tail_question(followup.model_dump())
 
         return responses

@@ -8,7 +8,7 @@ from fastapi import (
 )
 from langchain.memory import ConversationBufferMemory
 
-from app.api.v1.endpoints.memory_debug import MemoryDep
+from app.services.memory_logger import MemoryManager
 from app.models.question import (
     QuestionRequest,
     QuestionResponse
@@ -27,7 +27,7 @@ router = APIRouter()
 def generate_question(
     x_session_id: str = Header(...),
     req: QuestionRequest = Body(...), 
-    memory: ConversationBufferMemory = Depends(MemoryDep)
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep)
 ) -> List[QuestionResponse]:
     
     service = QuestionGeneratorService(

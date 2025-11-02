@@ -7,7 +7,7 @@ from fastapi import (
 )
 from langchain.memory import ConversationBufferMemory
 
-from app.api.v1.endpoints.memory_debug import MemoryDep 
+from app.services.memory_logger import MemoryManager
 from app.models.pdf import PDFUploadResponse
 from app.services.pdf_processor import PDFAnalysisService
 
@@ -23,7 +23,7 @@ router = APIRouter()
 async def parse_pdf(
     x_session_id: str = Header(...),
     file: UploadFile = File(..., description="PDF file to be parsed"), 
-    memory: ConversationBufferMemory = Depends(MemoryDep),
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
 ) -> PDFUploadResponse:
     
     file_bytes = await file.read()

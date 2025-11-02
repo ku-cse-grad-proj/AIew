@@ -19,7 +19,7 @@ from app.utils.llm_utils import (
     load_prompt_template,
     strip_json,
 )
-from app.services.memory_logger import log_evaluation
+from app.services.memory_logger import MemoryLogger
 from app.utils.extract_evaluation import extract_evaluation
 
 PROMPT_PATH = (PROMPT_BASE_DIR / "evaluation_prompt.txt").resolve()
@@ -35,6 +35,10 @@ class EvaluationService:
     ):
         self.memory = memory
         self.session_id = session_id
+        self.logger = MemoryLogger(
+            memory=memory, 
+            session_id=session_id
+        )
 
     def evaluate_answer(
         self, 
@@ -76,7 +80,7 @@ class EvaluationService:
             raise ValueError(f"LLM 평가 응답이 JSON 형식이 아닙니다.\n Raw JSON: {json_text}")
 
         eval_result = AnswerEvaluationResult.model_validate(parsed)
-        log_evaluation(memory, eval_result.model_dump())
+        self.logger.log_evaluation(eval_result.model_dump())
 
         return eval_result
 
@@ -111,6 +115,6 @@ class EvaluationService:
         parsed["average_score"] = float(avg_score)
         
         eval_result = SessionEvaluationResult.model_validate(parsed)
-        log_evaluation(memory, eval_result.model_dump())
+        self.logger.log_evaluation(eval_result.model_dump())
 
         return eval_result

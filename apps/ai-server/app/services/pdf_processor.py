@@ -12,7 +12,7 @@ from app.utils.pdf_utils import (
     extract_text_from_image_pdf,
     preprocess_text
 )
-from app.services.memory_logger import log_pdf_parsing
+from app.services.memory_logger import MemoryLogger
 
 
 class PDFAnalysisService:
@@ -24,6 +24,10 @@ class PDFAnalysisService:
         
         self.memory = memory
         self.session_id = session_id
+        self.logger = MemoryLogger(
+            memory=memory, 
+            session_id=session_id
+        )
 
     def process_and_persist(
         self, 
@@ -46,8 +50,7 @@ class PDFAnalysisService:
             "preprocessed_text": preprocessed_text
         }
         
-        log_pdf_parsing(
-            memory=self.memory,
+        self.logger.log_pdf_parsing(
             parsed_data=parsed_data
         )
             

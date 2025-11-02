@@ -6,7 +6,7 @@ from fastapi import (
 )
 from langchain.memory import ConversationBufferMemory
 
-from app.api.v1.endpoints.memory_debug import MemoryDep
+from app.services.memory_logger import MemoryManager
 from app.models.evaluation import (
     AnswerEvaluationRequest, 
     AnswerEvaluationResult,
@@ -26,7 +26,7 @@ router = APIRouter()
 def evaluate_answer(
     x_session_id: str = Header(...),
     req: AnswerEvaluationRequest = Body(...), 
-    memory: ConversationBufferMemory = Depends(MemoryDep)
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep)
 ) -> AnswerEvaluationResult:
     
     service = EvaluationService(
@@ -48,7 +48,7 @@ def evaluate_answer(
 )
 def evaluate_session(
     x_session_id: str = Header(...),
-    memory: ConversationBufferMemory = Depends(MemoryDep)
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep)
 ) -> SessionEvaluationResult:
 
     service = EvaluationService(
