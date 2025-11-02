@@ -16,7 +16,6 @@ router = APIRouter()
 
 def get_memory_logger_dep(
     x_session_id: str = Header(..., description="세션 고유 ID"),
-    # MemoryDep는 이제 core/memory.py 등에서 가져옵니다.
     memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep)
 ) -> MemoryLogger:
 
