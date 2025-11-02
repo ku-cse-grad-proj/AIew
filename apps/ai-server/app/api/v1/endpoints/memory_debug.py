@@ -23,10 +23,6 @@ def MemoryDep(
     """
     세션별 메모리 주입 (X-Session-Id 헤더 사용)
     """
-<<<<<<< HEAD
-
-=======
->>>>>>> 9381611 (refactor(api): update endpoint paths, add tags and summaries for clarity)
     if not x_session_id:
         raise HTTPException(
             status_code=400, 
