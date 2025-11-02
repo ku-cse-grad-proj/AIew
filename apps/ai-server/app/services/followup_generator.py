@@ -30,7 +30,7 @@ class FollowupGeneratorService:
         memory: Optional[ConversationBufferMemory] = None,
         session_id: str = "",
     ):
-                
+        
         self.memory = memory
         self.session_id = session_id
         
@@ -58,7 +58,7 @@ class FollowupGeneratorService:
 
     def _normalize_items(
         self,
-        parsed: Dict[str, Any],
+        parsed_item: Dict[str, Any], 
         req: FollowupRequest,
         memory: Optional[ConversationBufferMemory] = None
     ) -> Dict[str, Any]:
@@ -73,13 +73,12 @@ class FollowupGeneratorService:
             idx = req.next_followup_index or 1
         
         out = {
-            "parent_question_id": req.question_id,
             "followup_id": f"{req.question_id}-fu{idx}",
-            "question_text": parsed.get("question_text"),
-            "category": parsed.get("category") or req.category,
-            "rationale": parsed.get("rationale"),
-            "focus_criteria": parsed.get("focus_criteria") or req.criteria,
-            "expected_answer_time_sec": parsed.get("expected_answer_time_sec")
+            "parent_question_id": parsed_item.get("question_id", ""),            
+            "focus_criteria": parsed_item.get("focus_criteria", []),
+            "rationale": parsed_item.get("rationale", ""),
+            "question_text": parsed_item.get("question_text", ""), 
+            "expected_answer_time_sec": parsed_item.get("expected_answer_time_sec", 180),
         }
         
         return out
@@ -110,22 +109,20 @@ class FollowupGeneratorService:
         prompt_text = prompt_template.format(**vars)
         content = groq_chat(
             prompt_text, 
-            max_tokens=1024, 
+            max_tokens=2048, 
         )
         json_text = strip_json(content)
 
         try:
             parsed = json.loads(json_text)
         except json.JSONDecodeError:
-            raise ValueError(
-                f"LLM 꼬리질문 응답이 JSON 형식이 아닙니다. 오류: \n Raw JSON: {json_text}"
-            )
+            raise ValueError(f"LLM 꼬리질문 응답이 JSON 형식이 아닙니다. 오류: \n Raw JSON: {json_text}")
 
         responses: List[FollowupResponse] = []
-        for item in parsed:
-            norm = self._normalize_items(item, req, memory)
-            followup = FollowupResponse.model_validate(norm)
-            responses.append(followup)
-            log_tail_question(memory, followup.model_dump())
+        
+        norm = self._normalize_items(parsed, req, memory) 
+        followup = FollowupResponse.model_validate(norm)
+        responses.append(followup)
+        log_tail_question(memory, followup.model_dump())
 
         return responses

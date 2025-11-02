@@ -9,7 +9,7 @@ from app.models.evaluation import (
     AnswerEvaluationResult,
     SessionEvaluationResult,
 )
-from app.services.llm_utils import (
+from app.utils.llm_utils import (
     PROMPT_BASE_DIR,
     groq_chat,
     load_prompt_template,

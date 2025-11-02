@@ -46,7 +46,7 @@ class FollowupResponse(BaseModel):
     focus_criteria: List[str] = Field(default_factory=list, description="파고들 포커스 기준")
     rationale: str = Field(..., description="꼬리질문 생성 근거")
     question_text: str = Field(..., description="꼬리질문 본문")
-    expected_answer_time_sec: int = Field(45, ge=15, le=180, description="예상 답변 시간(초)")
+    expected_answer_time_sec: int = Field(180, ge=15, le=180, description="예상 답변 시간(초)")
 
     model_config = {
         "json_schema_extra": {

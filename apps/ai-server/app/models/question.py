@@ -61,9 +61,9 @@ class QuestionResponse(BaseModel):
     category: QuestionType = Field(..., description="질문 유형: behavioral|technical|tailored")
     criteria: List[str] = Field(..., min_items=1, max_items=5, description="평가 기준 키워드 목록")
     skills: List[str] = Field(default_factory=list, max_items=5, description="측정 역량 태그")
-    rationale: str = Field(None, description="질문 생선 전 근거")
+    rationale: str = Field(..., description="질문 생선 전 근거")
     question_text: str = Field(..., description="질문 본문")
-    estimated_answer_time_sec: int = Field(None, ge=10, le=600, description="예상 답변 시간(초)")
+    estimated_answer_time_sec: int = Field(180, ge=10, le=600, description="예상 답변 시간(초)")
    
     model_config = {
         "json_schema_extra": {

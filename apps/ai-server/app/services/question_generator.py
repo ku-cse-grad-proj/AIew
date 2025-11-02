@@ -44,12 +44,12 @@ class QuestionGeneratorService:
             out.append(
                 {
                     "main_question_id": f"q{i}",
-                    "category": q.get("category"),
-                    "criteria": q.get("criteria"),
+                    "category": q.get("category", ""),
+                    "criteria": q.get("criteria", []),
                     "skills": q.get("skills", []),
-                    "rationale": q.get("rationale"),
-                    "question_text": q.get("question_text"),
-                    "estimated_answer_time_sec": q.get("estimated_answer_time_sec"),
+                    "rationale": q.get("rationale", ""),
+                    "question_text": q.get("question_text", ""),
+                    "estimated_answer_time_sec": q.get("estimated_answer_time_sec", 180),
                 }
             )
         return out
@@ -72,7 +72,7 @@ class QuestionGeneratorService:
         self,
         user_info: UserInfo = ...,
         constraints: QuestionConstraints = ...,
-        memory: ConversationBufferMemory = None,
+        memory: ConversationBufferMemory = ...,
     ) -> List[Dict[str, Any]]:
         
         raw = load_prompt_template(PROMPT_PATH)
