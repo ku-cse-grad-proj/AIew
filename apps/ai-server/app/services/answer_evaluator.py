@@ -1,9 +1,12 @@
 import json
-from typing import Dict, Optional, Any
+from typing import (
+    Any,
+    Dict, 
+    Optional
+)
 
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
-from pathlib import Path
 
 from app.models.evaluation import (
     AnswerEvaluationRequest,
@@ -19,29 +22,35 @@ from app.utils.llm_utils import (
 from app.services.memory_logger import log_evaluation
 from app.utils.extract_evaluation import extract_evaluation
 
-PROMPT_PATH: Path = (PROMPT_BASE_DIR / "evaluation_prompt.txt").resolve()
+PROMPT_PATH = (PROMPT_BASE_DIR / "evaluation_prompt.txt").resolve()
 
-SESSION_PROMPT_PATH: Path = (PROMPT_BASE_DIR / "session_evaluation_prompt.txt").resolve()
+SESSION_PROMPT_PATH = (PROMPT_BASE_DIR / "session_evaluation_prompt.txt").resolve()
     
     
 class EvaluationService:
-    def __init__(self):
-        pass
+    def __init__(
+        self,
+        memory: ConversationBufferMemory = None,
+        session_id: str = ""
+    ):
+        self.memory = memory
+        self.session_id = session_id
 
     def evaluate_answer(
         self, 
-        req: AnswerEvaluationRequest = None, 
-        memory: Optional[ConversationBufferMemory] = None
+        req: AnswerEvaluationRequest = ..., 
+        memory: Optional[ConversationBufferMemory] = ...
     ) -> AnswerEvaluationResult:
-        """
-        사용자의 개별 답변을 LLM을 사용하여 평가하고, 그 결과를 메모리에 로깅합니다.
-        """
-        raw_prompt = load_prompt_template(self.PROMPT_PATH)
+
+        raw_prompt = load_prompt_template(PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
-        category_for_prompt = "tailored" if req.use_tailored_category else req.category
+        category_for_prompt = (
+            "tailored" 
+            if req.use_tailored_category 
+            else req.category
+        )
         
-        # 타입 힌트 개선: Dict[str, Any]를 사용하여 union type 대신 깔끔하게 정리
         vars: Dict[str, Any] = {
             "question_id": req.question_id,
             "category": category_for_prompt,
@@ -63,12 +72,11 @@ class EvaluationService:
 
         try:
             parsed = json.loads(json_text)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"LLM 평가 응답이 JSON 형식이 아닙니다: {e}")
+        except json.JSONDecodeError:
+            raise ValueError(f"LLM 평가 응답이 JSON 형식이 아닙니다.\n Raw JSON: {json_text}")
 
         eval_result = AnswerEvaluationResult.model_validate(parsed)
-        if memory is not None:
-            log_evaluation(memory, eval_result.model_dump())
+        log_evaluation(memory, eval_result.model_dump())
 
         return eval_result
 
@@ -80,7 +88,7 @@ class EvaluationService:
 
         avg_score, conversation_text = extract_evaluation(memory)
 
-        raw_prompt = load_prompt_template(self.SESSION_PROMPT_PATH)
+        raw_prompt = load_prompt_template(SESSION_PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
         vars = {
@@ -97,13 +105,12 @@ class EvaluationService:
 
         try:
             parsed = json.loads(json_text)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"LLM 세션 평가 응답이 JSON 형식이 아닙니다: {e}")
+        except json.JSONDecodeError:
+            raise ValueError(f"LLM 세션 평가 응답이 JSON 형식이 아닙니다.\n Raw JSON: {json_text}")
 
         parsed["average_score"] = float(avg_score)
         
         eval_result = SessionEvaluationResult.model_validate(parsed)
-        if memory is not None:
-            log_evaluation(memory, eval_result.model_dump())
+        log_evaluation(memory, eval_result.model_dump())
 
         return eval_result

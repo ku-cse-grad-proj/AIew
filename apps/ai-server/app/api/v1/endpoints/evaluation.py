@@ -17,8 +17,6 @@ from app.services.answer_evaluator import EvaluationService
 router = APIRouter()
 
 
-service = EvaluationService()
-
 @router.post(
     "/evaluate-answer", 
     response_model=AnswerEvaluationResult,
@@ -31,6 +29,11 @@ def evaluate_answer(
     memory: ConversationBufferMemory = Depends(MemoryDep)
 ) -> AnswerEvaluationResult:
     
+    service = EvaluationService(
+        memory=memory, 
+        session_id=x_session_id
+    )
+
     return service.evaluate_answer(
         req, 
         memory
@@ -44,7 +47,13 @@ def evaluate_answer(
     summary="Evaluate Entire Session"
 )
 def evaluate_session(
+    x_session_id: str = Header(...),
     memory: ConversationBufferMemory = Depends(MemoryDep)
 ) -> SessionEvaluationResult:
 
+    service = EvaluationService(
+        memory=memory,
+        session_id=x_session_id
+    )
+        
     return service.evaluate_session(memory)

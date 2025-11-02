@@ -32,6 +32,28 @@ class AnswerEvaluationResult(BaseModel):
     feedback: str = Field(..., description="300±50자 내외의 답변별 피드백")
     tail_rationale: Optional[str] = Field(None, description="꼬리질문 생성 여부 판단 근거")
     tail_decision: TailDecision = Field(..., description="create|skip")
+    
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "question_id": "q2",
+                "category": "technical",
+                "answer_duration_sec": 70,
+                "overall_score": 4,
+                "strengths": ["명확한 설명", "구체적인 예시 제공"],
+                "improvements": ["더 많은 근거 제시", "답변의 깊이 향상"],
+                "red_flags": ["긴 답변 시간"],
+                "criterion_scores": [
+                    {"name": "명확성", "score": 5, "reason": "답변이 매우 명확했습니다."},
+                    {"name": "깊이", "score": 4, "reason": "일부 깊이가 부족했습니다."},
+                    {"name": "근거", "score": 3, "reason": "근거가 다소 부족했습니다."}
+                ],
+                "feedback": "전반적으로 좋은 답변이었으나, 더 많은 근거와 깊이를 추가하면 더욱 향상될 것입니다.",
+                "tail_rationale": "답변에서 특정 기술에 대한 깊은 이해가 부족하여 꼬리질문이 필요합니다.",
+                "tail_decision": "create"
+            }
+        }
+    }
 
 
 class AnswerEvaluationRequest(BaseModel):
@@ -68,3 +90,11 @@ class SessionEvaluationResult(BaseModel):
     average_score: float = Field(..., ge=1.0, le=5.0, description="세션 전체 평균 점수")
     session_feedback: str = Field(..., description="1000±50자 내외의 세션 종합 피드백")
     
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "average_score": 4.2,
+                "session_feedback": "이번 세션에서 전반적으로 우수한 답변을 제공하셨습니다. 특히 기술적 질문에 대한 깊이 있는 이해와 명확한 설명이 돋보였습니다. 다만, 일부 질문에서는 더 구체적인 근거와 예시를 제시하면 더욱 향상될 수 있습니다. 앞으로도 이러한 강점을 유지하면서 개선할 부분에 집중하시면 좋겠습니다. 전체적으로 매우 긍정적인 평가를 드립니다."
+            }                                                                                                                                                                                                                                                                                                                                                                                           
+        }
+    }
