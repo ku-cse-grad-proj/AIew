@@ -15,8 +15,9 @@ export default function Interviewee() {
   const router = useRouter()
 
   //TODO:: redo일 때 어떻게 할지 고민할 것
-  const { startAt, endAt } = useAnswerStore(
+  const { stepId, startAt, endAt } = useAnswerStore(
     useShallow((state) => ({
+      stepId: state.stepId,
       startAt: state.startAt,
       endAt: state.endAt,
       isRedo: state.isRedo,
@@ -110,6 +111,7 @@ export default function Interviewee() {
         console.log(e.data.size)
         const arrayBuffer = await e.data.arrayBuffer()
         interviewSocket.emit('client:upload-chunk', {
+          stepId,
           chunk: arrayBuffer,
           index: index++,
         })
@@ -125,7 +127,10 @@ export default function Interviewee() {
           lastModified: Date.now(),
         })
 
-        interviewSocket.emit('client:upload-finish', { type: rec.mimeType })
+        interviewSocket.emit('client:upload-finish', {
+          stepId,
+          type: rec.mimeType,
+        })
 
         //file download
         // const url = URL.createObjectURL(file)

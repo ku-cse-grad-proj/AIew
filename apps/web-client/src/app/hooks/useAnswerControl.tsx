@@ -77,7 +77,7 @@ export default function useAnswerControl() {
     startAt,
     endAt,
     setIsRedo,
-    setStartAt,
+    startAnswer,
     setEndAt,
     answerReset,
   } = useAnswerStore(
@@ -86,7 +86,7 @@ export default function useAnswerControl() {
       startAt: state.startAt,
       endAt: state.endAt,
       setIsRedo: state.setIsRedo,
-      setStartAt: state.setStartAt,
+      startAnswer: state.startAnswer,
       setEndAt: state.setEndAt,
       answerReset: state.reset,
     })),
@@ -130,7 +130,10 @@ export default function useAnswerControl() {
     if (isMicPaused) {
       resumeMic()
       //답변 시작 시간 기록
-      setStartAt(Date.now())
+      if (!current?.stepId) {
+        throw new Error('stepId가 없어 답변을 시작할 수 없습니다.')
+      }
+      startAnswer(current?.stepId, Date.now())
     } else {
       endAnswer()
     }
