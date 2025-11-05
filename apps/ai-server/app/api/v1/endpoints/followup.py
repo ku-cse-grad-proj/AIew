@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/generate-followup", 
+    "/followup=generating", 
     response_model=List[FollowupResponse],
     tags=["Question"],
     summary="Generate Follow-up Question"

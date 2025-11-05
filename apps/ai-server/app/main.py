@@ -15,8 +15,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-app.include_router(session_log.router, prefix="/api/v1/session", tags=["Session"])
-app.include_router(memory_debug.router, prefix="/api/v1/memory", tags=["Session"])
+app.include_router(session_log.router, prefix="/api/v1/session-log", tags=["Session"])
+app.include_router(memory_debug.router, prefix="/api/v1/memory-debug", tags=["Session"])
 app.include_router(pdf.router, prefix="/api/v1/pdf", tags=["PDF"])
 app.include_router(question.router, prefix="/api/v1/question", tags=["Question"])
 app.include_router(evaluation.router, prefix="/api/v1/evaluation", tags=["Evaluation"])

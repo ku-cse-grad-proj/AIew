@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/session-memory-dump", 
+    "/dump", 
     response_model=MemoryDump,
     tags=["Session"],
     summary="Get Session Memory Dump"
@@ -55,7 +55,7 @@ def get_memory_dump(
     )
 
 @router.delete(
-    "/session-memory-reset",
+    "/reset",
     tags=["Session"],
     summary="Reset Session Memory"
 )

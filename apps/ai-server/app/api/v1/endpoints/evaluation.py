@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/evaluate-answer", 
+    "/answer-evaluating", 
     response_model=AnswerEvaluationResult,
     tags=["Evaluation"],
     summary="Evaluate User Answer"
@@ -41,7 +41,7 @@ def evaluate_answer(
 
 
 @router.post(
-    "/evaluate-session", 
+    "/session-evaluating", 
     response_model=SessionEvaluationResult,
     tags=["Evaluation"],
     summary="Evaluate Entire Session"

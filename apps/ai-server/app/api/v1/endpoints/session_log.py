@@ -25,7 +25,7 @@ def get_memory_logger_dep(
     )
     
 @router.post(
-    "/question-shown",
+    "/log/question-shown",
     tags=["Session"],
     summary="Log Shown Question"
 )
@@ -46,7 +46,7 @@ def post_question_shown(
         )
 
 @router.post(
-    "/user-answer",
+    "/log/user-answer",
     tags=["Session"],
     summary="Log User Answer"
 )

@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/parse-pdf", 
+    "/pdf-text-parsing", 
     response_model=PDFUploadResponse,
     tags=["PDF"],
     summary="Upload PDF and extract preprocessed text"

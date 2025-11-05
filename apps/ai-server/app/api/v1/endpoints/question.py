@@ -19,7 +19,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/generate-question", 
+    "/question-generating", 
     response_model=List[QuestionResponse],
     tags=["Question"],
     summary="Generate Interview Questions"
