@@ -61,8 +61,8 @@ async function ReportInfos({ query }: { query: Query }) {
 }
 
 async function fetchReportsSummary(query: Query) {
-  const response = fetch(
+  const response = await fetch(
     `http://localhost:4000/mock-api/reports/summary?${new URLSearchParams(query)}`,
   )
-  return (await response).json()
+  return response.json()
 }
