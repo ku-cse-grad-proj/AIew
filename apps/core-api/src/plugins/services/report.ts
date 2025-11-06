@@ -103,73 +103,45 @@ export class ReportService {
     // 전체 세션 수
     const totalReports = await prisma.interviewSession.count({ where })
 
-    // 평균 점수 및 평균 소요 시간 계산을 위한 데이터 조회
-    const sessions = await prisma.interviewSession.findMany({
+    // 평균 점수 & 평균 소요 시간 (DB 레벨 aggregate 사용)
+    const aggregateResult = await prisma.interviewSession.aggregate({
       where,
-      select: {
-        company: true,
+      _avg: {
         averageScore: true,
         totalTimeSec: true,
       },
     })
 
-    // 평균 점수 계산 (각 세션의 평균 점수를 다시 평균)
-    const sessionsWithScore = sessions.filter(
-      (s) => s.averageScore !== null,
-    ) as {
-      company: string
-      averageScore: number
-      totalTimeSec: number | null
-    }[]
+    const averageScore = aggregateResult._avg.averageScore
+      ? Math.round(aggregateResult._avg.averageScore * 10) / 10
+      : 0
 
-    const averageScore =
-      sessionsWithScore.length > 0
-        ? Math.round(
-            (sessionsWithScore.reduce((sum, s) => sum + s.averageScore, 0) /
-              sessionsWithScore.length) *
-              10,
-          ) / 10
-        : 0
+    const averageDuration = aggregateResult._avg.totalTimeSec
+      ? Math.round(aggregateResult._avg.totalTimeSec / 60)
+      : 0
 
-    // 평균 소요 시간 계산 (초 -> 분)
-    const sessionsWithTime = sessions.filter(
-      (s) => s.totalTimeSec !== null,
-    ) as {
-      company: string
-      averageScore: number | null
-      totalTimeSec: number
-    }[]
-
-    const averageDuration =
-      sessionsWithTime.length > 0
-        ? Math.round(
-            sessionsWithTime.reduce((sum, s) => sum + s.totalTimeSec, 0) /
-              60 /
-              sessionsWithTime.length,
-          )
-        : 0
-
-    // 가장 많이 등장한 회사명 계산
-    const companyCount = new Map<string, number>()
-    sessions.forEach((session) => {
-      const count = companyCount.get(session.company) || 0
-      companyCount.set(session.company, count + 1)
+    // 가장 많이 등장한 회사 (DB 레벨 groupBy 사용)
+    const companyGroups = await prisma.interviewSession.groupBy({
+      by: ['company'],
+      where,
+      _count: {
+        company: true,
+      },
+      orderBy: {
+        _count: {
+          company: 'desc',
+        },
+      },
+      take: 1,
     })
 
-    let mostFrequentCompany = ''
-    let maxCount = 0
-    companyCount.forEach((count, company) => {
-      if (count > maxCount) {
-        maxCount = count
-        mostFrequentCompany = company
-      }
-    })
+    const mostFrequentCompany = companyGroups[0]?.company || 'N/A'
 
     return {
       totalReports,
       averageScore,
       averageDuration,
-      mostFrequentCompany: mostFrequentCompany || 'N/A',
+      mostFrequentCompany,
     }
   }
 

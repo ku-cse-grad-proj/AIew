@@ -896,23 +896,20 @@ export class InterviewService {
       try {
         const sessionEvaluation = await this.aiClient.evaluateSession(sessionId)
 
-        // 평균 점수 계산
-        const allSteps = await prisma.interviewStep.findMany({
+        // 평균 점수 계산 (DB 레벨 aggregate 사용)
+        const result = await prisma.interviewStep.aggregate({
           where: {
             interviewSessionId: sessionId,
             score: { not: null },
           },
-          select: { score: true },
+          _avg: {
+            score: true,
+          },
         })
 
-        const totalScore = allSteps.reduce(
-          (sum, step) => sum + (step.score || 0),
-          0,
-        )
-        const averageScore =
-          allSteps.length > 0
-            ? Math.round((totalScore / allSteps.length) * 10) / 10
-            : null
+        const averageScore = result._avg.score
+          ? Math.round(result._avg.score * 10) / 10
+          : null
 
         await prisma.interviewSession.update({
           where: { id: sessionId },
