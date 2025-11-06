@@ -4,15 +4,15 @@ import EmptyInterview from './EmptyInterview'
 import InterviewCard from './InterviewCard'
 import ShortcutLink from './ShortcutLink'
 
-export default function RecentInterview({ className }: { className?: string }) {
+export default function RecentInterview({
+  interview,
+  className,
+}: {
+  interview: Interview
+  className?: string
+}) {
   const hasInterview = true
-  const interview = {
-    status: 'READY',
-    title: '배달의 민족 interview',
-    company: '배달의 민족',
-    jobTitle: 'web',
-    jobSpec: 'front',
-  } as Interview
+
   return (
     <CardSection
       className={`p-16 h-full flex flex-col gap-8 relative ${className}`}
