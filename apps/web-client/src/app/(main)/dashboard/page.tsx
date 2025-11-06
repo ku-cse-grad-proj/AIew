@@ -1,4 +1,5 @@
 import RecentInterview from './_components/RecentInterview'
+import RecentReports from './_components/RecentReports'
 import UserInfos from './_components/UserInfos'
 import CardSection from './CardSection'
 
@@ -10,15 +11,16 @@ export default function Dashboard() {
       </h1>
       <div
         className="flex-1 w-full min-h-0 flex flex-col sm:grid sm:grid-cols-2 
-       sm:[grid-template-rows:minmax(18rem,auto)_minmax(18rem,auto)_minmax(18rem,auto)] 
+       sm:[grid-template-rows:minmax(300px,auto)_minmax(300px,auto)_minmax(300px,auto)] 
        lg:grid-cols-3 lg:[grid-template-rows:minmax(300px,auto)_minmax(300px,auto)]
        gap-24 pt-24"
       >
         <UserInfos />
         <RecentInterview />
-        <CardSection className="bg-neutral-gray order-2 lg:order-none">
-          recent reports
-        </CardSection>
+        <RecentReports
+          reports={reports}
+          className="bg-neutral-gray order-2 lg:order-none"
+        />
         <CardSection className="lg:col-span-2 lg:row-start-2 row-start-3 col-span-2">
           recent's result
         </CardSection>
@@ -29,3 +31,20 @@ export default function Dashboard() {
     </article>
   )
 }
+
+const reports = [
+  {
+    id: 1,
+    title: 'Samsung AI Interview',
+    jobTitle: 'Frontend',
+    jobSpec: 'React',
+    finishDate: '2025-11-01',
+  },
+  {
+    id: 2,
+    title: 'Naver Manager Interview',
+    jobTitle: 'Manager',
+    jobSpec: 'UX',
+    finishDate: '2025-11-03',
+  },
+]
