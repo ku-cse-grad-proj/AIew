@@ -55,3 +55,8 @@ export const lineGraphData = [labels, scores, durations] as [
   number[],
   number[],
 ]
+
+export const companyCount = [
+  ['배달의민족', '카카오', '토스', '네이버', '쿠팡', 'Others'],
+  [4, 3, 2, 2, 1, 2],
+] as [string[], number[]]
