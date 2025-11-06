@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 
-import CardSection from '../CardSection'
-
+import CardSection from './CardSection'
 import styles from './dashboard.module.css'
 import LineGraph from './LineGraph'
 import ShortcutLink from './ShortcutLink'

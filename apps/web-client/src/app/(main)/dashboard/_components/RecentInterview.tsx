@@ -1,5 +1,4 @@
-import CardSection from '../CardSection'
-
+import CardSection from './CardSection'
 import styles from './dashboard.module.css'
 import EmptyInterview from './EmptyInterview'
 import InterviewCard from './InterviewCard'

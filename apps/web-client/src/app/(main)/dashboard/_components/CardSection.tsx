@@ -1,6 +1,6 @@
 import { ReactNode } from 'react'
 
-import styles from './_components/dashboard.module.css'
+import styles from './dashboard.module.css'
 
 export default function CardSection({
   children,

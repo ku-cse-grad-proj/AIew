@@ -1,8 +1,8 @@
+import CardSection from './_components/CardSection'
 import RecentGraph from './_components/RecentGraph'
 import RecentInterview from './_components/RecentInterview'
 import RecentReports from './_components/RecentReports'
 import UserInfos from './_components/UserInfos'
-import CardSection from './CardSection'
 
 export default function Dashboard() {
   return (
