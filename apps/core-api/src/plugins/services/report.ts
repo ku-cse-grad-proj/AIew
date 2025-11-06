@@ -41,14 +41,17 @@ export class ReportService {
   /**
    * 페이지별 리포트 목록을 반환합니다 (최대 10개)
    */
-  public async getReports(params: ReportQueryParams): Promise<ReportItem[]> {
+  public async getReports(
+    userId: string,
+    params: ReportQueryParams,
+  ): Promise<ReportItem[]> {
     const { prisma } = this.fastify
     const page = params.page || 1
     const pageSize = 10
     const skip = (page - 1) * pageSize
 
     // Prisma where 조건 구성
-    const where = this.buildWhereClause(params)
+    const where = this.buildWhereClause(userId, params)
 
     // 정렬 조건 구성
     const orderBy = this.buildOrderByClause(params.sort)
@@ -108,11 +111,14 @@ export class ReportService {
   /**
    * 전체 페이지 수를 반환합니다 (10개 단위)
    */
-  public async getTotalPages(params: ReportQueryParams): Promise<number> {
+  public async getTotalPages(
+    userId: string,
+    params: ReportQueryParams,
+  ): Promise<number> {
     const { prisma } = this.fastify
     const pageSize = 10
 
-    const where = this.buildWhereClause(params)
+    const where = this.buildWhereClause(userId, params)
 
     const totalCount = await prisma.interviewSession.count({ where })
 
@@ -122,10 +128,13 @@ export class ReportService {
   /**
    * 전체 리포트의 요약 통계를 반환합니다
    */
-  public async getSummary(params: ReportQueryParams): Promise<ReportsSummary> {
+  public async getSummary(
+    userId: string,
+    params: ReportQueryParams,
+  ): Promise<ReportsSummary> {
     const { prisma } = this.fastify
 
-    const where = this.buildWhereClause(params)
+    const where = this.buildWhereClause(userId, params)
 
     // 전체 세션 수
     const totalReports = await prisma.interviewSession.count({ where })
@@ -200,7 +209,11 @@ export class ReportService {
   /**
    * Prisma where 절을 구성합니다
    */
-  private buildWhereClause(params: ReportQueryParams): {
+  private buildWhereClause(
+    userId: string,
+    params: ReportQueryParams,
+  ): {
+    userId: string
     status: 'COMPLETED'
     title?: { contains: string; mode: 'insensitive' }
     company?: { contains: string; mode: 'insensitive' }
@@ -209,8 +222,10 @@ export class ReportService {
     jobSpec?: string
   } {
     const where = {
+      userId, // 사용자별 필터링
       status: 'COMPLETED' as const, // 완료된 면접만
     } as {
+      userId: string
       status: 'COMPLETED'
       title?: { contains: string; mode: 'insensitive' }
       company?: { contains: string; mode: 'insensitive' }

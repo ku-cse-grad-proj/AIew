@@ -1,3 +1,4 @@
+import { Static } from '@sinclair/typebox'
 import { FastifyPluginAsync, FastifySchema, RouteHandler } from 'fastify'
 
 import { Tag } from '@/configs/swagger-option'
@@ -23,19 +24,13 @@ const controller: FastifyPluginAsync = async (fastify) => {
     },
   }
 
-  const getHandler: RouteHandler = async (request, reply) => {
-    const queryParams = request.query as {
-      title?: string
-      company?: string
-      from?: string
-      to?: string
-      job?: 'web' | 'app'
-      detailJob?: 'front' | 'back'
-      page?: number
-      sort?: string
-    }
+  const getHandler: RouteHandler<{
+    Querystring: Static<typeof S_ReportsQueryParams>
+  }> = async (request, reply) => {
+    const { userId } = request.user
+    const queryParams = request.query
 
-    const summary = await fastify.reportService.getSummary(queryParams)
+    const summary = await fastify.reportService.getSummary(userId, queryParams)
     reply.send(summary)
   }
 
