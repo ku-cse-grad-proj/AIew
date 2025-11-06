@@ -1,3 +1,4 @@
+import RecentInterview from './_components/RecentInterview'
 import UserInfos from './_components/UserInfos'
 import CardSection from './CardSection'
 
@@ -10,10 +11,11 @@ export default function Dashboard() {
       <div
         className="flex-1 w-full min-h-0 flex flex-col sm:grid sm:grid-cols-2 
        sm:[grid-template-rows:minmax(18rem,auto)_minmax(18rem,auto)_minmax(18rem,auto)] 
-       lg:grid-cols-3 lg:grid-rows-2 gap-24 pt-24"
+       lg:grid-cols-3 lg:[grid-template-rows:minmax(300px,auto)_minmax(300px,auto)]
+       gap-24 pt-24"
       >
         <UserInfos />
-        <CardSection className="">recent interview</CardSection>
+        <RecentInterview />
         <CardSection className="bg-neutral-gray order-2 lg:order-none">
           recent reports
         </CardSection>
