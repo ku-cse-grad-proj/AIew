@@ -895,11 +895,31 @@ export class InterviewService {
       // 백그라운드에서 세션 평가 및 DB 업데이트 진행
       try {
         const sessionEvaluation = await this.aiClient.evaluateSession(sessionId)
+
+        // 평균 점수 계산
+        const allSteps = await prisma.interviewStep.findMany({
+          where: {
+            interviewSessionId: sessionId,
+            score: { not: null },
+          },
+          select: { score: true },
+        })
+
+        const totalScore = allSteps.reduce(
+          (sum, step) => sum + (step.score || 0),
+          0,
+        )
+        const averageScore =
+          allSteps.length > 0
+            ? Math.round((totalScore / allSteps.length) * 10) / 10
+            : null
+
         await prisma.interviewSession.update({
           where: { id: sessionId },
           data: {
             status: 'COMPLETED',
             finalFeedback: sessionEvaluation.session_feedback,
+            averageScore,
           },
         })
         log.info(`[${sessionId}] Session evaluation saved successfully.`)
