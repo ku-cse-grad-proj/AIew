@@ -1,20 +1,18 @@
-import styles from './_components/dashboard.module.css'
+import UserInfos from './_components/UserInfos'
 import CardSection from './CardSection'
 
 export default function Dashboard() {
   return (
-    <article className="w-full h-full flex flex-col">
+    <article className="w-full h-full flex flex-col min-h-0">
       <h1 className="text-[32px] font-bold leading-[48px]">
         Taeho's Dashboard
       </h1>
-      <div className="flex-1 w-full min-h-0 grid grid-cols-2 grid-rows-3 lg:grid-cols-3 lg:grid-rows-2 gap-24 pt-24">
-        <section className="w-full h-full grid grid-cols-2 grid-rows-2 gap-24">
-          <div className={`h-full col-span-2 ${styles.card}`}>name</div>
-          <div className={`h-full  bg-neutral-gray ${styles.card}`}>
-            interviewed count
-          </div>
-          <div className={`h-full ${styles.card} bg-secondary`}>user info</div>
-        </section>
+      <div
+        className="flex-1 w-full min-h-0 flex flex-col sm:grid sm:grid-cols-2 
+       sm:[grid-template-rows:minmax(18rem,auto)_minmax(18rem,auto)_minmax(18rem,auto)] 
+       lg:grid-cols-3 lg:grid-rows-2 gap-24 pt-24"
+      >
+        <UserInfos />
         <CardSection className="">recent interview</CardSection>
         <CardSection className="bg-neutral-gray order-2 lg:order-none">
           recent reports
