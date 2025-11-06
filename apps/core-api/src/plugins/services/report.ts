@@ -45,50 +45,31 @@ export class ReportService {
       orderBy,
       skip,
       take: pageSize,
-      include: {
-        steps: {
-          where: {
-            score: { not: null }, // 평가된 질문만
-          },
-          select: {
-            score: true,
-            answerDurationSec: true,
-          },
-        },
+      select: {
+        id: true,
+        title: true,
+        company: true,
+        jobTitle: true,
+        jobSpec: true,
+        createdAt: true,
+        averageScore: true,
+        totalTimeSec: true,
       },
     })
 
     // ReportItem 형식으로 변환
-    return sessions.map((session) => {
-      const scores = session.steps
-        .map((step) => step.score)
-        .filter((score): score is number => score !== null)
-
-      const averageScore =
-        scores.length > 0
-          ? Math.round(
-              (scores.reduce((sum, s) => sum + s, 0) / scores.length) * 10,
-            ) / 10
-          : 0
-
-      const totalDurationSec = session.steps
-        .map((step) => step.answerDurationSec)
-        .filter((duration): duration is number => duration !== null)
-        .reduce((sum, d) => sum + d, 0)
-
-      const durationMin = Math.round(totalDurationSec / 60)
-
-      return {
-        id: session.id,
-        title: session.title,
-        company: session.company,
-        jobTitle: session.jobTitle as 'web' | 'app',
-        jobSpec: session.jobSpec as 'front' | 'back',
-        date: session.createdAt.toISOString().split('T')[0], // YYYY-MM-DD
-        score: averageScore,
-        duration: durationMin,
-      }
-    })
+    return sessions.map((session) => ({
+      id: session.id,
+      title: session.title,
+      company: session.company,
+      jobTitle: session.jobTitle as 'web' | 'app',
+      jobSpec: session.jobSpec as 'front' | 'back',
+      date: session.createdAt.toISOString().split('T')[0], // YYYY-MM-DD
+      score: session.averageScore ?? 0,
+      duration: session.totalTimeSec
+        ? Math.round(session.totalTimeSec / 60)
+        : 0,
+    }))
   }
 
   /**
@@ -125,42 +106,47 @@ export class ReportService {
     // 평균 점수 및 평균 소요 시간 계산을 위한 데이터 조회
     const sessions = await prisma.interviewSession.findMany({
       where,
-      include: {
-        steps: {
-          where: {
-            score: { not: null },
-          },
-          select: {
-            score: true,
-            answerDurationSec: true,
-          },
-        },
+      select: {
+        company: true,
+        averageScore: true,
+        totalTimeSec: true,
       },
     })
 
-    // 평균 점수 계산
-    let totalScore = 0
-    let scoreCount = 0
-    let totalDurationSec = 0
-
-    sessions.forEach((session) => {
-      session.steps.forEach((step) => {
-        if (step.score !== null) {
-          totalScore += step.score
-          scoreCount++
-        }
-        if (step.answerDurationSec !== null) {
-          totalDurationSec += step.answerDurationSec
-        }
-      })
-    })
+    // 평균 점수 계산 (각 세션의 평균 점수를 다시 평균)
+    const sessionsWithScore = sessions.filter(
+      (s) => s.averageScore !== null,
+    ) as {
+      company: string
+      averageScore: number
+      totalTimeSec: number | null
+    }[]
 
     const averageScore =
-      scoreCount > 0 ? Math.round((totalScore / scoreCount) * 10) / 10 : 0
+      sessionsWithScore.length > 0
+        ? Math.round(
+            (sessionsWithScore.reduce((sum, s) => sum + s.averageScore, 0) /
+              sessionsWithScore.length) *
+              10,
+          ) / 10
+        : 0
+
+    // 평균 소요 시간 계산 (초 -> 분)
+    const sessionsWithTime = sessions.filter(
+      (s) => s.totalTimeSec !== null,
+    ) as {
+      company: string
+      averageScore: number | null
+      totalTimeSec: number
+    }[]
 
     const averageDuration =
-      sessions.length > 0
-        ? Math.round(totalDurationSec / 60 / sessions.length)
+      sessionsWithTime.length > 0
+        ? Math.round(
+            sessionsWithTime.reduce((sum, s) => sum + s.totalTimeSec, 0) /
+              60 /
+              sessionsWithTime.length,
+          )
         : 0
 
     // 가장 많이 등장한 회사명 계산
