@@ -1,3 +1,4 @@
+import RecentGraph from './_components/RecentGraph'
 import RecentInterview from './_components/RecentInterview'
 import RecentReports from './_components/RecentReports'
 import UserInfos from './_components/UserInfos'
@@ -21,9 +22,7 @@ export default function Dashboard() {
           reports={reports}
           className="bg-neutral-gray order-2 lg:order-none"
         />
-        <CardSection className="lg:col-span-2 lg:row-start-2 row-start-3 col-span-2">
-          recent's result
-        </CardSection>
+        <RecentGraph className="lg:col-span-2 lg:row-start-2 row-start-3 col-span-2" />
         <CardSection className="order-1 lg:order-none">
           interviewed company
         </CardSection>

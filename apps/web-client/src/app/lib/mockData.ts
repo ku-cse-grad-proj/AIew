@@ -29,3 +29,29 @@ export const reportsData = Array.from({ length: 223 }, (_, i) => {
     duration,
   }
 })
+
+const labels: string[] = [
+  '배달의민족 1',
+  '삼성',
+  '네이버',
+  '카카오',
+  '토스',
+  '라인',
+  '쿠팡',
+  'LG CNS',
+  '삼성 SDS',
+  '네이버 2',
+]
+
+// 0~5 사이 소수점 한 자리 점수
+const scores = labels.map(() => +(Math.random() * 5).toFixed(1))
+
+// 30~70 사이 정수 duration (분)
+const durations = labels.map(() => Math.floor(Math.random() * 41) + 30)
+
+// 최종 데이터
+export const lineGraphData = [labels, scores, durations] as [
+  string[],
+  number[],
+  number[],
+]
