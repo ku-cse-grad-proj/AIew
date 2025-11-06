@@ -1,0 +1,5 @@
+@reference "../../../globals.css";
+
+.card {
+  @apply rounded-[20px] shadow-box;
+}
