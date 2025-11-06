@@ -281,14 +281,18 @@ export class ReportService {
       return { createdAt: orderDirection }
     }
 
-    // score, duration은 복잡한 계산이 필요하므로 기본 정렬 사용
-    // (실제로는 애플리케이션 레벨에서 정렬해야 함)
-    if (field === 'score' || field === 'duration') {
-      // TODO: 애플리케이션 레벨에서 정렬 구현 필요
-      return { createdAt: 'desc' }
+    // score는 averageScore로 정렬
+    if (field === 'score') {
+      return { averageScore: orderDirection }
     }
 
-    // 허용된 필드만 정렬 가능
+    // duration은 totalTimeSec으로 정렬
+    if (field === 'duration') {
+      return { totalTimeSec: orderDirection }
+    }
+
+    // 스키마 필드와 요청 키가 같은 필드는 아래와 같이 정렬
+    // 사실 DB 스키마 확인하고 전부 동일하게 요청해주면 이 코드로 다 해결 가능한데
     if (field === 'title' || field === 'company') {
       return { [field]: orderDirection }
     }
