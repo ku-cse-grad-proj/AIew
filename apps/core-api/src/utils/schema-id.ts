@@ -8,6 +8,11 @@ enum SchemaId {
   InterviewSessionList = 'InterviewSessionList',
   InterviewSessionPatchBody = 'InterviewSessionPatchBody',
   InterviewSessionDeleteResponse = 'InterviewSessionDeleteResponse',
+  ReportsQueryParams = 'ReportsQueryParams',
+  ReportItem = 'ReportItem',
+  ReportsResponse = 'ReportsResponse',
+  ReportsPagesCountResponse = 'ReportsPagesCountResponse',
+  ReportsSummaryResponse = 'ReportsSummaryResponse',
 
   // WebSocket Schemas
   WsClientSubmitAnswer = 'WsClientSubmitAnswer',
