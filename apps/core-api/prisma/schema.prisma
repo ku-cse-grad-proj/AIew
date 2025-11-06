@@ -57,7 +57,8 @@ model InterviewSession {
   updatedAt            DateTime @updatedAt
 
   status               InterviewSessionStatus @default(PENDING)
-  totalTimeSec         Int?            // 면접 전체 제한 시간 (초)
+  totalTimeSec         Int?            // 면접 전체 소요 시간 (초)
+  averageScore         Float?          // 전체 평균 점수 (소수 1자리)
 
   // Relations
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
