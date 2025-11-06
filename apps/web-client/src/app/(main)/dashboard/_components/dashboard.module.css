@@ -3,3 +3,7 @@
 .card {
   @apply rounded-[20px] shadow-box;
 }
+
+.sectionHeading {
+  @apply text-[24px] font-medium shrink-0;
+}

@@ -1,5 +1,6 @@
 import CardSection from '../CardSection'
 
+import styles from './dashboard.module.css'
 import EmptyInterview from './EmptyInterview'
 import InterviewCard from './InterviewCard'
 import ShortcutLink from './ShortcutLink'
@@ -17,7 +18,7 @@ export default function RecentInterview({ className }: { className?: string }) {
     <CardSection
       className={`p-16 h-full flex flex-col gap-8 relative ${className}`}
     >
-      <h3 className="text-[24px] font-medium shrink-0">recent interview</h3>
+      <h3 className={`${styles.sectionHeading}`}>recent interview</h3>
       <ShortcutLink
         href="/interview"
         className="bg-neutral-gray absolute right-12 top-12"
