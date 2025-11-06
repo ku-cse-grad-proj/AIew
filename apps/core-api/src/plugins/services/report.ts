@@ -1,35 +1,18 @@
 import { Prisma } from '@prisma/client'
+import { Static } from '@sinclair/typebox'
 import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
-interface ReportQueryParams {
-  title?: string
-  company?: string
-  from?: string // YYYY-MM-DD
-  to?: string // YYYY-MM-DD
-  job?: 'web' | 'app'
-  detailJob?: 'front' | 'back'
-  page?: number
-  sort?: string // "{field}-{asc|desc}"
-}
+import {
+  S_ReportItem,
+  S_ReportsQueryParams,
+  S_ReportsSummaryResponse,
+} from '@/schemas/rest'
 
-interface ReportItem {
-  id: string
-  title: string
-  company: string
-  jobTitle: 'web' | 'app'
-  jobSpec: 'front' | 'back'
-  date: string // YYYY-MM-DD
-  score: number
-  duration: number // 분 단위
-}
-
-interface ReportsSummary {
-  totalReports: number
-  averageScore: number
-  averageDuration: number
-  mostFrequentCompany: string
-}
+// TypeBox 스키마에서 타입 추출
+type ReportQueryParams = Static<typeof S_ReportsQueryParams>
+type ReportItem = Static<typeof S_ReportItem>
+type ReportsSummary = Static<typeof S_ReportsSummaryResponse>
 
 export class ReportService {
   private fastify: FastifyInstance
