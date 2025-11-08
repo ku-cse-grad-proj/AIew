@@ -12,7 +12,7 @@ import ReportSearchSelect from './ReportSearchSelect'
 
 import Graph from '@/../public/icons/graph.svg'
 
-export default function ReportHeader({ query }: { query: Query }) {
+export default async function ReportHeader({ query }: { query: Query }) {
   return (
     <section className="w-full bg-neutral-card rounded-[20px] p-24 shadow-box">
       <h2 className="sr-only">reports header</h2>

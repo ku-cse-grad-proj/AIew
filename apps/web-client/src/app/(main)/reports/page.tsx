@@ -7,6 +7,8 @@ import TableBody from './_components/table/ReportTableBody'
 import TableBodySkeleton from './_components/table/ReportTableBodySkeleton'
 import TableHeader from './_components/table/ReportTableHeader'
 
+import { privateFetch } from '@/app/lib/fetch'
+
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
 export type Query = [string, string][]
 
@@ -24,7 +26,14 @@ export default async function ReportsPage({
 
   const queryWithoutPage = query.filter(([key]) => key !== 'page')
 
-  const totalPages = await fetchReportsCount(queryWithoutPage)
+  const { CORE_API_URL, API_PREFIX } = process.env
+
+  const response = await privateFetch(
+    `${CORE_API_URL}/${API_PREFIX}/reports/pages/count?${new URLSearchParams(query)}`,
+    { cache: 'no-store' },
+  )
+
+  const totalPages = await response.json()
 
   return (
     <article className="w-full h-full flex flex-col items-center gap-24">
@@ -40,13 +49,4 @@ export default async function ReportsPage({
       {totalPages > 1 && <Pagination totalPages={totalPages} />}
     </article>
   )
-}
-
-async function fetchReportsCount(query: Query): Promise<number> {
-  const response = await fetch(
-    `http://localhost:4000/mock-api/reports/pages/count?${new URLSearchParams(query)}`,
-  )
-  const data = await response.json()
-
-  return data
 }
