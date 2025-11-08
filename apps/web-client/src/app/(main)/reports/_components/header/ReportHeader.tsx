@@ -5,7 +5,7 @@ import { Query } from '../../page'
 
 import ReportCalendarButton from './ReportCalendarButton'
 import ReportFilterButton from './ReportFilterButton'
-import ReportInfo from './ReportInfo'
+import ReportInfos from './ReportInfos'
 import ReportInfosSkeleton from './ReportInfosSkeleton'
 import ReportSearchInput from './ReportSearchInput'
 import ReportSearchSelect from './ReportSearchSelect'
@@ -38,31 +38,4 @@ export default async function ReportHeader({ query }: { query: Query }) {
       </Suspense>
     </section>
   )
-}
-
-async function ReportInfos({ query }: { query: Query }) {
-  const data = await fetchReportsSummary(query)
-  const reportInfos = [
-    { title: 'total reports count', description: data.totalReports },
-    { title: 'average score', description: data.averageScore },
-    { title: 'average duration', description: `${data.averageDuration} min` },
-    {
-      title: 'most frequent company',
-      description: data.mostFrequentCompany,
-    },
-  ]
-  return (
-    <dl className="w-full flex justify-between gap-16 pt-16">
-      {reportInfos.map((info, i) => (
-        <ReportInfo key={i} title={info.title} description={info.description} />
-      ))}
-    </dl>
-  )
-}
-
-async function fetchReportsSummary(query: Query) {
-  const response = await fetch(
-    `http://localhost:4000/mock-api/reports/summary?${new URLSearchParams(query)}`,
-  )
-  return response.json()
 }
