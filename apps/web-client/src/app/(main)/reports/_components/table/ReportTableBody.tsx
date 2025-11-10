@@ -5,7 +5,7 @@ import { Query } from '../../page'
 import styles from './table.module.css'
 
 import Dots from '@/../public/icons/dots.svg'
-import Warning from '@/../public/icons/warning.svg'
+import EmptyMessage from '@/app/(main)/dashboard/_components/EmptyMessage'
 import { privateFetch } from '@/app/lib/fetch'
 
 export default async function TableBody({ query }: { query: Query }) {
@@ -19,16 +19,11 @@ export default async function TableBody({ query }: { query: Query }) {
 
   if (!reports || reports.length === 0) {
     return (
-      // TODO:: dashboard pr merge하면 EmptyMessage 컴포넌트로 교체
-      <div className="flex-1 min-h-48 flex flex-col items-center justify-center gap-8">
-        <Warning width={48} height={48} />
-        <p className="text-[20px] font-medium text-shadow-xs">
-          No result to display
-        </p>
-        <p className="text-[16px] text-neutral-subtext ">
-          complete an interview to generate a report
-        </p>
-      </div>
+      <EmptyMessage
+        main=" No result to display"
+        sub="complete an interview to generate a report"
+        showIcon
+      />
     )
   }
 
