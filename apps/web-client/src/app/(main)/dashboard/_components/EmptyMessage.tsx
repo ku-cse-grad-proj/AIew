@@ -16,15 +16,20 @@
  * @returns {JSX.Element} 화면 중앙에 정렬된 안내문 컴포넌트
  */
 
+import Warning from '@/../public/icons/warning.svg'
+
 export default function EmptyMessage({
   main,
   sub,
+  showIcon,
 }: {
   main: string
   sub: string
+  showIcon: boolean
 }) {
   return (
     <div className="flex-1 min-h-48 flex flex-col items-center justify-center gap-8">
+      {showIcon && <Warning width={48} height={48} />}
       <p className="text-[20px] font-medium text-shadow-xs">{main}</p>
       <p className="text-[16px] text-neutral-subtext ">{sub}</p>
     </div>
