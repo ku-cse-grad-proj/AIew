@@ -94,7 +94,6 @@ class QuestionGeneratorService:
                     ),
                 }
             )
-
         return out
 
     def _dedupe_and_enforce(
