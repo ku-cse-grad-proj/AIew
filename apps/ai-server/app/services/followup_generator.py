@@ -107,7 +107,7 @@ class FollowupGeneratorService:
 
         out = {
             "followup_id": f"{req.question_id}-fu{idx}",
-            "parent_question_id": parsed_item.get("question_id", ""),
+            "parent_question_id": parsed_item.get("parent_question_id", ""),
             "focus_criteria": parsed_item.get("focus_criteria", []),
             "rationale": parsed_item.get("rationale", ""),
             "question": parsed_item.get("question_text", "")
