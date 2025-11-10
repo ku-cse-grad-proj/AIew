@@ -25,7 +25,7 @@ export default function EmptyMessage({
 }: {
   main: string
   sub: string
-  showIcon: boolean
+  showIcon?: boolean
 }) {
   return (
     <div className="flex-1 min-h-48 flex flex-col items-center justify-center gap-8">
