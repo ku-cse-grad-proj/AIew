@@ -56,7 +56,7 @@ class EvaluationService:
 
         key = "criterion_scores"
         if not isinstance(item.get(key), List):
-            item[key] = []
+            item[key] = ["N/A"]  # default value
 
         cleaned_scores = []
         for score_item in item[key]:
@@ -90,7 +90,7 @@ class EvaluationService:
         for key in ["strengths", "improvements", "red_flags"]:
             value = item.get(key)
             if not isinstance(value, List):
-                item[key] = []
+                item[key] = ["N/A"]  # default values
             else:
                 cleaned_list = [str(v) for v in value if v is not None][:5]
                 item[key] = cleaned_list

@@ -61,7 +61,7 @@ class FollowupGeneratorService:
         key_criteria = "focus_criteria"
         value = item.get(key_criteria)
         if not isinstance(value, List):
-            item[key_criteria] = []
+            item[key_criteria] = ["N/A"]  # default value
         else:
             cleaned_list = [
                 str(v).strip() for v in value if v is not None and str(v).strip()

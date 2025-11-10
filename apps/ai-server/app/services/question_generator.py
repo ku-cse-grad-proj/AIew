@@ -69,7 +69,7 @@ class QuestionGeneratorService:
         for key in ["criteria", "skills"]:
             value = item.get(key)
             if value is None or not isinstance(value, List):
-                item[key] = []
+                item[key] = ["N/A"]  # default value
             elif not all(isinstance(v, str) for v in value):
                 item[key] = [str(v) for v in value if v is not None]
 
