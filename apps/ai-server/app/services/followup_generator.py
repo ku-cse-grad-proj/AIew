@@ -123,7 +123,7 @@ class FollowupGeneratorService:
         self,
         req: FollowupRequest = ...,
         memory: Optional[ConversationBufferMemory] = ...,
-    ) -> List[FollowupResponse]:
+    ) -> FollowupResponse:
         raw_prompt = load_prompt_template(PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
@@ -143,6 +143,8 @@ class FollowupGeneratorService:
             if req.remaining_main_questions is not None
             else "null",
             "depth": req.depth,
+            "use_tailored_category": str(req.use_tailored_category),
+            "auto_sequence": str(req.auto_sequence),
         }
 
         prompt_text = prompt_template.format(**vars)
