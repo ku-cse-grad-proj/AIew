@@ -91,9 +91,13 @@ class EvaluationService:
             value = item.get(key)
             if not isinstance(value, List):
                 item[key] = ["N/A"]  # default values
-            else:
+            elif not all(isinstance(v, str) for v in value):
                 cleaned_list = [str(v) for v in value if v is not None][:5]
                 item[key] = cleaned_list
+                if not cleaned_list:
+                    item[key] = ["N/A"]
+            elif not value:
+                item[key] = ["N/A"]
 
         for key in ["question_id", "category", "feedback"]:
             value = item.get(key)

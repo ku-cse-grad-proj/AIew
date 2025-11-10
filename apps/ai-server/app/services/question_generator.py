@@ -71,7 +71,12 @@ class QuestionGeneratorService:
             if value is None or not isinstance(value, List):
                 item[key] = ["N/A"]  # default value
             elif not all(isinstance(v, str) for v in value):
-                item[key] = [str(v) for v in value if v is not None]
+                cleaned_list = [str(v) for v in value if v is not None]
+                item[key] = cleaned_list
+                if not cleaned_list:
+                    item[key] = ["N/A"]
+            elif not value:
+                item[key] = ["N/A"]
 
         return item
 

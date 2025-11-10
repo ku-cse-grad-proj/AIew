@@ -62,11 +62,15 @@ class FollowupGeneratorService:
         value = item.get(key_criteria)
         if not isinstance(value, List):
             item[key_criteria] = ["N/A"]  # default value
-        else:
+        elif not all(isinstance(v, str) for v in value):
             cleaned_list = [
                 str(v).strip() for v in value if v is not None and str(v).strip()
             ]
             item[key_criteria] = cleaned_list
+            if not cleaned_list:
+                item[key_criteria] = ["N/A"]
+        elif not value:
+            item[key_criteria] = ["N/A"]
 
         for key in ["followup_id", "parent_question_id", "rationale"]:
             value = item.get(key)
@@ -164,4 +168,6 @@ class FollowupGeneratorService:
         followup = FollowupResponse.model_validate(norm)
         self.logger.log_tail_question(followup.model_dump())
 
+        print("--- Generated Followup ---")
+        print(followup)
         return followup
