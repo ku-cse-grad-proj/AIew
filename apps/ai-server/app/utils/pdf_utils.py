@@ -1,7 +1,59 @@
 import re
+import io
+from io import BytesIO
+from typing import List
+
+import fitz # PyMuPDF
+import pytesseract
+from PIL import Image
 
 
-def preprocess_text(text: str) -> str:
+def is_digital_pdf(
+    file_bytes: bytes
+) -> bool:
+    
+    doc = fitz.open("pdf", file_bytes)
+    for page in doc:
+        if page.get_text("text").strip():
+            return True
+    return False
+
+
+
+def extract_text_from_digital_pdf(
+    file_bytes: bytes
+) -> str:
+    
+    with fitz.open(stream=BytesIO(file_bytes), filetype="pdf") as doc:
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        return text
+
+
+
+def extract_text_from_image_pdf(
+    file_bytes: bytes
+) -> str:
+    
+    doc = fitz.open("pdf", file_bytes)
+    full_text = ""
+
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        pix = page.get_pixmap(dpi=300)
+        img_data = pix.tobytes("png")
+        image = Image.open(io.BytesIO(img_data))
+
+        text = pytesseract.image_to_string(image, lang="eng+kor")
+        full_text += text + "\n"
+
+    return full_text
+
+
+def preprocess_text(
+    text: str
+) -> List[str]:
     """
     문장 병합 및 정제
     - 문장 중간에서 끊긴 줄은 이어 붙이고, 의미 있는 개행은 유지
@@ -38,7 +90,9 @@ def preprocess_text(text: str) -> str:
             processed_text += line + " "
             i += 1
         else:
-            processed_text += line
+            processed_text += line + "\n"
             i += 1
 
-    return processed_text.strip()
+    preprocessed_text = "".join(processed_text)
+
+    return preprocessed_text

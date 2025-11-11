@@ -4,7 +4,9 @@ from statistics import mean
 from langchain.memory import ConversationBufferMemory
 
 
-def extract_evaluation(memory: ConversationBufferMemory) -> tuple[float, str]:
+def extract_evaluation(
+    memory: ConversationBufferMemory
+) -> tuple[float, str]:
     msgs = memory.chat_memory.messages
     qa_pairs: List[Dict] = []
     scores: List[float] = []

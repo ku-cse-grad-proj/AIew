@@ -54,7 +54,7 @@ class FollowupRequest(BaseModel):
     }
 
 
-class Followup(BaseModel):
+class FollowupResponse(BaseModel):
     followup_id: str = Field(..., description="꼬리질문 ID (예: q1-fu1)")
     parent_question_id: str = Field(..., description="부모 메인 질문 ID")
     focus_criteria: List[str] = Field(
@@ -63,7 +63,18 @@ class Followup(BaseModel):
     rationale: str = Field(..., description="꼬리질문 생성 근거")
     question_text: str = Field(..., alias="question", description="꼬리질문 본문")
     expected_answer_time_sec: int = Field(
-        45, ge=15, le=180, description="예상 답변 시간(초)"
+        180, ge=15, le=180, description="예상 답변 시간(초)"
     )
 
-    model_config = {"populate_by_name": True}
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "followup_id": "q3-fu1",
+                "parent_question_id": "q3",
+                "focus_criteria": ["성능 개선", "캐싱 전략"],
+                "rationale": "사용자가 API 성능 최적화에 대해 구체적인 기술과 방법론을 언급했으나, 캐싱 전략과 네트워크 최적화에 대한 상세한 설명이 부족했습니다. 따라서 이 꼬리질문을 통해 해당 부분을 집중적으로 파고들어 사용자의 깊은 이해도를 평가하고자 합니다.",
+                "question": "캐싱 전략을 구체적으로 설명해주시겠어요? 어떤 데이터를 캐싱했고, 캐싱 정책은 어떻게 설정했나요?",
+                "expected_answer_time_sec": 60,
+            }
+        }
+    }
