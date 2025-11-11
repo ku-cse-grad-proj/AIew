@@ -13,6 +13,12 @@ enum SchemaId {
   ReportsResponse = 'ReportsResponse',
   ReportsPagesCountResponse = 'ReportsPagesCountResponse',
   ReportsSummaryResponse = 'ReportsSummaryResponse',
+  DashboardUserInfos = 'DashboardUserInfos',
+  DashboardInterview = 'DashboardInterview',
+  DashboardReportItem = 'DashboardReportItem',
+  DashboardResponse = 'DashboardResponse',
+  DashboardLineGraphResponse = 'DashboardLineGraphResponse',
+  DashboardCompanyGraphResponse = 'DashboardCompanyGraphResponse',
 
   // WebSocket Schemas
   WsClientSubmitAnswer = 'WsClientSubmitAnswer',
