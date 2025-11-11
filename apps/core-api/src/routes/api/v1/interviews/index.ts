@@ -10,7 +10,8 @@ const controller: FastifyPluginAsync = async (fastify) => {
   const getSchema: FastifySchema = {
     tags: [Tag.Interview],
     summary: '사용자가 생성한 모든 면접 세션 목록 조회',
-    description: '사용자가 생성한 면접 세션들의 목록을 반환합니다.',
+    description:
+      '사용자가 생성한 면접 세션들 중 완료되지 않은 모든 세션을 반환합니다.',
     response: {
       200: S_InterviewSessionList,
     },
