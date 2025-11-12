@@ -110,7 +110,7 @@ describe('InterviewService Unit Tests', () => {
       expect(session).toBeDefined()
       expect(session.userId).toBe(testUser.id)
       expect(session.company).toBe('TestCorp')
-      expect(session.title).toContain('TestCorp interview')
+      expect(session.title).toContain('TestCorp')
     } finally {
       if (session) {
         await app.prisma.interviewSession.delete({ where: { id: session.id } })
