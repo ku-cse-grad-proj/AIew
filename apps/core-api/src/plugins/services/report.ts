@@ -7,12 +7,16 @@ import {
   S_ReportItem,
   S_ReportsQueryParams,
   S_ReportsSummaryResponse,
+  S_ReportDetailResponse,
+  S_ReportQuestionsResponse,
 } from '@/schemas/rest'
 
 // TypeBox 스키마에서 타입 추출
 type ReportQueryParams = Static<typeof S_ReportsQueryParams>
 type ReportItem = Static<typeof S_ReportItem>
 type ReportsSummary = Static<typeof S_ReportsSummaryResponse>
+type ReportDetailResponse = Static<typeof S_ReportDetailResponse>
+type ReportQuestionsResponse = Static<typeof S_ReportQuestionsResponse>
 
 export class ReportService {
   private fastify: FastifyInstance
@@ -145,7 +149,255 @@ export class ReportService {
     }
   }
 
+  /**
+   * 특정 리포트의 상세 정보를 반환합니다
+   * @throws {Error} 404 Not Found - 세션이 존재하지 않을 경우
+   * @throws {Error} 403 Forbidden - 소유자가 아닐 경우
+   * @throws {Error} 400 Bad Request - 세션이 COMPLETED 상태가 아닐 경우
+   */
+  public async getReportDetail(
+    sessionId: string,
+    userId: string,
+  ): Promise<ReportDetailResponse> {
+    const { prisma } = this.fastify
+
+    // 세션 조회 및 권한 확인
+    const session = await prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      select: {
+        userId: true,
+        status: true,
+        title: true,
+        jobTitle: true,
+        jobSpec: true,
+        coverLetter: true,
+        portfolio: true,
+        idealTalent: true,
+        averageScore: true,
+        totalTimeSec: true,
+        finalFeedback: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    if (!session) {
+      throw this.fastify.httpErrors.notFound('Report not found.')
+    }
+
+    if (session.userId !== userId) {
+      throw this.fastify.httpErrors.forbidden(
+        'You are not authorized to view this report.',
+      )
+    }
+
+    if (session.status !== 'COMPLETED') {
+      throw this.fastify.httpErrors.badRequest(
+        'This interview session is not completed yet.',
+      )
+    }
+
+    // 메인 질문들 조회 (tailSteps 포함)
+    const mainQuestions = await prisma.interviewStep.findMany({
+      where: {
+        interviewSessionId: sessionId,
+        parentStepId: null,
+      },
+      orderBy: { aiQuestionId: 'asc' },
+      include: {
+        tailSteps: {
+          orderBy: { aiQuestionId: 'asc' },
+        },
+      },
+    })
+
+    // 메트릭 계산
+    const scores = mainQuestions.map((mainQ) => {
+      const allScores = [
+        mainQ.score,
+        ...mainQ.tailSteps.map((tail) => tail.score),
+      ].filter((s): s is number => s !== null)
+      if (allScores.length === 0) return 0
+      const sum = allScores.reduce((acc, s) => acc + s, 0)
+      return Math.round((sum / allScores.length) * 10) / 10 // 소수점 1자리
+    })
+    const durations = mainQuestions.map((mainQ) => {
+      const mainDuration = mainQ.answerDurationSec ?? 0
+      const tailDuration = mainQ.tailSteps.reduce(
+        (sum, tail) => sum + (tail.answerDurationSec ?? 0),
+        0,
+      )
+      return Math.round((mainDuration + tailDuration) / 60) // 분 단위
+    })
+    const counts = mainQuestions.map((q) => q.tailSteps.length + 1) // 메인 + 꼬리 세트
+    const totalQuestionCount =
+      mainQuestions.length +
+      mainQuestions.reduce((sum, q) => sum + q.tailSteps.length, 0)
+
+    return {
+      overviewInfo: {
+        interviewInfo: {
+          title: session.title,
+          jobTitle: session.jobTitle,
+          jobSpec: session.jobSpec,
+          coverLetterFilename: this.extractFilenameFromUrl(
+            session.coverLetter ?? '',
+          ),
+          portfolioFilename: this.extractFilenameFromUrl(
+            session.portfolio ?? '',
+          ),
+          idealTalent: session.idealTalent,
+        },
+        metricsInfo: {
+          score: session.averageScore ?? 0,
+          scores,
+          duration: session.totalTimeSec
+            ? Math.round(session.totalTimeSec / 60)
+            : 0,
+          durations,
+          count: totalQuestionCount,
+          counts,
+          startDate: session.createdAt.toISOString(),
+          finishDate: session.updatedAt.toISOString(),
+        },
+      },
+      feedback: session.finalFeedback ?? '',
+    }
+  }
+
+  /**
+   * 특정 리포트의 질문 상세 정보를 반환합니다
+   * @throws {Error} 404 Not Found - 세션이 존재하지 않을 경우
+   * @throws {Error} 403 Forbidden - 소유자가 아닐 경우
+   * @throws {Error} 400 Bad Request - 세션이 COMPLETED 상태가 아닐 경우
+   */
+  public async getReportQuestions(
+    sessionId: string,
+    userId: string,
+  ): Promise<ReportQuestionsResponse> {
+    const { prisma } = this.fastify
+
+    // 세션 조회 및 권한 확인
+    const session = await prisma.interviewSession.findUnique({
+      where: { id: sessionId },
+      select: {
+        userId: true,
+        status: true,
+        title: true,
+      },
+    })
+
+    if (!session) {
+      throw this.fastify.httpErrors.notFound('Report not found.')
+    }
+
+    if (session.userId !== userId) {
+      throw this.fastify.httpErrors.forbidden(
+        'You are not authorized to view this report.',
+      )
+    }
+
+    if (session.status !== 'COMPLETED') {
+      throw this.fastify.httpErrors.badRequest(
+        'This interview session is not completed yet.',
+      )
+    }
+
+    const { title } = session
+
+    // 메인 질문들 조회 (tailSteps 포함)
+    const mainQuestions = await prisma.interviewStep.findMany({
+      where: {
+        interviewSessionId: sessionId,
+        parentStepId: null,
+      },
+      orderBy: { aiQuestionId: 'asc' },
+      include: {
+        tailSteps: {
+          orderBy: { aiQuestionId: 'asc' },
+        },
+      },
+    })
+
+    // 응답 형식에 맞게 변환
+    const questions = mainQuestions.map((mainQ) => ({
+      id: mainQ.id,
+      aiQuestionId: mainQ.aiQuestionId,
+      type: mainQ.type,
+      question: mainQ.question,
+      answer: mainQ.answer,
+      score: mainQ.score,
+      createdAt: mainQ.createdAt.toISOString(),
+      updatedAt: mainQ.updatedAt.toISOString(),
+      rationale: mainQ.rationale,
+      criteria: mainQ.criteria,
+      skills: mainQ.skills,
+      estimatedAnswerTimeSec: mainQ.estimatedAnswerTimeSec,
+      answerDurationSec: mainQ.answerDurationSec,
+      answerStartedAt: mainQ.answerStartedAt?.toISOString() ?? null,
+      answerEndedAt: mainQ.answerEndedAt?.toISOString() ?? null,
+      strengths: mainQ.strengths,
+      improvements: mainQ.improvements,
+      redFlags: mainQ.redFlags,
+      feedback: mainQ.feedback,
+      interviewSessionId: mainQ.interviewSessionId,
+      parentStepId: mainQ.parentStepId,
+      tailSteps: mainQ.tailSteps.map((tailQ) => ({
+        id: tailQ.id,
+        aiQuestionId: tailQ.aiQuestionId,
+        type: tailQ.type,
+        question: tailQ.question,
+        answer: tailQ.answer,
+        score: tailQ.score,
+        createdAt: tailQ.createdAt.toISOString(),
+        updatedAt: tailQ.updatedAt.toISOString(),
+        rationale: tailQ.rationale,
+        criteria: tailQ.criteria,
+        skills: tailQ.skills,
+        estimatedAnswerTimeSec: tailQ.estimatedAnswerTimeSec,
+        answerDurationSec: tailQ.answerDurationSec,
+        answerStartedAt: tailQ.answerStartedAt?.toISOString() ?? null,
+        answerEndedAt: tailQ.answerEndedAt?.toISOString() ?? null,
+        strengths: tailQ.strengths,
+        improvements: tailQ.improvements,
+        redFlags: tailQ.redFlags,
+        feedback: tailQ.feedback,
+        interviewSessionId: tailQ.interviewSessionId,
+        parentStepId: tailQ.parentStepId,
+        tailSteps: [], // 꼬리질문의 꼬리질문은 없음
+      })),
+    }))
+
+    return {
+      title,
+      questions,
+    }
+  }
+
   // --- Helper Methods ---
+
+  /**
+   * R2 URL에서 원본 파일명을 추출합니다
+   * InterviewService와 동일한 로직
+   */
+  private extractFilenameFromUrl(url: string): string {
+    if (!url) return ''
+
+    const parts = url.split('/')
+
+    // 새 형식 확인: 끝에서 3번째 part가 'coverLetter' 또는 'portfolio'인지 확인
+    if (parts.length >= 3) {
+      const thirdLast = parts[parts.length - 3]
+      if (thirdLast === 'coverLetter' || thirdLast === 'portfolio') {
+        // 새 형식: key/sessionId/filename
+        return parts[parts.length - 1]
+      }
+    }
+
+    // 기존 형식: sessionId-key-filename
+    const filenameWithPrefix = parts[parts.length - 1]
+    return filenameWithPrefix.split('-').slice(2).join('-')
+  }
 
   /**
    * Prisma where 절을 구성합니다
