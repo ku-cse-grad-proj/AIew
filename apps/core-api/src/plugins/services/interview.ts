@@ -60,7 +60,7 @@ export class InterviewService {
 
     // 유니크한 제목을 찾을 때까지 반복
     while (true) {
-      const potentialTitle = `${companyName} interview ${suffix}`
+      const potentialTitle = `${companyName} ${suffix}`
       const existingSession = await prisma.interviewSession.findUnique({
         where: {
           userId_title: {
