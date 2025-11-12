@@ -578,8 +578,12 @@ export class InterviewService {
   ): Promise<FilePayload | null> {
     if (!fileUrl) return null
     const { r2 } = this.fastify
-    const { R2_BUCKET_NAME } = process.env
-    const fileKey = fileUrl.substring(fileUrl.lastIndexOf('/') + 1)
+    const { R2_BUCKET_NAME, R2_PUBLIC_URL } = process.env
+
+    // R2_PUBLIC_URL 이후의 경로 전체를 fileKey로 추출
+    // 새 형식: https://r2.example.com/coverLetter/abc123/file.pdf → coverLetter/abc123/file.pdf
+    // 기존 형식: https://r2.example.com/abc123-coverLetter-file.pdf → abc123-coverLetter-file.pdf
+    const fileKey = fileUrl.replace(`${R2_PUBLIC_URL}/`, '')
 
     try {
       const command = new GetObjectCommand({
@@ -601,12 +605,23 @@ export class InterviewService {
 
   /**
    * R2 URL에서 Prefix를 제거하고 원본 파일명을 추출합니다.
-   * 예: "sessionId-coverLetter-my_cover_letter.pdf" -> "my_cover_letter.pdf"
+   * 새 형식: "key/sessionId/my_cover_letter.pdf" -> "my_cover_letter.pdf"
+   * 기존 형식: "sessionId-coverLetter-my_cover_letter.pdf" -> "my_cover_letter.pdf"
    */
   private extractFilenameFromUrl(url: string): string {
     const parts = url.split('/')
+
+    // 새 형식 확인: 끝에서 3번째 part가 'coverLetter' 또는 'portfolio'인지 확인
+    if (parts.length >= 3) {
+      const thirdLast = parts[parts.length - 3]
+      if (thirdLast === 'coverLetter' || thirdLast === 'portfolio') {
+        // 새 형식: key/sessionId/filename
+        return parts[parts.length - 1]
+      }
+    }
+
+    // 기존 형식: sessionId-key-filename
     const filenameWithPrefix = parts[parts.length - 1]
-    // 첫 두 개의 '-' (sessionId-, key-) 이후의 모든 것을 반환
     return filenameWithPrefix.split('-').slice(2).join('-')
   }
 
@@ -635,7 +650,7 @@ export class InterviewService {
     const { R2_BUCKET_NAME, R2_PUBLIC_URL } = process.env
     const uploadPromises = Object.entries(files).map(async ([key, file]) => {
       if (!file) return null // 파일이 제공되지 않은 경우 건너뜀
-      const fileKey = `${sessionId}-${key}-${file.filename}`
+      const fileKey = `${key}/${sessionId}/${file.filename}`
       await r2.send(
         new PutObjectCommand({
           Bucket: R2_BUCKET_NAME,
