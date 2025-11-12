@@ -361,7 +361,10 @@ export class InterviewService {
   public async getUserInterviews(userId: string) {
     const { prisma } = this.fastify
     const sessions = await prisma.interviewSession.findMany({
-      where: { userId },
+      where: {
+        userId,
+        NOT: { status: 'COMPLETED' },
+      },
       orderBy: { createdAt: 'desc' },
     })
 
