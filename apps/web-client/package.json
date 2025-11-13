@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 4000",
+    "dev": "next dev -p 4000",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -13,11 +13,11 @@
     "chart.js": "^4.5.1",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
-    "next": "15.4.7",
+    "next": "16.0.2",
     "next-runtime-env": "^3.3.0",
-    "react": "^19.1.0",
+    "react": "19.2.0",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "^19.1.0",
+    "react-dom": "19.2.0",
     "socket.io-client": "^4.8.1",
     "use-debounce": "^10.0.6",
     "zod": "^3.25.76",
@@ -29,10 +29,10 @@
     "@tailwindcss/postcss": "^4.1.11",
     "@types/dropzone": "^5.7.9",
     "@types/node": "^20.19.9",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
+    "@types/react": "19.2.4",
+    "@types/react-dom": "19.2.3",
     "eslint": "^9.31.0",
-    "eslint-config-next": "15.3.4",
+    "eslint-config-next": "16.0.2",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3"
   }
