@@ -2,9 +2,7 @@ import jwt from '@fastify/jwt'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 
-interface JWTPayload {
-  userId: string
-}
+import { JWTPayload } from '@/types/jwt'
 
 declare module 'fastify' {
   interface FastifyInstance {
