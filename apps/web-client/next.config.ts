@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       fullUrl: true,
     },
   },
+  reactCompiler: true,
   // TurboPack 설정
   turbopack: {
     rules: {
