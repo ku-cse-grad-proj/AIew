@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   //prefligth 경우에는 auth 검사 제외
   if (req.method === 'OPTIONS') {
     return NextResponse.next()
