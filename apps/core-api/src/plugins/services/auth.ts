@@ -3,6 +3,7 @@ import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
 import { S_AuthLogoutResponse } from '@/schemas/rest'
+import { JWTPayload } from '@/types/jwt'
 
 type AuthLogoutResponse = Static<typeof S_AuthLogoutResponse>
 
@@ -30,16 +31,45 @@ export class AuthService {
 
   /**
    * Refresh Token을 사용하여 새로운 Access Token 발급
-   * TODO: /api/v1/refresh 에 로직이 있으니 여기로 옮겨오면 됨
    */
   public async refreshToken(
-    // eslint-disable-next-line
     refreshToken: string,
-  ): Promise<{ accessToken: string }> {
-    // TODO: refreshToken 검증
-    // TODO: 새로운 accessToken 발급
-    // TODO: 필요 시 refreshToken 갱신 (rotation)
-    throw new Error('Not implemented')
+  ): Promise<{ accessToken: string; userId: string }> {
+    try {
+      // JWT 검증
+      const decoded = this.fastify.jwt.verify<JWTPayload>(refreshToken)
+
+      // DB에서 사용자 확인
+      const user = await this.fastify.prisma.user.findUnique({
+        where: { id: decoded.userId },
+      })
+
+      if (!user) {
+        throw this.fastify.httpErrors.unauthorized('User not found')
+      }
+
+      // 새 accessToken 발급
+      const accessToken = await this.fastify.jwt.sign(
+        { userId: user.id },
+        { expiresIn: '15m' },
+      )
+
+      // 로그 기록
+      this.fastify.log.info(
+        `Access token refreshed for user ${user.id} at ${new Date().toISOString()}`,
+      )
+
+      // TODO: refreshToken rotation
+      // TODO: Redis blacklist 확인
+
+      return { accessToken, userId: user.id }
+    } catch (error) {
+      // JWT 검증 실패, 만료 등
+      this.fastify.log.error('Refresh token validation failed:', error)
+      throw this.fastify.httpErrors.unauthorized(
+        'Invalid or expired refresh token',
+      )
+    }
   }
 
   /**
