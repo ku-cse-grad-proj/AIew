@@ -39,6 +39,7 @@ const swaggerOption: SwaggerOptions = {
 enum Tag {
   DoNotExecute = '❌ 실행금지',
   Oauth = '🔐 OAuth2.0 (테스트 불가)',
+  Auth = '🛡️ 인증',
   User = '👤 사용자',
   Dashboard = '📌 대시보드',
   Interview = '🗣️ 면접',
