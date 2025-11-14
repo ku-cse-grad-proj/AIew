@@ -1,11 +1,10 @@
-import { SignPayloadType } from '@fastify/jwt'
 import {
   FastifyPluginAsyncTypebox,
   TypeBoxTypeProvider,
 } from '@fastify/type-provider-typebox'
 import { Type, Static } from '@sinclair/typebox'
 import axios from 'axios'
-import { FastifySchema, RouteHandler } from 'fastify'
+import { FastifySchema, RouteHandler, RouteOptions } from 'fastify'
 
 import { Tag } from '@/configs/swagger-option'
 import SchemaId from '@/utils/schema-id'
@@ -38,8 +37,9 @@ const controller: FastifyPluginAsyncTypebox = async (fastify) => {
   // 4xx/5xx 에러 응답을 위한 스키마 (기존 스키마 재사용)
   const ResErr = Type.Ref(SchemaId.Error)
 
-  const handler: RouteHandler = async (request, reply) => {
+  const getHandler: RouteHandler = async (request, reply) => {
     try {
+      // Google OAuth2 토큰 획득
       const { token: googleToken } =
         await server.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(
           request,
@@ -57,30 +57,13 @@ const controller: FastifyPluginAsyncTypebox = async (fastify) => {
 
       server.log.info(userInfo)
 
-      // DB에서 사용자 조회 또는 생성
-      let user = await server.prisma.user.findUnique({
-        where: { email: userInfo.email },
-      })
-
-      if (!user) {
-        user = await server.prisma.user.create({
-          data: {
-            email: userInfo.email,
-            name: userInfo.name,
-            pic_url: userInfo.picture,
-            provider: 'GOOGLE',
-          },
+      // AuthService를 통해 OAuth 로그인 처리 (사용자 생성 또는 조회 + JWT 발급)
+      const { accessToken, refreshToken } =
+        await server.authService.handleOAuthLogin(userInfo.email, {
+          name: userInfo.name,
+          pic_url: userInfo.picture,
+          provider: 'GOOGLE',
         })
-      }
-
-      // 사용자를 위한 JWT 생성
-      const payload: SignPayloadType = { userId: user.id }
-      const accessToken: string = await reply.jwtSign(payload, {
-        expiresIn: '15m',
-      })
-      const refreshToken: string = await reply.jwtSign(payload, {
-        expiresIn: '7d',
-      })
 
       // JWT를 HttpOnly 쿠키에 담아 프론트엔드로 리디렉션
       reply
@@ -105,7 +88,7 @@ const controller: FastifyPluginAsyncTypebox = async (fastify) => {
     }
   }
 
-  const schema: FastifySchema = {
+  const getSchema: FastifySchema = {
     tags: [Tag.Oauth],
     summary: '구글 OAuth2.0 콜백',
     description:
@@ -118,12 +101,15 @@ const controller: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   }
 
-  server.route({
+  // 로그인 도중이므로 onRequest 훅으로 authenticate 진행하지 않음
+  const getOpts: RouteOptions = {
     method: 'GET',
     url: '/',
-    handler,
-    schema,
-  })
+    handler: getHandler,
+    schema: getSchema,
+  }
+
+  server.route(getOpts)
 }
 
 export default controller
