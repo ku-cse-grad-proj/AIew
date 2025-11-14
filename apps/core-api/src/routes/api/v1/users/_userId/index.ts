@@ -24,7 +24,7 @@ const controller: FastifyPluginAsyncTypebox = async (
   const C_UserDeleteResponse = Type.Ref(SchemaId.UserDeleteResponse)
   const C_ResErr = Type.Ref(SchemaId.Error)
 
-  // --- GET /users/:userId ---
+  // GET api/v1/users/:userId
   const getSchema: FastifySchema = {
     tags: [Tag.User],
     summary: '특정 사용자 정보 조회',
@@ -43,9 +43,7 @@ const controller: FastifyPluginAsyncTypebox = async (
   ) => {
     const { userId: requestedUserId } = request.params
 
-    const user = await server.prisma.user.findUnique({
-      where: { id: requestedUserId },
-    })
+    const user = await server.userService.getUserById(requestedUserId)
 
     if (!user) {
       return reply.notFound(`User with ID '${requestedUserId}' not found.`)
@@ -62,7 +60,7 @@ const controller: FastifyPluginAsyncTypebox = async (
     handler: getHandler,
   })
 
-  // --- PATCH /users/:userId ---
+  // PATCH api/v1/users/:userId
   const patchSchema: FastifySchema = {
     tags: [Tag.User],
     summary: '특정 사용자 정보 수정',
@@ -88,10 +86,10 @@ const controller: FastifyPluginAsyncTypebox = async (
       return reply.forbidden('You are not authorized to modify this resource.')
     }
 
-    const updatedUser = await server.prisma.user.update({
-      where: { id: requestedUserId },
-      data: request.body as Prisma.UserUpdateInput,
-    })
+    const updatedUser = await server.userService.updateUser(
+      requestedUserId,
+      request.body as Prisma.UserUpdateInput,
+    )
 
     reply.send(updatedUser)
   }
@@ -107,7 +105,7 @@ const controller: FastifyPluginAsyncTypebox = async (
     handler: patchHandler,
   })
 
-  // --- DELETE /users/:userId ---
+  // DELETE api/v1/users/:userId
   const deleteSchema: FastifySchema = {
     tags: [Tag.User],
     summary: '특정 사용자 삭제 (회원 탈퇴)',
@@ -131,9 +129,7 @@ const controller: FastifyPluginAsyncTypebox = async (
       return reply.forbidden('You are not authorized to delete this resource.')
     }
 
-    await server.prisma.user.delete({
-      where: { id: requestedUserId },
-    })
+    await server.userService.deleteUser(requestedUserId)
 
     reply
       .clearCookie('accessToken', { path: '/' })
