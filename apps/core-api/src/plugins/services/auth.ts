@@ -73,6 +73,57 @@ export class AuthService {
   }
 
   /**
+   * userId를 받아 accessToken과 refreshToken 쌍을 생성
+   */
+  public async generateTokenPair(
+    userId: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const accessToken = await this.fastify.jwt.sign(
+      { userId },
+      { expiresIn: '15m' },
+    )
+
+    const refreshToken = await this.fastify.jwt.sign(
+      { userId },
+      { expiresIn: '7d' },
+    )
+
+    this.fastify.log.info(
+      `Token pair generated for user ${userId} at ${new Date().toISOString()}`,
+    )
+
+    return { accessToken, refreshToken }
+  }
+
+  /**
+   * OAuth 로그인 처리 (Google/GitHub 공통)
+   * 사용자를 찾거나 생성하고, 토큰 쌍을 반환
+   */
+  public async handleOAuthLogin(
+    email: string,
+    userData: {
+      name: string
+      pic_url: string
+      provider: 'GOOGLE' | 'GITHUB'
+    },
+  ): Promise<{ accessToken: string; refreshToken: string; userId: string }> {
+    // UserService를 통해 사용자 찾기 또는 생성
+    const user = await this.fastify.userService.findOrCreateUserByEmail(
+      email,
+      userData,
+    )
+
+    // 토큰 쌍 생성
+    const { accessToken, refreshToken } = await this.generateTokenPair(user.id)
+
+    this.fastify.log.info(
+      `OAuth login successful for user ${user.id} via ${userData.provider}`,
+    )
+
+    return { accessToken, refreshToken, userId: user.id }
+  }
+
+  /**
    * 특정 토큰을 무효화 (blacklist 추가)
    * TODO: 구현 필요 (Redis 필요)
    */
