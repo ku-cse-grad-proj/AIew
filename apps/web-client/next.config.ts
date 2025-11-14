@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     },
   },
   reactCompiler: true,
+  cacheComponents: true,
   // TurboPack 설정
   turbopack: {
     rules: {
