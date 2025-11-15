@@ -14,7 +14,7 @@ export default function FooterButtons({
   const router = useRouter()
   const params = useParams<{ sessionId?: string }>()
 
-  function handleBackButton() {
+  async function handleBackButton() {
     router.push('/interview')
   }
 

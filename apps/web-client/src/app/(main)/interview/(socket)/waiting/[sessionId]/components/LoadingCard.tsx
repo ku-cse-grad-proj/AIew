@@ -1,5 +1,7 @@
 'use client'
 
+import { Suspense } from 'react'
+
 import LoadingCircle from './LoadingCircle'
 
 import Card from '@/app/(main)/interview/_components/Card'
@@ -25,7 +27,9 @@ export default function LoadingCard() {
             : 'preparing interview...'}
         </span>
       </div>
-      <FooterButtons mode="waiting" isQuestionsReady={!!questions} />
+      <Suspense>
+        <FooterButtons mode="waiting" isQuestionsReady={!!questions} />
+      </Suspense>
     </Card>
   )
 }
