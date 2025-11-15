@@ -5,7 +5,7 @@ import styles from './dashboard.module.css'
 import LineGraph from './LineGraph'
 import ShortcutLink from './ShortcutLink'
 
-import { lineGraphData } from '@/app/lib/mockData'
+import { privateFetch } from '@/app/lib/fetch'
 
 export default async function RecentGraph({
   className,
@@ -32,15 +32,21 @@ export default async function RecentGraph({
 }
 
 async function GraphArea() {
-  const graphData = await fetchGraphData()
+  const { CORE_API_URL, API_PREFIX } = process.env
+  const res = await privateFetch(
+    `${CORE_API_URL}/${API_PREFIX}/dashboard/graphs/line`,
+  )
+  const { labels, scores, durations } = await res.json()
+
+  const graphData = [labels, scores, durations] as [
+    string[],
+    number[],
+    number[],
+  ]
+
   return (
     <div className="flex-1 min-h-250 w-full">
       <LineGraph data={graphData} />
     </div>
   )
-}
-
-async function fetchGraphData() {
-  await new Promise((r) => setTimeout(r, 2500))
-  return lineGraphData
 }

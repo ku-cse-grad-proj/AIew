@@ -1,5 +1,7 @@
 import Image from 'next/image'
 
+import { fetchDashboardData } from '../page'
+
 import styles from './dashboard.module.css'
 import InfoCard from './InfoCard'
 
@@ -12,13 +14,8 @@ type UserInfos = {
   averageScore: number
 }
 
-export default function UserInfos({
-  userInfos,
-  className,
-}: {
-  userInfos: UserInfos
-  className?: string
-}) {
+export default async function UserInfos({ className }: { className?: string }) {
+  const { userInfos }: { userInfos: UserInfos } = await fetchDashboardData()
   const {
     name,
     mostJobTitle,
@@ -27,6 +24,7 @@ export default function UserInfos({
     interviewCount,
     averageScore,
   } = userInfos
+
   return (
     <section
       className={`w-full h-full grid grid-cols-2 grid-rows-2 items-stretch gap-24 ${className}`}

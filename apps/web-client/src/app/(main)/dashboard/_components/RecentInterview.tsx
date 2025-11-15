@@ -1,17 +1,17 @@
+import { fetchDashboardData } from '../page'
+
 import CardSection from './CardSection'
 import styles from './dashboard.module.css'
 import EmptyInterview from './EmptyInterview'
 import InterviewCard from './InterviewCard'
 import ShortcutLink from './ShortcutLink'
 
-export default function RecentInterview({
-  interview,
+export default async function RecentInterview({
   className,
 }: {
-  interview: Interview
   className?: string
 }) {
-  const hasInterview = true
+  let { interview }: { interview: Interview } = await fetchDashboardData()
 
   return (
     <CardSection
@@ -23,7 +23,7 @@ export default function RecentInterview({
         className="bg-neutral-gray absolute right-12 top-12"
       />
 
-      {hasInterview ? (
+      {interview.id ? (
         <InterviewCard interview={interview} />
       ) : (
         <EmptyInterview />
