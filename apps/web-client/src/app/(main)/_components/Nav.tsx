@@ -1,4 +1,4 @@
-'use client'
+import { Suspense } from 'react'
 
 import MainLink from './MainLink'
 
@@ -13,11 +13,13 @@ export default function Nav({ className }: { className?: string }) {
     <nav
       className={`bg-neutral-card w-372 h-48 flex items-center gap-3 px-3 rounded-full shadow-box ${className}`}
     >
-      {LINKS.map(({ href, label }) => (
-        <MainLink key={href} href={href}>
-          {label}
-        </MainLink>
-      ))}
+      <Suspense>
+        {LINKS.map(({ href, label }) => (
+          <MainLink key={href} href={href}>
+            {label}
+          </MainLink>
+        ))}
+      </Suspense>
     </nav>
   )
 }
