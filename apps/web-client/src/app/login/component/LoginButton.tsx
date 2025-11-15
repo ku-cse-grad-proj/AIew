@@ -1,14 +1,18 @@
+import { connection } from 'next/server'
+
 interface LoginButtonProps {
   text: string
   children: React.ReactNode
   link: string
 }
 
-export default function LoginButton({
+export default async function LoginButton({
   text,
   children,
   link,
 }: LoginButtonProps) {
+  await connection()
+
   const { API_BASE_URL, API_PREFIX } = process.env
   return (
     <a
