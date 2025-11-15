@@ -37,7 +37,8 @@ export default async function UserInfos({ className }: { className?: string }) {
             src={profileImg}
             fill
             alt={`${name} profile image`}
-            className="p-12 lg:p-24"
+            style={{ objectFit: 'contain' }}
+            className="p-16 lg:p-24"
           />
         </div>
         <div className="flex-5 h-full flex flex-col justify-center gap-4 p-8">
