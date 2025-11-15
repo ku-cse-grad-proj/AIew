@@ -1,7 +1,8 @@
 import { Suspense } from 'react'
 
-import CardSection from './CardSection'
-import styles from './dashboard.module.css'
+import CardSection from '../CardSection'
+import styles from '../dashboard.module.css'
+
 import DoughnutGraph from './DoughnutGraph'
 
 import { privateFetch } from '@/app/lib/fetch'

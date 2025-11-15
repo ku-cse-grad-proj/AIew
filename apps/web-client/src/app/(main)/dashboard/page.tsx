@@ -1,11 +1,11 @@
 import { Suspense } from 'react'
 
-import CompanyGraph from './_components/CompanyGraph'
 import { DashboardSkeleton } from './_components/DashboardSkeleton'
+import CompanyGraph from './_components/graph/CompanyGraph'
+import RecentGraph from './_components/graph/RecentGraph'
 import Heading, { HeaderSkeleton } from './_components/Header'
-import RecentGraph from './_components/RecentGraph'
-import RecentInterview from './_components/RecentInterview'
-import RecentReports from './_components/RecentReports'
+import RecentInterview from './_components/recent/RecentInterview'
+import RecentReports from './_components/recent/RecentReports'
 import UserInfos from './_components/UserInfos'
 
 import { privateFetch } from '@/app/lib/fetch'

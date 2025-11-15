@@ -1,10 +1,10 @@
-import { fetchDashboardData } from '../page'
+import { fetchDashboardData } from '../../page'
+import CardSection from '../CardSection'
+import styles from '../dashboard.module.css'
+import EmptyMessage from '../EmptyMessage'
+import ShortcutLink from '../ShortcutLink'
 
-import CardSection from './CardSection'
-import styles from './dashboard.module.css'
-import EmptyMessage from './EmptyMessage'
 import ReportCard from './ReportCard'
-import ShortcutLink from './ShortcutLink'
 
 export type Report = {
   id: number

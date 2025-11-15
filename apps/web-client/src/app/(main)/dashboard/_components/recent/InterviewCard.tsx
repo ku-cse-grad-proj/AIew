@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import InterviewStatusChip from '../../interview/_components/InterviewStatusChip'
+import InterviewStatusChip from '@/app/(main)/interview/_components/InterviewStatusChip'
 
 export default function InterviewCard({ interview }: { interview: Interview }) {
   const { status, title, company, jobTitle, jobSpec } = interview

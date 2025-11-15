@@ -1,10 +1,10 @@
-import { fetchDashboardData } from '../page'
+import { fetchDashboardData } from '../../page'
+import CardSection from '../CardSection'
+import styles from '../dashboard.module.css'
+import ShortcutLink from '../ShortcutLink'
 
-import CardSection from './CardSection'
-import styles from './dashboard.module.css'
 import EmptyInterview from './EmptyInterview'
 import InterviewCard from './InterviewCard'
-import ShortcutLink from './ShortcutLink'
 
 export default async function RecentInterview({
   className,

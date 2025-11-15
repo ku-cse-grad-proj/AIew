@@ -1,9 +1,10 @@
 import { Suspense } from 'react'
 
-import CardSection from './CardSection'
-import styles from './dashboard.module.css'
+import CardSection from '../CardSection'
+import styles from '../dashboard.module.css'
+import ShortcutLink from '../ShortcutLink'
+
 import LineGraph from './LineGraph'
-import ShortcutLink from './ShortcutLink'
 
 import { privateFetch } from '@/app/lib/fetch'
 
