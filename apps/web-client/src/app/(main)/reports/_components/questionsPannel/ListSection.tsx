@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useParams, usePathname, useSearchParams } from 'next/navigation'
 import { ReactNode } from 'react'
 
-import { QuestionItem, QuestionList } from '../[reportId]/questions/_types'
+import { QuestionItem, QuestionList } from '../../[reportId]/questions/_types'
 
 import CancelIcon from '@/../public/icons/cancel.svg'
 import InfoIcon from '@/../public/icons/info.svg'
