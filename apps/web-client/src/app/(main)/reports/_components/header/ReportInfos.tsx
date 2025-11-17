@@ -3,13 +3,14 @@ import { Query } from '../../page'
 import ReportInfo from './ReportInfo'
 
 import { privateFetch } from '@/app/lib/fetch'
+import { CACHE_TAG } from '@/constants/cacheTags'
 
 export default async function ReportInfos({ query }: { query: Query }) {
   const { CORE_API_URL, API_PREFIX } = process.env
 
   const response = await privateFetch(
     `${CORE_API_URL}/${API_PREFIX}/reports/summary?${new URLSearchParams(query)}`,
-    { cache: 'no-store' },
+    { cache: 'force-cache', next: { tags: [CACHE_TAG.REPORTS] } },
   )
   const data = await response.json()
 

@@ -8,6 +8,7 @@ import TableBodySkeleton from './_components/table/ReportTableBodySkeleton'
 import TableHeader from './_components/table/ReportTableHeader'
 
 import { privateFetch } from '@/app/lib/fetch'
+import { CACHE_TAG } from '@/constants/cacheTags'
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
 export type Query = [string, string][]
@@ -30,7 +31,7 @@ export default async function ReportsPage({
 
   const response = await privateFetch(
     `${CORE_API_URL}/${API_PREFIX}/reports/pages/count?${new URLSearchParams(query)}`,
-    { cache: 'no-store' },
+    { cache: 'force-cache', next: { tags: [CACHE_TAG.REPORTS] } },
   )
 
   const totalPages = await response.json()
