@@ -82,7 +82,7 @@ function ItemLink({
   return (
     <Link
       href={questionPathname + '?id=' + questionItem.id}
-      className={`block text-[14px] ${isActive ? 'font-medium' : 'text-neutral-subtext'}`}
+      className={`block text-[14px] transition-all duration-300 ease-in-out hover:scale-[1.03] ${isActive ? 'font-medium scale-[1.03]' : 'text-neutral-subtext'}`}
     >
       {children}
     </Link>
