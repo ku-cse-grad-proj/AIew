@@ -43,7 +43,7 @@ export default function ListSection({
       <ul className="w-full flex-1 min-h-0 px-16 pb-16  overflow-auto">
         {questionList.map((main: QuestionList, i) => (
           <li key={main.id} className="pl-8 py-8">
-            <ItemLink questionItem={main} isDefault={i === 0}>
+            <ItemLink questionItem={main}>
               Q{i + 1}. {main.question}
             </ItemLink>
             <ul>
