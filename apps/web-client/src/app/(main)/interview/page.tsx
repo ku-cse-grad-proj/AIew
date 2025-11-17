@@ -5,6 +5,7 @@ import Skeleton from './_components/CardsSkeleton'
 import Carousel from './_components/Carousel'
 
 import { privateFetch } from '@/app/lib/fetch'
+import { CACHE_TAG } from '@/constants/cacheTags'
 
 export default async function InterviewPage() {
   return (
@@ -29,6 +30,7 @@ async function InterviewList() {
   const { CORE_API_URL, API_PREFIX } = process.env
   const response = await privateFetch(
     `${CORE_API_URL}/${API_PREFIX}/interviews`,
+    { cache: 'force-cache', next: { tags: [CACHE_TAG.INTERVIEWS] } },
   )
   const cards: Interview[] = await response.json()
   return <Carousel cards={cards} />
