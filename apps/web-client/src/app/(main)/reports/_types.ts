@@ -27,3 +27,33 @@ export type ReportResponse = {
   overviewInfo: OverviewInfo
   feedback: string
 }
+
+export type ReportQuestionsResponse = {
+  title: string
+  questions: ReportQuestionStep[]
+}
+
+export type ReportQuestionStep = {
+  id: string
+  aiQuestionId: string
+  type: 'TECHNICAL' | 'PERSONALITY' | 'TAILORED'
+  question: string
+  answer: string
+  score: number
+  createdAt: string
+  updatedAt: string
+  rationale: string
+  criteria: string[]
+  skills: string[]
+  estimatedAnswerTimeSec: number
+  answerDurationSec: number
+  answerStartedAt: string
+  answerEndedAt: string
+  strengths: string[]
+  improvements: string[]
+  redFlags: string[]
+  feedback: string
+  interviewSessionId: string
+  parentStepId: string | null
+  tailSteps: ReportQuestionStep[]
+}

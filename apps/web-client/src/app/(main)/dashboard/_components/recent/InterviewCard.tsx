@@ -1,9 +1,9 @@
 import Link from 'next/link'
 
-import InterviewStatusChip from '../../interview/_components/InterviewStatusChip'
+import InterviewStatusChip from '@/app/(main)/interview/_components/InterviewStatusChip'
 
 export default function InterviewCard({ interview }: { interview: Interview }) {
-  const { status, title, company, jobTitle, jobSpec } = interview
+  const { id, status, title, company, jobTitle, jobSpec } = interview
   return (
     <div className="flex-1 min-h-0 flex flex-col justify-between bg-neutral-background rounded-[10px] p-16">
       <InterviewStatusChip status={status} />
@@ -27,7 +27,7 @@ export default function InterviewCard({ interview }: { interview: Interview }) {
       <div className="flex justify-end">
         <Link
           className="bg-primary rounded-[10px] text-neutral-inverse px-20 h-40 inline-flex items-center justify-center z-10"
-          href={`/interview/${'30'}`}
+          href={`/interview/${id}`}
         >
           start interview
         </Link>

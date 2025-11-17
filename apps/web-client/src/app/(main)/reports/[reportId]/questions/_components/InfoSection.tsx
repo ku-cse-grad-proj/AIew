@@ -35,7 +35,7 @@ export default function InfoSection({
           tags={[info.type]}
         />
         <DefinitionItem
-          term="evaluatoin criteria"
+          term="evaluation criteria"
           description={info.rationale}
           tags={info.criteria}
         />

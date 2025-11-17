@@ -1,8 +1,10 @@
-import CardSection from './CardSection'
-import styles from './dashboard.module.css'
-import EmptyMessage from './EmptyMessage'
+import { fetchDashboardData } from '../../page'
+import CardSection from '../CardSection'
+import styles from '../dashboard.module.css'
+import EmptyMessage from '../EmptyMessage'
+import ShortcutLink from '../ShortcutLink'
+
 import ReportCard from './ReportCard'
-import ShortcutLink from './ShortcutLink'
 
 export type Report = {
   id: number
@@ -12,13 +14,12 @@ export type Report = {
   finishDate: string
 }
 
-export default function RecentReports({
-  reports,
+export default async function RecentReports({
   className,
 }: {
-  reports: Report[]
   className?: string
 }) {
+  const { reports }: { reports: Report[] } = await fetchDashboardData()
   return (
     <CardSection
       className={`p-16 flex flex-col gap-16 bg-neutral-gray min-h-300 overflow-y-auto relative ${className}`}

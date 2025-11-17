@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useParams, usePathname, useSearchParams } from 'next/navigation'
 import { ReactNode } from 'react'
 
-import { QuestionItem, QuestionList } from '../[id]/questions/_types'
+import { QuestionItem, QuestionList } from '../../[reportId]/questions/_types'
 
 import CancelIcon from '@/../public/icons/cancel.svg'
 import InfoIcon from '@/../public/icons/info.svg'
@@ -17,7 +17,7 @@ export default function ListSection({
   questionList: QuestionList[]
 }) {
   const params = useParams()
-  const reportId = params.id
+  const reportId = params.reportId
 
   const searchParams = useSearchParams()
   const questionId = searchParams.get('id')
@@ -43,7 +43,7 @@ export default function ListSection({
       <ul className="w-full flex-1 min-h-0 px-16 pb-16  overflow-auto">
         {questionList.map((main: QuestionList, i) => (
           <li key={main.id} className="pl-8 py-8">
-            <ItemLink questionItem={main} isDefault={i === 0}>
+            <ItemLink questionItem={main}>
               Q{i + 1}. {main.question}
             </ItemLink>
             <ul>
@@ -82,7 +82,7 @@ function ItemLink({
   return (
     <Link
       href={questionPathname + '?id=' + questionItem.id}
-      className={`block text-[14px] ${isActive ? 'font-medium' : 'text-neutral-subtext'}`}
+      className={`block text-[14px] transition-all duration-300 ease-in-out hover:scale-[1.03] ${isActive ? 'font-medium scale-[1.03]' : 'text-neutral-subtext'}`}
     >
       {children}
     </Link>
