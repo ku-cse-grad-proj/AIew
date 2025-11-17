@@ -7,6 +7,7 @@ import ShortcutLink from '../ShortcutLink'
 import LineGraph from './LineGraph'
 
 import { privateFetch } from '@/app/lib/fetch'
+import { CACHE_TAG } from '@/constants/cacheTags'
 
 export default async function RecentGraph({
   className,
@@ -36,6 +37,7 @@ async function GraphArea() {
   const { CORE_API_URL, API_PREFIX } = process.env
   const res = await privateFetch(
     `${CORE_API_URL}/${API_PREFIX}/dashboard/graphs/line`,
+    { cache: 'force-cache', next: { tags: [CACHE_TAG.REPORTS] } },
   )
   const { labels, scores, durations } = await res.json()
 

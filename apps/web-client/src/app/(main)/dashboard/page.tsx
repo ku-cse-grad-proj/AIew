@@ -9,10 +9,14 @@ import RecentReports from './_components/recent/RecentReports'
 import UserInfos from './_components/UserInfos'
 
 import { privateFetch } from '@/app/lib/fetch'
+import { CACHE_TAG } from '@/constants/cacheTags'
 
 export async function fetchDashboardData() {
   const { CORE_API_URL, API_PREFIX } = process.env
-  const res = await privateFetch(`${CORE_API_URL}/${API_PREFIX}/dashboard`)
+  const res = await privateFetch(`${CORE_API_URL}/${API_PREFIX}/dashboard`, {
+    cache: 'force-cache',
+    next: { tags: [CACHE_TAG.INTERVIEWS, CACHE_TAG.REPORTS, CACHE_TAG.USER] },
+  })
 
   const data = await res.json()
   return data
