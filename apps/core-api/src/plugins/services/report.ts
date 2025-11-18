@@ -475,7 +475,9 @@ export class ReportService {
    */
   private buildOrderByClause(
     sort?: string,
-  ): Prisma.InterviewSessionOrderByWithRelationInput {
+  ):
+    | Prisma.InterviewSessionOrderByWithRelationInput
+    | Prisma.InterviewSessionOrderByWithRelationInput[] {
     if (!sort) {
       // 기본: 최신순
       return { createdAt: 'desc' }
@@ -489,6 +491,11 @@ export class ReportService {
     // date는 createdAt으로 매핑
     if (field === 'date') {
       return { createdAt: orderDirection }
+    }
+
+    // job은 jobTitle, jobSpec 순으로 정렬
+    if (field === 'job') {
+      return [{ jobTitle: orderDirection }, { jobSpec: orderDirection }]
     }
 
     // score는 averageScore로 정렬
