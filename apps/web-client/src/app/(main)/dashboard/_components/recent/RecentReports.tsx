@@ -1,4 +1,4 @@
-import { fetchDashboardData } from '../../page'
+import { getDashboard } from '../../_lib/api'
 import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
 import EmptyMessage from '../EmptyMessage'
@@ -19,7 +19,7 @@ export default async function RecentReports({
 }: {
   className?: string
 }) {
-  const { reports }: { reports: Report[] } = await fetchDashboardData()
+  const { reports }: { reports: Report[] } = await getDashboard()
   return (
     <CardSection
       className={`p-16 flex flex-col gap-16 bg-neutral-gray min-h-300 overflow-y-auto relative ${className}`}

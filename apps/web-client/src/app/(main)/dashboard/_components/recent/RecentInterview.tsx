@@ -1,4 +1,4 @@
-import { fetchDashboardData } from '../../page'
+import { getDashboard } from '../../_lib/api'
 import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
 import ShortcutLink from '../ShortcutLink'
@@ -11,7 +11,7 @@ export default async function RecentInterview({
 }: {
   className?: string
 }) {
-  let { interview }: { interview: Interview } = await fetchDashboardData()
+  let { interview }: { interview: Interview } = await getDashboard()
 
   return (
     <CardSection

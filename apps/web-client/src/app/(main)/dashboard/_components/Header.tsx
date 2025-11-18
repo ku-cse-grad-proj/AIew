@@ -1,7 +1,7 @@
-import { fetchDashboardData } from '../page'
+import { getDashboard } from '../_lib/api'
 
 export default async function Heading() {
-  const { userInfos } = await fetchDashboardData()
+  const { userInfos } = await getDashboard()
   return (
     <>
       <h1 className="text-[32px] font-bold leading-[48px]">

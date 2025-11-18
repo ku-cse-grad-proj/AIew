@@ -1,6 +1,6 @@
 import Image from 'next/image'
 
-import { fetchDashboardData } from '../page'
+import { getDashboard } from '../_lib/api'
 
 import styles from './dashboard.module.css'
 import InfoCard from './InfoCard'
@@ -15,7 +15,7 @@ type UserInfos = {
 }
 
 export default async function UserInfos({ className }: { className?: string }) {
-  const { userInfos }: { userInfos: UserInfos } = await fetchDashboardData()
+  const { userInfos }: { userInfos: UserInfos } = await getDashboard()
   const {
     name,
     mostJobTitle,
