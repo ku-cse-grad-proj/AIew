@@ -1,6 +1,5 @@
+import { getInterview } from '../../_lib/api'
 import Form from '../Form'
-
-import { privateFetch } from '@/app/lib/fetch'
 
 export default async function CreateInterviewPage({
   params,
@@ -9,15 +8,7 @@ export default async function CreateInterviewPage({
 }) {
   const { sessionId } = await params
 
-  const fetchInterview = async () => {
-    const { CORE_API_URL, API_PREFIX } = process.env
-    const response = await privateFetch(
-      `${CORE_API_URL}/${API_PREFIX}/interviews/${sessionId}`,
-    )
-    return await response.json()
-  }
-
-  const interview = sessionId && sessionId[0] && (await fetchInterview())
+  const interview = sessionId && sessionId[0] && (await getInterview(sessionId))
 
   return (
     <div className="w-full h-full p-24">

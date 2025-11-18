@@ -2,7 +2,7 @@ import InfoItem from './InfoItem'
 
 import Card from '@/app/(main)/interview/_components/Card'
 import EditDeleteButtons from '@/app/(main)/interview/_components/EditDeleteButtons'
-import { privateFetch } from '@/app/lib/fetch'
+import { getInterview } from '@/app/(main)/interview/_lib/api'
 
 export default async function InterviewInfo({
   params,
@@ -10,12 +10,8 @@ export default async function InterviewInfo({
   params: Promise<{ sessionId: string }>
 }) {
   const { sessionId } = await params
-  const { CORE_API_URL, API_PREFIX } = process.env
-  const response = await privateFetch(
-    `${CORE_API_URL}/${API_PREFIX}/interviews/${sessionId}`,
-    { cache: 'no-store' },
-  )
-  const interview: Interview = await response.json()
+
+  const interview: Interview = await getInterview(sessionId)
 
   return (
     <Card className="w-full h-full flex flex-col">

@@ -1,10 +1,10 @@
 import Link from 'next/link'
 
+import { getInterview } from '../../_lib/api'
+
 import AnswerControl from './_components/AnswerControl/AnswerControl'
 import IntervieweeContainer from './_components/IntervieweeContainer/IntervieweeContainer'
 import InterviewerPannel from './_components/InterviewerPannel/InterviewerPannel'
-
-import { privateFetch } from '@/app/lib/fetch'
 
 export default async function InterviewPage({
   params,
@@ -13,16 +13,8 @@ export default async function InterviewPage({
 }) {
   const { sessionId } = await params
 
-  const { CORE_API_URL, API_PREFIX } = process.env
-  const response = await privateFetch(
-    `${CORE_API_URL}/${API_PREFIX}/interviews/${sessionId}`,
-  )
-  if (!response.ok) {
-    return (
-      <ErrorPage reason="sessionId에 해당하는 Interview를 찾을 수 없습니다." />
-    )
-  }
-  const interview: Interview = await response.json()
+  const interview: Interview = await getInterview(sessionId)
+
   if (interview.status === 'COMPLETED') {
     return <ErrorPage reason="완료한 Interview는 진행할 수 없습니다" />
   }

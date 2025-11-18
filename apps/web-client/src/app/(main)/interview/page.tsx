@@ -3,9 +3,7 @@ import { Suspense } from 'react'
 
 import Skeleton from './_components/CardsSkeleton'
 import Carousel from './_components/Carousel'
-
-import { privateFetch } from '@/app/lib/fetch'
-import { CACHE_TAG } from '@/constants/cacheTags'
+import { getInterviews } from './_lib/api'
 
 export default async function InterviewPage() {
   return (
@@ -27,11 +25,6 @@ export default async function InterviewPage() {
 }
 
 async function InterviewList() {
-  const { CORE_API_URL, API_PREFIX } = process.env
-  const response = await privateFetch(
-    `${CORE_API_URL}/${API_PREFIX}/interviews`,
-    { cache: 'force-cache', next: { tags: [CACHE_TAG.INTERVIEWS] } },
-  )
-  const cards: Interview[] = await response.json()
+  const cards: Interview[] = await getInterviews()
   return <Carousel cards={cards} />
 }
