@@ -168,6 +168,4 @@ class FollowupGeneratorService:
         followup = FollowupResponse.model_validate(norm)
         self.logger.log_tail_question(followup.model_dump())
 
-        print("--- Generated Followup ---")
-        print(followup)
         return followup
