@@ -1,18 +1,9 @@
-import { Query } from '../../page'
+import { getSummary, Query } from '../../_lib/api'
 
 import ReportInfo from './ReportInfo'
 
-import { privateFetch } from '@/app/lib/fetch'
-import { CACHE_TAG } from '@/constants/cacheTags'
-
 export default async function ReportInfos({ query }: { query: Query }) {
-  const { CORE_API_URL, API_PREFIX } = process.env
-
-  const response = await privateFetch(
-    `${CORE_API_URL}/${API_PREFIX}/reports/summary?${new URLSearchParams(query)}`,
-    { cache: 'force-cache', next: { tags: [CACHE_TAG.REPORTS] } },
-  )
-  const data = await response.json()
+  const data = await getSummary(query)
 
   const mostFrequentCompany = data.mostFrequentCompany
   //일치하는 값이 없다면 response로 N/A가 온다.

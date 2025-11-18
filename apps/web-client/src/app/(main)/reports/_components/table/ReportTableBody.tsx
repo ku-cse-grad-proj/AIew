@@ -1,22 +1,14 @@
 import Link from 'next/link'
 
-import { Query } from '../../page'
+import { getReports, Query } from '../../_lib/api'
 
 import styles from './table.module.css'
 
 import Dots from '@/../public/icons/dots.svg'
 import EmptyMessage from '@/app/(main)/dashboard/_components/EmptyMessage'
-import { privateFetch } from '@/app/lib/fetch'
-import { CACHE_TAG } from '@/constants/cacheTags'
 
 export default async function TableBody({ query }: { query: Query }) {
-  const { CORE_API_URL, API_PREFIX } = process.env
-
-  const response = await privateFetch(
-    `${CORE_API_URL}/${API_PREFIX}/reports/?${new URLSearchParams(query)}`,
-    { cache: 'force-cache', next: { tags: [CACHE_TAG.REPORTS] } },
-  )
-  const reports = await response.json()
+  const reports = await getReports(query)
 
   if (!reports || reports.length === 0) {
     return (

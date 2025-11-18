@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 
-import { Query } from '../../page'
+import { Query } from '../../_lib/api'
 
 import ReportCalendarButton from './ReportCalendarButton'
 import ReportFilterButton from './ReportFilterButton'
