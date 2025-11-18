@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "concurrently -n web,api,ai -c cyan,green,magenta \"pnpm --filter ./apps/web-client run dev\" \"pnpm --filter ./apps/core-api run dev\" \"poetry --directory apps/ai-server run uvicorn app.main:app --reload --port 8000\"",
+    "start": "concurrently -n web,api,ai -c cyan,green,magenta \"pnpm --filter ./apps/web-client run start --port 4000\" \"pnpm --filter ./apps/core-api run dev\" \"poetry --directory apps/ai-server run uvicorn app.main:app --reload --port 8000\"",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:ai": "poetry --directory apps/ai-server run ruff format .",
     "lint": "pnpm lint:node && pnpm lint:ai",
