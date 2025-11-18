@@ -1,5 +1,5 @@
-import getQuestions from '../../[reportId]/getQuestions'
 import { QuestionList } from '../../[reportId]/questions/_types'
+import { getQuestions } from '../../_lib/api'
 
 import ListSection from './ListSection'
 

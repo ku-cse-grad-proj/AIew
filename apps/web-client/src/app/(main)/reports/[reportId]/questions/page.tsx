@@ -1,5 +1,5 @@
 import DeckLayout from '../../_components/DeckLayout'
-import getQuestions from '../getQuestions'
+import { getQuestions } from '../../_lib/api'
 
 import FeedbackSection from './_components/FeedbackSection'
 import InfoSection from './_components/InfoSection'

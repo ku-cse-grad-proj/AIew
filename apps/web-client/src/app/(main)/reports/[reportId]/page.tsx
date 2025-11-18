@@ -1,22 +1,17 @@
 import DeckLayout from '../_components/DeckLayout'
 import Feedback from '../_components/Feedback'
 import OverviewSection from '../_components/OverviewSection'
+import { getReport } from '../_lib/api'
 import { ReportResponse } from '../_types'
-
-import { privateFetch } from '@/app/lib/fetch'
 
 export default async function ReportPage({
   params,
 }: {
   params: Promise<{ reportId: string }>
 }) {
-  const { CORE_API_URL, API_PREFIX } = process.env
   const { reportId } = await params
-  const res = await privateFetch(
-    `${CORE_API_URL}/${API_PREFIX}/reports/${reportId}`,
-  )
 
-  const reportData: ReportResponse = await res.json()
+  const reportData: ReportResponse = await getReport(reportId)
 
   const cardStyle = 'w-full h-full bg-neutral-card rounded-[20px] shadow-box'
 
