@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 export default function MainLink({
   href,
@@ -11,7 +11,6 @@ export default function MainLink({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const router = useRouter()
 
   //href와 동일한 주소 이거나, 그 하위 주소일 경우 active
   const isActive = pathname === href || pathname.startsWith(href + '/')
@@ -25,10 +24,6 @@ export default function MainLink({
       href={href}
       aria-current={isActive ? 'page' : undefined}
       className={`${basicStyle} ${isActive ? activeStyle : 'text-neutral-subtext'}`}
-      onMouseEnter={() => {
-        //호버될 경우에만 prefetch한다
-        router.prefetch(href)
-      }}
     >
       {children}
     </Link>
