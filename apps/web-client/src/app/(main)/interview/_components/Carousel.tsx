@@ -1,7 +1,7 @@
 'use client'
 
 import useEmblaCarousel from 'embla-carousel-react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import InterviewCard from './InterviewCard'
 
@@ -16,7 +16,6 @@ import { DotButton, useDotButton } from '@/app/hooks/EmblaCarouselDotButton'
 const GROUP_SIZE = 4
 
 export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
-  const [localCards] = useState<Interview[]>(cards)
   const [emblaRef, emblaApi] = useEmblaCarousel()
 
   const { selectedIndex, scrollSnaps, onDotButtonClick } =
@@ -32,11 +31,11 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
   // GROUP_SIZE를 기준으로 2차원 배열 생성
   const groups = useMemo(() => {
     const result: Interview[][] = []
-    for (let i = 0; i < localCards.length; i += GROUP_SIZE) {
-      result.push(localCards.slice(i, i + GROUP_SIZE))
+    for (let i = 0; i < cards.length; i += GROUP_SIZE) {
+      result.push(cards.slice(i, i + GROUP_SIZE))
     }
     return result
-  }, [localCards])
+  }, [cards])
 
   const dot = `w-8 h-8 rounded-full bg-gray-300`
 
@@ -46,7 +45,7 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
       <PrevButton onClick={onPrevButtonClick} disabled={prevBtnDisabled} />
       <NextButton onClick={onNextButtonClick} disabled={nextBtnDisabled} />
 
-      {localCards.length === 0 && (
+      {cards.length === 0 && (
         <div className="h-full flex items-center justify-center">
           please create interview
         </div>
@@ -59,8 +58,11 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
               key={`group-${groupIdx}`}
               className="flex-none basis-full px-24 pt-16 pb-20 grid grid-rows-4 lg:grid-cols-2 lg:grid-rows-2 gap-24"
             >
-              {group.map((localCard: Interview) => (
-                <InterviewCard key={localCard.id} data={localCard} />
+              {group.map((card: Interview) => (
+                <InterviewCard
+                  key={`${card.id}-${card.updatedAt}`}
+                  data={card}
+                />
               ))}
             </div>
           ))}
