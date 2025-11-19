@@ -16,7 +16,7 @@ import { DotButton, useDotButton } from '@/app/hooks/EmblaCarouselDotButton'
 const GROUP_SIZE = 4
 
 export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
-  const [localCards, setLocalCards] = useState<Interview[]>(cards)
+  const [localCards] = useState<Interview[]>(cards)
   const [emblaRef, emblaApi] = useEmblaCarousel()
 
   const { selectedIndex, scrollSnaps, onDotButtonClick } =
@@ -37,17 +37,6 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
     }
     return result
   }, [localCards])
-
-  const handleDelete = (id: string) => {
-    setLocalCards((prev) => {
-      const idx = prev.findIndex((c) => c.id === id)
-      if (idx === -1) return prev
-      const next = [...prev]
-      next.splice(idx, 1) // 삭제 후 뒤 카드들이 자동으로 앞으로 당겨짐
-
-      return next
-    })
-  }
 
   const dot = `w-8 h-8 rounded-full bg-gray-300`
 
@@ -71,11 +60,7 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
               className="flex-none basis-full px-24 pt-16 pb-20 grid grid-rows-4 lg:grid-cols-2 lg:grid-rows-2 gap-24"
             >
               {group.map((localCard: Interview) => (
-                <InterviewCard
-                  key={localCard.id}
-                  data={localCard}
-                  onDelete={handleDelete}
-                />
+                <InterviewCard key={localCard.id} data={localCard} />
               ))}
             </div>
           ))}
