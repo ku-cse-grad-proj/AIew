@@ -1,5 +1,6 @@
 import { InterviewInfo, OverviewInfo } from '../_types'
 
+import BackButton from './BackButton'
 import MetricsPannel from './MetricsPannel'
 
 export default function OverviewSection({
@@ -14,13 +15,14 @@ export default function OverviewSection({
   const interview: InterviewInfo = overview.interviewInfo
 
   return (
-    <section className={`w-full h-full flex flex-col py-16 px-24 ${className}`}>
-      <header className="pb-24">
+    <section className={`w-full h-full flex flex-col py-16 pr-24 ${className}`}>
+      <header className="pb-24 flex pl-8 gap-4">
+        <BackButton />
         <h2 className="text-[24px] font-bold leading-[36px]">
           {interview.title} report
         </h2>
       </header>
-      <div className="flex-1 min-h-0 flex gap-24">
+      <div className="flex-1 min-h-0 flex pl-36 gap-24">
         <dl className="flex-1 h-full flex flex-col gap-8">
           <div>
             <dt className={dtStyle}>job</dt>
