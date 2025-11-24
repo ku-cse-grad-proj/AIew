@@ -5,7 +5,7 @@ import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
 import ShortcutLink from '../ShortcutLink'
 
-import LineGraph from './LineGraph'
+import LineGraph from '@/app/(main)/_components/graph/LineGraph'
 
 export default async function RecentGraph({
   className,
