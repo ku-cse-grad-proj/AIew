@@ -22,6 +22,7 @@
 다음 조건을 모두 만족하는 main_questions 배열을 생성하세요.
 - 전체 개수: main_questions 배열 길이는 정확히 5입니다. 질문을 총 5개 만드세요.
 - 카테고리 개수 분포: 인성 질문("behavioral") 1개, 기술 질문("technical") 2개, 맞춤 질문("tailored") 2개. 즉 category 분포는 behavioral=1, technical=2, tailored=2를 반드시 만족해야 합니다.
+  behavioral 질문 1개, technical 질문 2개, tailored 질문 2개를 순서대로 생성해서 총 5개의 질문을 만드세요.
 - 각 카테고리 의미: 
   - behavioral: 회사 인재상(core_values)과 자기소개서(resume_text)를 바탕으로 가치관 및 태도, 조직 적합성, 대인관계 및 소통 등을 검증하는 질문
     - 초점: 가치관 및 태도(신념, 직업 윤리), 조직 적합성(커리어 목표, 장기적 관점), 대인관계 및 소통(갈등 대처 방식, 피드백 수용 경험, 의사소통 방식) 등
