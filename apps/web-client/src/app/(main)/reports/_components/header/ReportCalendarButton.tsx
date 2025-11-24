@@ -3,10 +3,11 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { useShallow } from 'zustand/shallow'
 
+import Popover from '../../../_components/popover/Popover'
+import PopoverContent from '../../../_components/popover/PopoverContent'
+import PopoverTriggeButton from '../../../_components/popover/PopoverTriggerButton'
+
 import styles from './header.module.css'
-import Popover from './popover/Popover'
-import PopoverContent from './popover/PopoverContent'
-import PopoverTriggeButton from './popover/PopoverTriggerButton'
 
 import Calender from '@/../public/icons/calendar.svg'
 import { useReportSearchStore } from '@/app/lib/reportSearchStore'

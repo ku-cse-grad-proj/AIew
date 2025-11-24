@@ -1,7 +1,8 @@
+import Popover from '../../../_components/popover/Popover'
+import PopoverContent from '../../../_components/popover/PopoverContent'
+import PopoverTriggerButton from '../../../_components/popover/PopoverTriggerButton'
+
 import styles from './header.module.css'
-import Popover from './popover/Popover'
-import PopoverContent from './popover/PopoverContent'
-import PopoverTriggerButton from './popover/PopoverTriggerButton'
 import ReportDetailJobSelect from './ReportDetailJobSelect'
 import ReportJobSelect from './ReportJobSelect'
 
