@@ -3,10 +3,14 @@
 import { updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-import { deleteInterview, patchInterview, postInterview } from '../_lib/api'
+import {
+  appendCreateData,
+  appendFiles,
+  appendUpdateData,
+} from '../create/_lib/append'
+import { waitUntilFilesProcessed } from '../create/_lib/wait'
 
-import { appendCreateData, appendFiles, appendUpdateData } from './_lib/append'
-import { waitUntilFilesProcessed } from './_lib/wait'
+import { deleteInterview, patchInterview, postInterview } from './api'
 
 import { CACHE_TAG } from '@/constants/cacheTags'
 
