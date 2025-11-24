@@ -1,10 +1,10 @@
 import Link from 'next/link'
 
 import { getReports, Query } from '../../_lib/api'
+import ReportOptionButton from '../ReportOptionButton'
 
 import styles from './table.module.css'
 
-import Dots from '@/../public/icons/dots.svg'
 import EmptyMessage from '@/app/(main)/dashboard/_components/EmptyMessage'
 
 export default async function TableBody({ query }: { query: Query }) {
@@ -38,9 +38,11 @@ export default async function TableBody({ query }: { query: Query }) {
               <div>{item.score}</div>
               <div>{item.duration} min</div>
             </Link>
-            <button>
-              <Dots width={20} height={20} />
-            </button>
+            {/* 10개중 마지막 일때만 popover를 위로 위치시킨다. 
+            아래로 할 경우 content가 layout에 잘리는 문제가 있음 */}
+            <ReportOptionButton
+              contentPosition={i == 9 ? 'top-right' : 'bottom-right'}
+            />
           </div>
         ) : (
           <div key={i} className="w-full min-h-40 py-8"></div>
