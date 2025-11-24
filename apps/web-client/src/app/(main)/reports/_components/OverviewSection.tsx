@@ -16,7 +16,9 @@ export default function OverviewSection({
   const interview: InterviewInfo = overview.interviewInfo
 
   return (
-    <section className={`w-full h-full flex flex-col py-16 pr-24 ${className}`}>
+    <section
+      className={`w-full h-full flex flex-col py-16 pr-24 overflow-auto ${className}`}
+    >
       <header className="pb-24 flex pl-8 justify-between items-center">
         <div className="flex gap-4">
           <BackButton />
@@ -48,7 +50,7 @@ export default function OverviewSection({
           </div>
         </dl>
         <MetricsPannel
-          className="flex-1 min-w-0 h-full"
+          className="flex-1 min-w-0 h-full min-h-168"
           metricsInfo={overview.metricsInfo}
         />
       </div>
