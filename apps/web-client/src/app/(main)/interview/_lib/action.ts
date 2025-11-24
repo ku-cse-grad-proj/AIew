@@ -64,3 +64,13 @@ export async function removeInterview(id: string) {
   await deleteInterview(id)
   updateTag(CACHE_TAG.INTERVIEWS)
 }
+
+export async function revalidateInterview(id: string) {
+  updateTag(CACHE_TAG.INTERVIEWS)
+  updateTag(CACHE_TAG.INTERVIEW(id))
+}
+
+export async function revalidateInterviewAndReports(id: string) {
+  await revalidateInterview(id)
+  updateTag(CACHE_TAG.REPORTS)
+}

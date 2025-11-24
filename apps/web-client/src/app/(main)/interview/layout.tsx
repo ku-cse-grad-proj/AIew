@@ -1,10 +1,11 @@
-import { updateTag } from 'next/cache'
-
+import {
+  removeInterview,
+  revalidateInterview,
+  revalidateInterviewAndReports,
+} from './_lib/action'
 import { getInterview } from './_lib/api'
-import { removeInterview } from './create/action'
 
 import { InterviewActionsProvider } from '@/app/hooks/InterviewActionsContext'
-import { CACHE_TAG } from '@/constants/cacheTags'
 
 export default function InterviewLayout({
   children,
@@ -16,11 +17,8 @@ export default function InterviewLayout({
       value={{
         removeInterview,
         getInterview,
-        updateInterviewCache: async (id: string) => {
-          'use server'
-          updateTag(CACHE_TAG.INTERVIEWS)
-          updateTag(CACHE_TAG.INTERVIEW(id))
-        },
+        revalidateInterview,
+        revalidateInterviewAndReports,
       }}
     >
       {children}

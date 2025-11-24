@@ -26,7 +26,7 @@ export function useInterviewPolling(
     timeoutMs: 20000,
   },
 ) {
-  const { getInterview, updateInterviewCache } = useInterviewActions()
+  const { getInterview, revalidateInterview } = useInterviewActions()
 
   useEffect(() => {
     // PENDING 상태가 아니면 polling 하지 않음
@@ -44,7 +44,7 @@ export function useInterviewPolling(
         if (updated.status !== 'PENDING') {
           clearInterval(interval)
           clearTimeout(timeoutId)
-          updateInterviewCache(interview.id)
+          revalidateInterview(interview.id)
         }
       } catch (err) {
         if (!isCancelled) {
@@ -71,7 +71,7 @@ export function useInterviewPolling(
     interview.id,
     interview.status,
     getInterview,
-    updateInterviewCache,
+    revalidateInterview,
     setInterview,
   ])
 }
