@@ -44,7 +44,7 @@ export default function PopoverContent({
         )}
         {props.children}
       </div>
-      <div className="fixed inset-0" onClick={closePopover} />
+      <div className="fixed inset-0 z-10" onClick={closePopover} />
     </>
   )
 }
