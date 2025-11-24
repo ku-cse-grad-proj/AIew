@@ -87,3 +87,19 @@ export async function getQuestions(
 
   return await res.json()
 }
+
+export async function deleteReport(id: string) {
+  //TODO: 백엔드 API 준비되면 주석 해제
+  // const { CORE_API_URL, API_PREFIX } = process.env
+  // const res = await privateFetch(
+  //   `${CORE_API_URL}/${API_PREFIX}/reports/${id}`,
+  //   {
+  //     method: 'DELETE',
+  //   },
+  // )
+
+  // if (!res.ok) {
+  // throw new Error('report 삭제 중 문제가 발생했습니다.')
+  // }
+  console.log(`Report with id ${id} deleted (mock)`)
+}
