@@ -26,7 +26,7 @@ export default function OverviewSection({
             {interview.title} report
           </h2>
         </div>
-        <ReportOptionButton />
+        <ReportOptionButton id={overview.id} />
       </header>
       <div className="flex-1 min-h-0 flex pl-36 gap-24">
         <dl className="flex-1 h-full flex flex-col gap-8">

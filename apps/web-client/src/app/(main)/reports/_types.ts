@@ -19,6 +19,7 @@ export type MetricsInfo = {
 }
 
 export type OverviewInfo = {
+  id: string
   interviewInfo: InterviewInfo
   metricsInfo: MetricsInfo
 }

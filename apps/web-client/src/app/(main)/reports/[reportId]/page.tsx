@@ -25,7 +25,7 @@ export default async function ReportPage({
     <div className={`w-full h-full flex flex-col gap-24`}>
       <OverviewSection
         className={`flex-7 min-h-0 ${cardStyle}`}
-        overview={reportData.overviewInfo}
+        overview={{ ...reportData.overviewInfo, id: reportId }}
       />
       <DeckLayout className={`flex-8 min-h-0`}>
         {/* top card */}

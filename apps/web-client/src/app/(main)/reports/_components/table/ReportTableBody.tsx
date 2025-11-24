@@ -42,6 +42,7 @@ export default async function TableBody({ query }: { query: Query }) {
             아래로 할 경우 content가 layout에 잘리는 문제가 있음 */}
             <ReportOptionButton
               contentPosition={i == 9 ? 'top-right' : 'bottom-right'}
+              id={item.id}
             />
           </div>
         ) : (
