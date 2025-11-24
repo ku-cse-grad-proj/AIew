@@ -1,10 +1,12 @@
 import DeckLayout from '../../_components/DeckLayout'
 import { getQuestions } from '../../_lib/api'
 
+import EmotionSection from './_components/EmotionSection'
 import FeedbackSection from './_components/FeedbackSection'
 import InfoSection from './_components/InfoSection'
 import { QuestionFeedback, QuestionInfo } from './_types'
 
+import { EmotionGraphData } from '@/app/(main)/_components/graph/EmotionGraph'
 import { QUESTION_TYPES, QuestionType } from '@/app/_types'
 
 // main이든 tail이든 필요한 필드만 뽑아 QuestionInfo로 변환
@@ -71,12 +73,37 @@ export default async function QuestionsReportPage({
         {/* top card */}
         <FeedbackSection feedbacks={feedbacks} />
         {/* bottom card */}
-        <div>
-          <h2 className="absolute bottom-0 pl-16 pb-10 font-medium">
-            emotional feedback
-          </h2>
-        </div>
+        <EmotionSection emotionGraphData={mockEmotionGraphData} />
       </DeckLayout>
     </div>
   )
+}
+
+export const mockEmotionGraphData: EmotionGraphData = {
+  labels: Array.from({ length: 20 }, (_, i) => `${i}s`), // 0~19초
+
+  angry: [
+    0.1, 0.08, 0.05, 0.03, 0.02, 0.01, 0.02, 0.03, 0.05, 0.04, 0.03, 0.02, 0.02,
+    0.01, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0,
+  ],
+  fear: [
+    0.05, 0.06, 0.07, 0.08, 0.1, 0.12, 0.1, 0.08, 0.06, 0.05, 0.04, 0.03, 0.03,
+    0.02, 0.02, 0.01, 0.01, 0.0, 0.0, 0.0,
+  ],
+  happy: [
+    0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.7, 0.68, 0.65,
+    0.6, 0.55, 0.5, 0.45, 0.4, 0.35,
+  ],
+  neutral: [
+    0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.28, 0.25, 0.22, 0.2, 0.2, 0.22,
+    0.25, 0.28, 0.3, 0.32, 0.35, 0.38, 0.4,
+  ],
+  sad: [
+    0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.1, 0.11, 0.12, 0.13, 0.14, 0.14, 0.13,
+    0.12, 0.1, 0.08, 0.06, 0.05, 0.04, 0.03,
+  ],
+  surprise: [
+    0.02, 0.02, 0.03, 0.04, 0.05, 0.08, 0.1, 0.12, 0.1, 0.08, 0.06, 0.05, 0.04,
+    0.03, 0.02, 0.02, 0.01, 0.01, 0.0, 0.0,
+  ],
 }
