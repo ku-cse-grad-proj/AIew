@@ -2,17 +2,18 @@
 
 import { useState, useRef } from 'react'
 
-import Card from '../_components/Card'
-import FooterButtons from '../_components/FooterButtons'
+import Card from '../../_components/Card'
+import FooterButtons from '../../_components/FooterButtons'
 
-import { createInterview, patchInterview } from './action'
-import DropzoneBox from './component/DropzoneBox'
-import { Label } from './component/Label'
+import DropzoneBox from './DropzoneBox'
+import { Label } from './Label'
 
 export default function InterviewForm({
   interview,
+  onSubmitAction,
 }: {
   interview?: Interview
+  onSubmitAction: (formData: FormData) => Promise<void>
 }) {
   //interview가 존재하면 수정하는 것임
   const isEdit = !!interview && !!interview.id
@@ -30,17 +31,15 @@ export default function InterviewForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
     const formData = new FormData(e.currentTarget)
     if (resumeFileRef.current)
       formData.append('coverLetter', resumeFileRef.current)
     if (portfolioFileRef.current)
       formData.append('portfolio', portfolioFileRef.current)
+
     try {
-      if (isEdit) {
-        await patchInterview(formData, interview)
-      } else {
-        await createInterview(formData)
-      }
+      await onSubmitAction(formData)
     } catch (error) {
       console.error('면접 생성 실패:', error)
     }

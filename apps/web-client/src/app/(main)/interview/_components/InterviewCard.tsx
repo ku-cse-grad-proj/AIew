@@ -1,57 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { env } from 'next-runtime-env'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import EditDeleteButtons from './EditDeleteButtons'
 import InterviewStatusChip from './InterviewStatusChip'
 
-import { privateFetch } from '@/app/lib/fetch'
+import { useInterviewPolling } from '@/app/hooks/useInterviewPolling'
 
-export default function InterviewCard({
-  data,
-  onDelete,
-}: {
-  data: Interview
-  onDelete?: (id: string) => void
-}) {
+export default function InterviewCard({ data }: { data: Interview }) {
   const [interview, setInterview] = useState(data)
 
-  // interview 상태가 PENDING이 아닐 때까지 상태를 polling
-  useEffect(() => {
-    if (interview.status !== 'PENDING') return
-
-    const interval = setInterval(async () => {
-      try {
-        const CORE_API_URL = env('NEXT_PUBLIC_CORE_API_URL')
-        const API_PREFIX = env('NEXT_PUBLIC_API_PREFIX')
-        const res = await privateFetch(
-          `${CORE_API_URL}/${API_PREFIX}/interviews/${interview.id}`,
-          { cache: 'no-store' }, // 항상 fresh fetch
-        )
-        const updated = await res.json()
-        setInterview(updated)
-
-        if (updated.status !== 'PENDING') {
-          clearInterval(interval) // READY or FAILED 되면 중단
-        }
-      } catch (err) {
-        console.error('Failed to fetch interview:', err)
-      }
-    }, 2000) // 2초마다 polling
-
-    return () => clearInterval(interval)
-  }, [interview.id, interview.status])
-
-  const handleDelete = (id?: string) => {
-    if (!id) {
-      console.error('id가 필요합니다')
-      return
-    }
-    //Carousel에서 삭제
-    onDelete?.(id)
-  }
+  useInterviewPolling(interview, setInterview)
 
   const { id, title, company, jobTitle, jobSpec, createdAt, status } = interview
 
@@ -92,7 +52,7 @@ export default function InterviewCard({
 
       <footer className="flex justify-between items-center h-40">
         <div className="flex gap-8 h-32">
-          <EditDeleteButtons id={id} onDeleteClick={handleDelete} />
+          <EditDeleteButtons id={id} />
         </div>
         <Link
           className="bg-primary rounded-[10px] text-neutral-inverse px-20 h-40 flex items-center justify-center z-10"

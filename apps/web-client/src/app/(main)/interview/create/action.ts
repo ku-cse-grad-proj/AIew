@@ -1,84 +1,43 @@
 'use server'
 
+import { updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-import { privateFetch } from '@/app/lib/fetch'
+import { deleteInterview, patchInterview, postInterview } from '../_lib/api'
+
+import { appendCreateData, appendFiles, appendUpdateData } from './_lib/append'
+import { waitUntilFilesProcessed } from './_lib/wait'
+
+import { CACHE_TAG } from '@/constants/cacheTags'
 
 function redirectToWaiting(id: string) {
   redirect(`/interview/waiting/${id}`)
 }
 
-function appendFiles(formData: FormData, newFormData: FormData) {
-  const coverLetter = formData.get('coverLetter')
-  if (coverLetter instanceof File && coverLetter.size > 0) {
-    newFormData.append('coverLetter', coverLetter)
-  }
-
-  const portfolio = formData.get('portfolio')
-  if (portfolio instanceof File && portfolio.size > 0) {
-    newFormData.append('portfolio', portfolio)
-  }
-}
-
 export async function createInterview(formData: FormData) {
   const newFormData = new FormData()
 
-  newFormData.append(
-    'company',
-    JSON.stringify({ value: formData.get('company') }),
-  )
-  newFormData.append(
-    'jobTitle',
-    JSON.stringify({ value: formData.get('jobTitle') }),
-  )
-  newFormData.append(
-    'jobSpec',
-    JSON.stringify({ value: formData.get('jobSpec') }),
-  )
-  newFormData.append(
-    'idealTalent',
-    JSON.stringify({ value: formData.get('idealTalent') }),
-  )
-
+  //formData로 받는 형식과 back에서 필요로 하는 형식이 다르므로 변환 필요
+  appendCreateData(formData, newFormData)
   appendFiles(formData, newFormData)
 
-  const { CORE_API_URL, API_PREFIX } = process.env
-  const res = await privateFetch(`${CORE_API_URL}/${API_PREFIX}/interviews`, {
-    method: 'POST',
-    body: newFormData,
-  })
+  const { sessionId } = await postInterview(newFormData)
 
-  if (!res.ok) {
-    throw new Error('면접 생성에 실패했습니다.')
-  }
-
-  const { sessionId } = await res.json()
-  console.log('sessionId', sessionId)
+  await waitUntilFilesProcessed(sessionId, formData)
+  updateTag(CACHE_TAG.INTERVIEWS)
   redirectToWaiting(sessionId)
 }
 
-export async function patchInterview(formData: FormData, interview: Interview) {
+export async function updateInterview(
+  formData: FormData,
+  interview?: Interview,
+) {
   const newFormData = new FormData()
 
-  const EDITABLE_KEYS = [
-    'title',
-    'company',
-    'jobTitle',
-    'jobSpec',
-    'idealTalent',
-  ] as const
+  if (!interview) throw new Error('patch할 interview가 존재하지 않습니다.')
 
-  //기존 interview와 다른 값일 경우에만 newFormData에 포함시킴
-  for (const key of EDITABLE_KEYS) {
-    const raw = formData.get(key)
-    const newVal = typeof raw === 'string' ? raw : null
-    const oldVal = interview[key] // string
-
-    if (newVal !== null && newVal !== oldVal) {
-      newFormData.append(key, JSON.stringify({ set: newVal }))
-    }
-  }
-
+  //formData로 받는 형식과 back에서 필요로 하는 형식이 다르므로 변환 필요
+  appendUpdateData(formData, newFormData, interview)
   //size > 0 이면 새로운 파일임을 의미
   appendFiles(formData, newFormData)
 
@@ -88,11 +47,16 @@ export async function patchInterview(formData: FormData, interview: Interview) {
     redirectToWaiting(interview.id)
   }
 
-  const { CORE_API_URL, API_PREFIX } = process.env
-  const res = await privateFetch(
-    `${CORE_API_URL}/${API_PREFIX}/interviews/${interview.id}`,
-    { method: 'PATCH', body: newFormData },
-  )
-  if (!res.ok) throw new Error('면접 수정에 실패했습니다.')
-  redirectToWaiting(interview.id)
+  const { id } = await patchInterview(interview.id, newFormData)
+
+  updateTag(CACHE_TAG.INTERVIEWS)
+  await waitUntilFilesProcessed(id, formData)
+  updateTag(CACHE_TAG.INTERVIEW(id))
+
+  redirectToWaiting(id)
+}
+
+export async function removeInterview(id: string) {
+  await deleteInterview(id)
+  updateTag(CACHE_TAG.INTERVIEWS)
 }

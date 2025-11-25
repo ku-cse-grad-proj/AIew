@@ -1,3 +1,5 @@
+'use server'
+
 import { notFound } from 'next/navigation'
 
 import { privateFetch } from '@/app/lib/fetch'
@@ -34,6 +36,57 @@ export async function getInterview(id: string, cache = true) {
 
   if (!response.ok) {
     throw new Error(`인터뷰 조회 중 오류가 발생했습니다.`)
+  }
+
+  return await response.json()
+}
+
+export async function postInterview(formData: FormData) {
+  const { CORE_API_URL, API_PREFIX } = process.env
+  const response = await privateFetch(
+    `${CORE_API_URL}/${API_PREFIX}/interviews`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('면접 생성에 실패했습니다.')
+  }
+
+  return await response.json()
+}
+
+export async function deleteInterview(id: string) {
+  const { CORE_API_URL, API_PREFIX } = process.env
+  const response = await privateFetch(
+    `${CORE_API_URL}/${API_PREFIX}/interviews/${id}`,
+    {
+      method: 'DELETE',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('interview 삭제 중 오류가 발생했습니다.')
+  }
+
+  return await response.json()
+}
+
+export async function patchInterview(id: string, formData: FormData) {
+  const { CORE_API_URL, API_PREFIX } = process.env
+
+  const response = await privateFetch(
+    `${CORE_API_URL}/${API_PREFIX}/interviews/${id}`,
+    {
+      method: 'PATCH',
+      body: formData,
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('면접 수정에 실패했습니다.')
   }
 
   return await response.json()
