@@ -49,6 +49,29 @@ export async function getReports(query: Query) {
   return await response.json()
 }
 
+export async function getReportsGraph(query: Query) {
+  // const { CORE_API_URL, API_PREFIX } = process.env
+
+  // const response = await privateFetch(
+  //   `${CORE_API_URL}/${API_PREFIX}/reports/graphs?${new URLSearchParams(
+  //     query,
+  //   )}`,
+  //   { cache: 'force-cache', next: { tags: [CACHE_TAG.REPORTS] } },
+  // )
+
+  // if (!response.ok) {
+  //   throw new Error('Reports graph 조회 중 문제가 발생했습니다.')
+  // }
+  console.log('getReportsGraph called with query:', query)
+  return {
+    labels: ['토스', '카카', '배달의 민족', '네이버', '쿠팡'],
+    scores: [3.4, 2, 0, 5, 3.1],
+    durations: [2, 4, 5, 7, 10],
+  }
+
+  // return await response.json()
+}
+
 export async function getReport(id: string): Promise<ReportResponse> {
   const { CORE_API_URL, API_PREFIX } = process.env
   const res = await privateFetch(
