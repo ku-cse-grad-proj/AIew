@@ -5,6 +5,7 @@ import fp from 'fastify-plugin'
 
 export class FileService {
   private fastify: FastifyInstance
+  private static readonly MAX_PROFILE_PICTURE_SIZE = 3 * 1024 * 1024 // 3MB
 
   constructor(fastifyInstance: FastifyInstance) {
     this.fastify = fastifyInstance
@@ -51,6 +52,14 @@ export class FileService {
     contentType: string,
   ): Promise<string | null> {
     try {
+      // 파일 크기 검증
+      if (buffer.length > FileService.MAX_PROFILE_PICTURE_SIZE) {
+        this.fastify.log.warn(
+          `Profile picture too large (${buffer.length} bytes) for user ${userId}, max: ${FileService.MAX_PROFILE_PICTURE_SIZE} bytes`,
+        )
+        return null
+      }
+
       const ext = this.getExtensionFromContentType(contentType)
       const fileKey = `profilePictures/${userId}/avatar.${ext}`
 
@@ -89,7 +98,7 @@ export class FileService {
       const response = await axios.get(sourceUrl, {
         responseType: 'arraybuffer',
         timeout: 5000, // 5초 타임아웃
-        maxContentLength: 3 * 1024 * 1024, // 3MB 제한
+        maxContentLength: FileService.MAX_PROFILE_PICTURE_SIZE,
         validateStatus: (status) => status === 200,
       })
 
