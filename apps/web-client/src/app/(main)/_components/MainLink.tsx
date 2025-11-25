@@ -16,7 +16,7 @@ export default function MainLink({
   const isActive = pathname === href || pathname.startsWith(href + '/')
 
   const basicStyle =
-    'w-120 h-42 font-32 leading-42 flex items-center justify-center'
+    'flex-1 h-42 font-32 leading-42 flex items-center justify-center'
   const activeStyle = 'text-neutral-inverse bg-primary rounded-full'
 
   return (

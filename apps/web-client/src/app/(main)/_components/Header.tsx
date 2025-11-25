@@ -8,24 +8,40 @@ import { CACHE_TAG } from '@/constants/cacheTags'
 
 export default function MainHeader() {
   return (
-    <header className="w-full max-w-1248 mx-auto h-96 grid grid-cols-3 items-center p-24">
-      <span className="justify-self-start text-primary text-4xl font-bold">
+    <header
+      className="
+        w-full h-144 grid items-center p-16 grid-cols-2 gap-16
+        sm:max-w-1248 sm:h-96 sm:p-24 sm:grid-cols-[1fr_auto_1fr]"
+    >
+      {/* Left (span) */}
+      <span className="order-1 justify-self-start text-primary text-4xl font-bold sm:order-none">
         AIew
       </span>
-      <Nav className="justify-self-center" />
-      <Suspense
-        fallback={
-          <Image
-            src={'profile.svg'}
-            width={48}
-            height={48}
-            alt="profile"
-            className="justify-self-end"
-          />
-        }
-      >
-        <Profile />
-      </Suspense>
+
+      {/* Center (Nav) */}
+      <Nav
+        className="
+          order-2 col-span-2 justify-self-center
+          sm:order-none sm:col-span-1 sm:justify-self-center sm:min-w-[384px]
+        "
+      />
+
+      {/* Right (Profile) */}
+      <div className="order-1 justify-self-end sm:order-none">
+        <Suspense
+          fallback={
+            <Image
+              src={'profile.svg'}
+              width={48}
+              height={48}
+              alt="profile"
+              className="rounded-full"
+            />
+          }
+        >
+          <Profile />
+        </Suspense>
+      </div>
     </header>
   )
 }
