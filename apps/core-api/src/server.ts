@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { join } from 'node:path'
 
 import AutoLoad from '@fastify/autoload'
