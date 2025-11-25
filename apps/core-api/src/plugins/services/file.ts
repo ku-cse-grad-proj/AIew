@@ -72,8 +72,8 @@ export class FileService {
       return publicUrl
     } catch (error) {
       this.fastify.log.error(
-        `Failed to upload profile picture to R2 for user ${userId}:`,
         error,
+        `Failed to upload profile picture to R2 for user ${userId}:`,
       )
       return null
     }
@@ -136,14 +136,14 @@ export class FileService {
           )
         } else {
           this.fastify.log.error(
-            `Failed to download profile picture for user ${userId}:`,
             error,
+            `Failed to download profile picture for user ${userId}:`,
           )
         }
       } else {
         this.fastify.log.error(
-          `Failed to upload profile picture for user ${userId}:`,
           error,
+          `Failed to upload profile picture for user ${userId}:`,
         )
       }
 
