@@ -7,6 +7,7 @@ import TableBody from './_components/table/ReportTableBody'
 import TableBodySkeleton from './_components/table/ReportTableBodySkeleton'
 import TableHeader from './_components/table/ReportTableHeader'
 import { getTotalPage } from './_lib/api'
+import { getQuery, getQueryWithoutPage } from './_lib/utils'
 import { Query, SearchParams } from './_types'
 
 export default async function ReportsPage({
@@ -16,12 +17,8 @@ export default async function ReportsPage({
 }) {
   const params = await searchParams
 
-  //URLSearchParmas의 생성자 type에 parmas 맞게 변환
-  const query = Object.entries(params).filter(
-    (_, value) => value != null,
-  ) as Query
-
-  const queryWithoutPage = query.filter(([key]) => key !== 'page')
+  const query: Query = getQuery(params)
+  const queryWithoutPage = getQueryWithoutPage(params)
 
   const totalPages = await getTotalPage(query)
 
