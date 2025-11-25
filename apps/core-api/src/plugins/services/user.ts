@@ -83,54 +83,60 @@ export class UserService {
         `New user created: ${user.id} (${email}) via ${userData.provider}`,
       )
 
-      // 백그라운드에서 프로필 사진 업로드 (non-blocking)
-      // 실패해도 기본 아바타 제공
-      const createdUserId = user.id
-      this.uploadProfilePictureInBackground(
-        createdUserId,
+      // 프로필 사진 업로드 완료 후 반환
+      // 실패해도 기본 아바타가 유지되므로 에러는 로깅만
+      const updatedUser = await this.uploadAndUpdateProfilePicture(
+        user.id,
         userData.pic_url,
         userData.provider,
-      ).catch((err) => {
-        // 실패 여부 로깅
-        this.fastify.log.error(
-          `Background profile picture upload failed for user ${createdUserId}:`,
-          err,
-        )
-      })
+      )
+
+      return updatedUser ?? user
     }
 
     return user
   }
 
   /**
-   * 백그라운드에서 프로필 사진을 R2에 업로드하고 DB 업데이트
-   * FileService에서는 URL로부터 이미지를 다운로드 받아 R2에 업로드하는 로직만 수행
-   * 이로 인해 책임이 명확히 분리
+   * 외부 URL에서 프로필 사진을 R2에 업로드하고 DB 업데이트
+   * @returns 업데이트된 User 또는 실패 시 null
    */
-  private async uploadProfilePictureInBackground(
+  private async uploadAndUpdateProfilePicture(
     userId: string,
     sourceUrl: string,
     provider: string,
-  ): Promise<void> {
-    // FileService를 통해 외부 URL → R2 업로드
-    const r2Url = await this.fastify.fileService.uploadProfilePictureFromUrl(
-      userId,
-      sourceUrl,
-      provider,
-    )
-
-    if (r2Url) {
-      // R2 업로드 성공 시 DB 업데이트
-      await this.fastify.prisma.user.update({
-        where: { id: userId },
-        data: { pic_url: r2Url },
-      })
-
-      this.fastify.log.info(
-        `Profile picture updated in DB for user ${userId}: ${r2Url}`,
+  ): Promise<User | null> {
+    try {
+      // FileService를 통해 외부 URL → R2 업로드
+      const r2Url = await this.fastify.fileService.uploadProfilePictureFromUrl(
+        userId,
+        sourceUrl,
+        provider,
       )
+
+      if (r2Url) {
+        // R2 업로드 성공 시 DB 업데이트 후 반환
+        const updatedUser = await this.fastify.prisma.user.update({
+          where: { id: userId },
+          data: { pic_url: r2Url },
+        })
+
+        this.fastify.log.info(
+          `Profile picture updated in DB for user ${userId}: ${r2Url}`,
+        )
+
+        return updatedUser
+      }
+
+      // r2Url이 null이면 기본 dicebear URL 유지 (로그는 FileService에서 처리)
+      return null
+    } catch (error) {
+      this.fastify.log.error(
+        error,
+        `Failed to upload profile picture for user ${userId}`,
+      )
+      return null
     }
-    // r2Url이 null이면 기본 dicebear URL 유지 (로그는 FileService에서 처리)
   }
 }
 
