@@ -32,11 +32,11 @@ async function setupGoogleCredentials(fastify: FastifyInstance) {
         await fs.unlink(tempFilePath)
         log.info(`Cleaned up temporary credential file: ${tempFilePath}`)
       } catch (cleanupError) {
-        log.error('Error cleaning up temporary credential file:', cleanupError)
+        log.error(cleanupError, 'Error cleaning up temporary credential file')
       }
     })
   } catch (error) {
-    log.error('FATAL: Failed to setup Google credentials from R2.', error)
+    log.error(error, 'FATAL: Failed to setup Google credentials from R2.')
     process.exit(1)
   }
 }

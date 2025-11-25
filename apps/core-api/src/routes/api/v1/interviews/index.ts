@@ -123,7 +123,7 @@ const controller: FastifyPluginAsync = async (fastify) => {
         },
       )
     } catch (error) {
-      fastify.log.error(`[${request.id}] Error in postHandler:`, { error })
+      fastify.log.error({ error }, `[${request.id}] Error in postHandler`)
       const statusCode = (error as { statusCode?: number }).statusCode ?? 500
       const message =
         (error as { message?: string }).message ?? 'Internal Server Error'

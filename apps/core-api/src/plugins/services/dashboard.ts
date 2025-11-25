@@ -84,7 +84,7 @@ export class DashboardService {
     const { prisma } = this.fastify
 
     // 회사별 인터뷰 횟수 집계
-    const companyGroups = await prisma.interviewSession.groupBy({
+    const companyGroups = (await prisma.interviewSession.groupBy({
       by: ['company'],
       where: {
         userId,
@@ -97,7 +97,7 @@ export class DashboardService {
           company: 'desc',
         },
       },
-    })
+    })) as { company: string; _count: { company: number } }[]
 
     // 상위 N-1개와 나머지를 Others로 집계
     if (companyGroups.length <= limit) {
@@ -171,7 +171,7 @@ export class DashboardService {
 
     // 가장 많이 진행한 직무 (모든 status에 대해서)
     // jobTitle이랑 jobSpec을 그룹으로 묶어서 계산
-    const jobGroups = await prisma.interviewSession.groupBy({
+    const jobGroups = (await prisma.interviewSession.groupBy({
       by: ['jobTitle', 'jobSpec'],
       where: {
         userId,
@@ -185,7 +185,7 @@ export class DashboardService {
         },
       },
       take: 1,
-    })
+    })) as { jobTitle: string; jobSpec: string; _count: { jobTitle: number } }[]
 
     const mostJob = jobGroups[0]
 

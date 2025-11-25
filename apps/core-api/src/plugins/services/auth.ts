@@ -65,7 +65,7 @@ export class AuthService {
       return { accessToken, userId: user.id }
     } catch (error) {
       // JWT 검증 실패, 만료 등
-      this.fastify.log.error('Refresh token validation failed:', error)
+      this.fastify.log.error(error, 'Refresh token validation failed')
       throw this.fastify.httpErrors.unauthorized(
         'Invalid or expired refresh token',
       )

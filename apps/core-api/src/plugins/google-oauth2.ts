@@ -72,8 +72,8 @@ async function loadGoogleOAuthCredentials(
         log.info(`Cleaned up temporary OAuth credential file: ${tempFilePath}`)
       } catch (cleanupError) {
         log.error(
-          'Error cleaning up temporary OAuth credential file:',
           cleanupError,
+          'Error cleaning up temporary OAuth credential file',
         )
       }
     })
@@ -83,7 +83,7 @@ async function loadGoogleOAuthCredentials(
       clientSecret: oauthConfig.client_secret,
     }
   } catch (error) {
-    log.error('FATAL: Failed to load Google OAuth credentials from R2.', error)
+    log.error(error, 'FATAL: Failed to load Google OAuth credentials from R2.')
     // Cleanup on error
     try {
       await fs.unlink(tempFilePath)

@@ -53,7 +53,7 @@ export class TTSService {
       // Buffer를 Base64 문자열로 변환하여 반환
       return Buffer.from(response.audioContent).toString('base64')
     } catch (error) {
-      log.error('Error generating TTS audio:', error)
+      log.error(error, 'Error generating TTS audio')
       // 에러를 다시 던져서 호출한 쪽에서 처리하도록 함
       throw new Error('Failed to generate speech audio.')
     }

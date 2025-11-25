@@ -1,6 +1,7 @@
-import { Prisma, User } from '@prisma/client'
 import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
+
+import { Prisma, User } from '@/generated/prisma/client'
 
 export class UserService {
   private fastify: FastifyInstance

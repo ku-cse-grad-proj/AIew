@@ -1,6 +1,5 @@
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { createId } from '@paralleldrive/cuid2'
-import { InterviewSession, InterviewStep, QuestionType } from '@prisma/client'
 import { Static } from '@sinclair/typebox'
 import axios, { AxiosResponse } from 'axios'
 import { FastifyInstance } from 'fastify'
@@ -8,6 +7,11 @@ import fp from 'fastify-plugin'
 
 import { AiClientService } from './ai-client'
 
+import {
+  InterviewSession,
+  InterviewStep,
+  QuestionType,
+} from '@/generated/prisma/client'
 import { S_InterviewSessionPatchBody } from '@/schemas/rest'
 import {
   AiInterviewQuestion,
@@ -134,7 +138,7 @@ export class InterviewService {
         data: { status: 'READY' },
       })
     } catch (error) {
-      log.error(`[${sessionId}] Error during background processing:`, { error })
+      log.error({ error }, `[${sessionId}] Error during background processing`)
       // 실패 시 상태를 FAILED로 변경
       await prisma.interviewSession.update({
         where: { id: sessionId },
@@ -177,9 +181,10 @@ export class InterviewService {
         answeredSteps: [],
       })
     } catch (error) {
-      log.error(`[${sessionId}] Error in saveQuestionsAndNotifyClient:`, {
-        error,
-      })
+      log.error(
+        { error },
+        `[${sessionId}] Error in saveQuestionsAndNotifyClient`,
+      )
       io.to(sessionId).emit('server:error', {
         code: 'QUESTION_PROCESSING_FAILED',
         message: 'Failed to process and save interview questions.',
@@ -277,9 +282,10 @@ export class InterviewService {
         await this.handleNextMainQuestion(sessionId)
       }
     } catch (error) {
-      log.error(`[${sessionId}] Error processing answer for step ${stepId}:`, {
-        error,
-      })
+      log.error(
+        { error },
+        `[${sessionId}] Error processing answer for step ${stepId}`,
+      )
       io.to(sessionId).emit('server:error', {
         code: 'ANSWER_PROCESSING_FAILED',
         message: 'Failed to process your answer.',
@@ -457,7 +463,7 @@ export class InterviewService {
         await this.aiClient.resetMemory(sessionId)
         log.info(`[${sessionId}] AI memory reset for re-processing.`)
       } catch (error) {
-        log.error(`[${sessionId}] Failed to reset AI memory:`, { error })
+        log.error({ error }, `[${sessionId}] Failed to reset AI memory`)
       }
 
       // 텍스트 데이터 업데이트 및 상태 PENDING으로 변경
@@ -536,8 +542,8 @@ export class InterviewService {
       log.info(`[${sessionId}] AI memory reset successfully before deletion.`)
     } catch (error) {
       log.error(
-        `[${sessionId}] Failed to reset AI memory before deletion, but proceeding with DB deletion:`,
         { error },
+        `[${sessionId}] Failed to reset AI memory before deletion, but proceeding with DB deletion`,
       )
     }
 
@@ -597,7 +603,7 @@ export class InterviewService {
       const filename = this.extractFilenameFromUrl(fileUrl)
       return { buffer, filename }
     } catch (error) {
-      this.fastify.log.error(`Failed to fetch file from R2: ${fileKey}`, error)
+      this.fastify.log.error(error, `Failed to fetch file from R2: ${fileKey}`)
       // 파일을 가져오지 못하면 재처리 불가하므로 null 반환
       return null
     }
@@ -944,10 +950,10 @@ export class InterviewService {
           await this.aiClient.resetMemory(sessionId)
           log.info(`[${sessionId}] AI memory reset successfully.`)
         } catch (memError) {
-          log.error(`[${sessionId}] Failed to reset AI memory:`, { memError })
+          log.error({ memError }, `[${sessionId}] Failed to reset AI memory`)
         }
       } catch (error) {
-        log.error(`[${sessionId}] Error during session evaluation:`, { error })
+        log.error({ error }, `[${sessionId}] Error during session evaluation`)
         // 실패하더라도 세션 상태는 COMPLETED로 유지하되, 에러 로깅
         await prisma.interviewSession.update({
           where: { id: sessionId },

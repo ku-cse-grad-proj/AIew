@@ -1,6 +1,6 @@
-import { InterviewSessionStatus } from '@prisma/client'
 import { Type } from '@sinclair/typebox'
 
+import { InterviewSessionStatus } from '@/generated/prisma/client'
 import SchemaId from '@/utils/schema-id'
 
 // --- Reusable Properties ---

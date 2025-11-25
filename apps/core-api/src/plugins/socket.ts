@@ -1,6 +1,7 @@
-import { InterviewStep, User } from '@prisma/client'
 import fp from 'fastify-plugin'
 import { Server, Socket } from 'socket.io'
+
+import { InterviewStep, User } from '@/generated/prisma/client'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -59,7 +60,7 @@ export default fp(
         socket.user = user
         next()
       } catch (err) {
-        fastify.log.error('Socket authentication error:', err)
+        fastify.log.error(err, 'Socket authentication error')
         return next(new Error('Authentication error: Invalid token.'))
       }
     })
@@ -132,8 +133,8 @@ export default fp(
           }
         } catch (error) {
           fastify.log.error(
-            `Error joining room ${sessionId} for socket ${socket.id}:`,
             error,
+            `Error joining room ${sessionId} for socket ${socket.id}`,
           )
           socket.emit('server:error', { message: 'Error joining room.' })
         }
@@ -202,8 +203,8 @@ export default fp(
           // 다른 상태(COMPLETED, FAILED 등)에서는 아무것도 보내지 않음
         } catch (error) {
           fastify.log.error(
-            `Error handling client:ready for session ${sessionId}:`,
             error,
+            `Error handling client:ready for session ${sessionId}`,
           )
           socket.emit('server:error', {
             message: 'Failed to start or resume the interview.',
@@ -228,8 +229,8 @@ export default fp(
             socket.uploadChunks[p.index] = Buffer.from(new Uint8Array(p.chunk))
           } catch (error) {
             fastify.log.error(
-              `Error processing chunk ${p.index} for socket ${socket.id}:`,
               error,
+              `Error processing chunk ${p.index} for socket ${socket.id}`,
             )
             socket.emit('server:error', {
               message: 'Failed to process chunk.',
@@ -314,8 +315,8 @@ export default fp(
             )
           } catch (error) {
             fastify.log.error(
-              `Error finalizing upload for socket ${socket.id}:`,
               error,
+              `Error finalizing upload for socket ${socket.id}`,
             )
             socket.emit('server:error', {
               code: 'EMOTION_ANALYSIS_FAILED',
@@ -353,8 +354,8 @@ export default fp(
             )
           } catch (error) {
             fastify.log.error(
-              `Error processing answer for step ${payload.stepId}:`,
               error,
+              `Error processing answer for step ${payload.stepId}`,
             )
             socket.emit('server:error', {
               code: 'ANSWER_PROCESSING_FAILED',
@@ -380,8 +381,8 @@ export default fp(
             })
           } catch (error) {
             fastify.log.error(
-              `[${sessionId}] Failed to update elapsed time:`,
               error,
+              `[${sessionId}] Failed to update elapsed time`,
             )
           }
         },

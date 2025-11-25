@@ -1,8 +1,8 @@
-import { Prisma } from '@prisma/client'
 import { Static } from '@sinclair/typebox'
 import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
+import { Prisma } from '@/generated/prisma/client'
 import {
   S_ReportItem,
   S_ReportsQueryParams,
@@ -125,7 +125,7 @@ export class ReportService {
       : 0
 
     // 가장 많이 등장한 회사 (DB 레벨 groupBy 사용)
-    const companyGroups = await prisma.interviewSession.groupBy({
+    const companyGroups = (await prisma.interviewSession.groupBy({
       by: ['company'],
       where,
       _count: {
@@ -137,7 +137,7 @@ export class ReportService {
         },
       },
       take: 1,
-    })
+    })) as { company: string; _count: { company: number } }[]
 
     const mostFrequentCompany = companyGroups[0]?.company || 'N/A'
 

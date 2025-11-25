@@ -2,11 +2,11 @@ import {
   FastifyPluginAsyncTypebox,
   TypeBoxTypeProvider,
 } from '@fastify/type-provider-typebox'
-import { Prisma } from '@prisma/client'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyInstance, FastifySchema, RouteHandler } from 'fastify'
 
 import { Tag } from '@/configs/swagger-option'
+import { Prisma } from '@/generated/prisma/client'
 import SchemaId from '@/utils/schema-id'
 
 const controller: FastifyPluginAsyncTypebox = async (
