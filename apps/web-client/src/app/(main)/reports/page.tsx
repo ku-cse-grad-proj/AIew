@@ -6,9 +6,8 @@ import ReportTable from './_components/table/ReportTable'
 import TableBody from './_components/table/ReportTableBody'
 import TableBodySkeleton from './_components/table/ReportTableBodySkeleton'
 import TableHeader from './_components/table/ReportTableHeader'
-import { getTotalPage, Query } from './_lib/api'
-
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
+import { getTotalPage } from './_lib/api'
+import { Query, SearchParams } from './_types'
 
 export default async function ReportsPage({
   searchParams,

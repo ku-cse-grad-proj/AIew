@@ -1,10 +1,9 @@
 import { notFound } from 'next/navigation'
 
-import { ReportQuestionsResponse, ReportResponse } from '../_types'
+import { Query, ReportQuestionsResponse, ReportResponse } from '../_types'
 
 import { privateFetch } from '@/app/lib/fetch'
 import { CACHE_TAG } from '@/constants/cacheTags'
-export type Query = [string, string][]
 
 export async function getTotalPage(query: Query) {
   const { CORE_API_URL, API_PREFIX } = process.env

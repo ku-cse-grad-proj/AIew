@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
-import { getReports, Query } from '../../_lib/api'
+import { getReports } from '../../_lib/api'
+import { Query } from '../../_types'
 import ReportOptionButton from '../ReportOptionButton'
 
 import styles from './table.module.css'
