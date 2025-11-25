@@ -1,7 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { InterviewStep, User, InterviewSession } from '@prisma/client'
 import { Socket } from 'socket.io-client'
 import {
   afterAll,
@@ -21,6 +20,11 @@ import {
   startWebSocketClient,
 } from '../../helper'
 
+import {
+  InterviewStep,
+  User,
+  InterviewSession,
+} from '@/generated/prisma/client'
 import {
   AiQuestionCategory,
   AnswerEvaluationResult,

@@ -1,7 +1,8 @@
-import { User } from '@prisma/client'
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 
 import { build, createTestUserAndToken, FastifyInstance } from '../../../helper'
+
+import { User } from '@/generated/prisma/client'
 
 describe('User API (/api/v1/users & /api/v1/me)', () => {
   let app: FastifyInstance

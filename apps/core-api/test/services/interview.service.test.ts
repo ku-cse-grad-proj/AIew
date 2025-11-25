@@ -1,5 +1,4 @@
 // import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { User } from '@prisma/client'
 import { FastifyInstance } from 'fastify'
 // import { Server } from 'socket.io';
 import {
@@ -15,6 +14,7 @@ import {
 
 import { build, createTestUserAndToken } from '../helper'
 
+import { User } from '@/generated/prisma/client'
 // import { AiClientService } from '@/plugins/services/ai-client';
 import { InterviewService } from '@/plugins/services/interview'
 import { AiQuestionCategory, QuestionGenerateResponse } from '@/types/ai.types'

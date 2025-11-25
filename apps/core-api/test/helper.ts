@@ -1,4 +1,5 @@
 // This file contains code that we reuse between our tests.
+import 'dotenv/config'
 import { join } from 'node:path'
 
 import { S3Client } from '@aws-sdk/client-s3'
@@ -9,7 +10,6 @@ import { FastifyJWT } from '@fastify/jwt'
 import Multipart from '@fastify/multipart'
 import { ajvFilePlugin } from '@fastify/multipart'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
-import { PrismaClient, User } from '@prisma/client'
 import { FastifyInstance as OriginalFastifyInstance } from 'fastify'
 import Fastify from 'fastify'
 import { Server as SocketIOServer } from 'socket.io'
@@ -20,10 +20,12 @@ import { app as AppPlugin } from '../src/app'
 import { AiClientService } from '../src/plugins/services/ai-client'
 import { InterviewService } from '../src/plugins/services/interview'
 
+import { User } from '@/generated/prisma/client'
+
 // Extend the FastifyInstance interface with all our decorators
+// Note: prisma type is already declared in src/plugins/prisma.ts
 declare module 'fastify' {
   interface FastifyInstance {
-    prisma: PrismaClient
     r2: S3Client
     io: SocketIOServer
     aiClientService: AiClientService

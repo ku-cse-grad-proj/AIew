@@ -1,7 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { InterviewSession, User } from '@prisma/client'
 import FormData from 'form-data'
 import {
   describe,
@@ -15,6 +14,8 @@ import {
 } from 'vitest'
 
 import { build, createTestUserAndToken, FastifyInstance } from '../../../helper'
+
+import { InterviewSession, User } from '@/generated/prisma/client'
 
 const DUMMY_FILE_PATH = path.join(__dirname, 'dummy.pdf')
 
