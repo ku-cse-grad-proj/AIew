@@ -40,6 +40,7 @@ const start = async () => {
   // Register essential plugins
   await app.register(Cookie)
   await app.register(Multipart, {
+    attachFieldsToBody: true,
     limits: {
       fieldNameSize: 100, // 필드명 크기 (bytes)
       fieldSize: 1024 * 10, // 필드값 크기 (10KB)

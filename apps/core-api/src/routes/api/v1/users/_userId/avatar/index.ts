@@ -1,3 +1,4 @@
+import { MultipartFile } from '@fastify/multipart'
 import {
   FastifyPluginAsyncTypebox,
   TypeBoxTypeProvider,
@@ -23,6 +24,12 @@ const controller: FastifyPluginAsyncTypebox = async (
       description: '아바타를 변경할 사용자의 ID',
     }),
   })
+  const C_Body = Type.Object({
+    file: Type.Any({
+      isFile: true,
+      description: '업로드할 이미지 파일 (JPEG, PNG, WebP, GIF)',
+    }),
+  })
   const C_User = Type.Ref(SchemaId.User)
   const C_ResErr = Type.Ref(SchemaId.Error)
 
@@ -34,6 +41,7 @@ const controller: FastifyPluginAsyncTypebox = async (
       '사용자의 아바타를 업로드합니다. **본인만 변경할 수 있습니다.** 지원 형식: JPEG, PNG, WebP, GIF (최대 3MB). `file` 필드로 이미지를 전송하세요.',
     consumes: ['multipart/form-data'],
     params: C_Params,
+    body: C_Body,
     response: {
       200: C_User,
       400: C_ResErr,
@@ -50,8 +58,9 @@ const controller: FastifyPluginAsyncTypebox = async (
       return reply.forbidden('You are not authorized to modify this resource.')
     }
 
-    // multipart 파일 파싱
-    const file = await request.file()
+    // attachFieldsToBody: true 사용 시 body에서 파일 접근
+    const body = request.body as { file?: MultipartFile }
+    const file = body.file
 
     if (!file) {
       return reply.badRequest('No file uploaded.')
