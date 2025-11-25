@@ -16,7 +16,7 @@ export default async function RecentGraph({
     <CardSection className={`p-16 h-full flex flex-col relative ${className}`}>
       <h3 className={`${styles.sectionHeading}`}>recent graph</h3>
       <ShortcutLink
-        href="/reports"
+        href="/reports/graph"
         className="bg-neutral-gray absolute right-12 top-12"
       />
 
