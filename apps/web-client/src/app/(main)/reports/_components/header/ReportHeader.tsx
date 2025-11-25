@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Suspense } from 'react'
 
 import { Query } from '../../_types'
@@ -9,8 +8,7 @@ import ReportInfos from './ReportInfos'
 import ReportInfosSkeleton from './ReportInfosSkeleton'
 import ReportSearchInput from './ReportSearchInput'
 import ReportSearchSelect from './ReportSearchSelect'
-
-import Graph from '@/../public/icons/graph.svg'
+import ToggleButton from './ToggleButton'
 
 export default async function ReportHeader({ query }: { query: Query }) {
   return (
@@ -24,13 +22,7 @@ export default async function ReportHeader({ query }: { query: Query }) {
         <div className="flex gap-8">
           <ReportCalendarButton />
           <ReportFilterButton />
-          <Link
-            href={'/reports'}
-            className="bg-primary inline-flex items-center px-16 rounded-[10px] h-40 gap-8"
-          >
-            <Graph width={20} height={20} />
-            <span className="text-neutral-background">show graph</span>
-          </Link>
+          <ToggleButton />
         </div>
       </div>
       <Suspense key={query.toString()} fallback={<ReportInfosSkeleton />}>
