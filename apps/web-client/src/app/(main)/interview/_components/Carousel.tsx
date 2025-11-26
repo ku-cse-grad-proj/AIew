@@ -3,6 +3,8 @@
 import useEmblaCarousel from 'embla-carousel-react'
 import { useMemo } from 'react'
 
+import EmptyMessage from '../../dashboard/_components/EmptyMessage'
+
 import InterviewCard from './InterviewCard'
 
 import {
@@ -39,17 +41,22 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
 
   const dot = `w-8 h-8 rounded-full bg-gray-300`
 
+  if (cards.length === 0) {
+    return (
+      <div className="flex-1 min-h-0 flex items-center justify-center">
+        <EmptyMessage
+          main="Create one to start!"
+          sub="No ongoing or ready interviews"
+        />
+      </div>
+    )
+  }
+
   return (
     <section className="w-full flex-1 min-h-0 flex flex-col relative">
       {/* Carousel 좌 우 로 이동하는 버튼 */}
       <PrevButton onClick={onPrevButtonClick} disabled={prevBtnDisabled} />
       <NextButton onClick={onNextButtonClick} disabled={nextBtnDisabled} />
-
-      {cards.length === 0 && (
-        <div className="h-full flex items-center justify-center">
-          please create interview
-        </div>
-      )}
 
       <div
         className="overflow-hidden flex-1 min-h-620 flex flex-col"
