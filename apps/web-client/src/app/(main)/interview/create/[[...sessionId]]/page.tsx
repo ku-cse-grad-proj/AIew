@@ -1,5 +1,5 @@
+import { createInterview, updateInterview } from '../../_lib/action'
 import { getInterview } from '../../_lib/api'
-import { createInterview, updateInterview } from '../action'
 import Form from '../component/Form'
 
 export default async function CreateInterviewPage({

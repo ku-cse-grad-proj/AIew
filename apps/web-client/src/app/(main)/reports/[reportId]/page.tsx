@@ -1,6 +1,7 @@
 import DeckLayout from '../_components/DeckLayout'
 import Feedback from '../_components/Feedback'
 import OverviewSection from '../_components/OverviewSection'
+import ReportGraph from '../_components/ReportGraph'
 import { getReport } from '../_lib/api'
 import { ReportResponse } from '../_types'
 
@@ -12,6 +13,11 @@ export default async function ReportPage({
   const { reportId } = await params
 
   const reportData: ReportResponse = await getReport(reportId)
+  const graphData = {
+    labels: ['q1', 'q1-1', 'q1-2', 'q2', 'q2-1'],
+    scores: [3.4, 2, 0, 5, 3.1],
+    durations: [2, 4, 5, 7, 10],
+  }
 
   const cardStyle = 'w-full h-full bg-neutral-card rounded-[20px] shadow-box'
 
@@ -19,15 +25,13 @@ export default async function ReportPage({
     <div className={`w-full h-full flex flex-col gap-24`}>
       <OverviewSection
         className={`flex-7 min-h-0 ${cardStyle}`}
-        overview={reportData.overviewInfo}
+        overview={{ ...reportData.overviewInfo, id: reportId }}
       />
       <DeckLayout className={`flex-8 min-h-0`}>
         {/* top card */}
         <Feedback feedback={reportData.feedback} />
         {/* bottom card */}
-        <div>
-          <h2 className="absolute bottom-0 pl-16 pb-10 font-medium">graph</h2>
-        </div>
+        <ReportGraph data={graphData} />
       </DeckLayout>
     </div>
   )

@@ -3,10 +3,14 @@
 import { updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-import { deleteInterview, patchInterview, postInterview } from '../_lib/api'
+import {
+  appendCreateData,
+  appendFiles,
+  appendUpdateData,
+} from '../create/_lib/append'
+import { waitUntilFilesProcessed } from '../create/_lib/wait'
 
-import { appendCreateData, appendFiles, appendUpdateData } from './_lib/append'
-import { waitUntilFilesProcessed } from './_lib/wait'
+import { deleteInterview, patchInterview, postInterview } from './api'
 
 import { CACHE_TAG } from '@/constants/cacheTags'
 
@@ -59,4 +63,14 @@ export async function updateInterview(
 export async function removeInterview(id: string) {
   await deleteInterview(id)
   updateTag(CACHE_TAG.INTERVIEWS)
+}
+
+export async function revalidateInterview(id: string) {
+  updateTag(CACHE_TAG.INTERVIEWS)
+  updateTag(CACHE_TAG.INTERVIEW(id))
+}
+
+export async function revalidateInterviewAndReports(id: string) {
+  await revalidateInterview(id)
+  updateTag(CACHE_TAG.REPORTS)
 }

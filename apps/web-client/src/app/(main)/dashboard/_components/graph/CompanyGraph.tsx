@@ -4,7 +4,7 @@ import { getCompanyGraph } from '../../_lib/api'
 import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
 
-import DoughnutGraph from './DoughnutGraph'
+import DoughnutGraph from '@/app/(main)/_components/graph/DoughnutGraph'
 
 export default async function CompanyGraph({
   className,

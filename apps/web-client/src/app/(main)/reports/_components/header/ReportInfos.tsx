@@ -1,4 +1,5 @@
-import { getSummary, Query } from '../../_lib/api'
+import { getSummary } from '../../_lib/api'
+import { Query } from '../../_types'
 
 import ReportInfo from './ReportInfo'
 

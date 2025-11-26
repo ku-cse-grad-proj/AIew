@@ -1,3 +1,9 @@
+export type SearchParams = Promise<{
+  [key: string]: string | string[] | undefined
+}>
+
+export type Query = [string, string][]
+
 export type InterviewInfo = {
   title: string
   jobTitle: string
@@ -19,6 +25,7 @@ export type MetricsInfo = {
 }
 
 export type OverviewInfo = {
+  id: string
   interviewInfo: InterviewInfo
   metricsInfo: MetricsInfo
 }

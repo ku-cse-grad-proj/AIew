@@ -5,7 +5,7 @@ import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
 import ShortcutLink from '../ShortcutLink'
 
-import LineGraph from './LineGraph'
+import LineGraph from '@/app/(main)/_components/graph/LineGraph'
 
 export default async function RecentGraph({
   className,
@@ -16,7 +16,7 @@ export default async function RecentGraph({
     <CardSection className={`p-16 h-full flex flex-col relative ${className}`}>
       <h3 className={`${styles.sectionHeading}`}>recent graph</h3>
       <ShortcutLink
-        href="/reports"
+        href="/reports/graph"
         className="bg-neutral-gray absolute right-12 top-12"
       />
 

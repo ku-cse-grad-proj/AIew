@@ -1,10 +1,9 @@
 import { notFound } from 'next/navigation'
 
-import { ReportQuestionsResponse, ReportResponse } from '../_types'
+import { Query, ReportQuestionsResponse, ReportResponse } from '../_types'
 
 import { privateFetch } from '@/app/lib/fetch'
 import { CACHE_TAG } from '@/constants/cacheTags'
-export type Query = [string, string][]
 
 export async function getTotalPage(query: Query) {
   const { CORE_API_URL, API_PREFIX } = process.env
@@ -50,6 +49,29 @@ export async function getReports(query: Query) {
   return await response.json()
 }
 
+export async function getReportsGraph(query: Query) {
+  // const { CORE_API_URL, API_PREFIX } = process.env
+
+  // const response = await privateFetch(
+  //   `${CORE_API_URL}/${API_PREFIX}/reports/graphs?${new URLSearchParams(
+  //     query,
+  //   )}`,
+  //   { cache: 'force-cache', next: { tags: [CACHE_TAG.REPORTS] } },
+  // )
+
+  // if (!response.ok) {
+  //   throw new Error('Reports graph 조회 중 문제가 발생했습니다.')
+  // }
+  console.log('getReportsGraph called with query:', query)
+  return {
+    labels: ['토스', '카카', '배달의 민족', '네이버', '쿠팡'],
+    scores: [3.4, 2, 0, 5, 3.1],
+    durations: [2, 4, 5, 7, 10],
+  }
+
+  // return await response.json()
+}
+
 export async function getReport(id: string): Promise<ReportResponse> {
   const { CORE_API_URL, API_PREFIX } = process.env
   const res = await privateFetch(
@@ -86,4 +108,20 @@ export async function getQuestions(
   }
 
   return await res.json()
+}
+
+export async function deleteReport(id: string) {
+  //TODO: 백엔드 API 준비되면 주석 해제
+  // const { CORE_API_URL, API_PREFIX } = process.env
+  // const res = await privateFetch(
+  //   `${CORE_API_URL}/${API_PREFIX}/reports/${id}`,
+  //   {
+  //     method: 'DELETE',
+  //   },
+  // )
+
+  // if (!res.ok) {
+  // throw new Error('report 삭제 중 문제가 발생했습니다.')
+  // }
+  console.log(`Report with id ${id} deleted (mock)`)
 }

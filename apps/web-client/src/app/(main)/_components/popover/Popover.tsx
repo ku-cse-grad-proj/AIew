@@ -24,6 +24,8 @@ const PopoverContext = createContext<{
  * ```
  * - `PopoverTriggerButton`: 팝오버를 여닫는 버튼입니다.
  * - `PopoverContent`: 팝오버의 실제 콘텐츠를 렌더링합니다.
+ *   - `showCloseButton` prop을 통해 X 버튼의 표시 여부를 제어할 수 있습니다.
+ *   - 기본값은 true로, X 버튼이 표시됩니다.
  * - `Content`의 X 버튼이나 팝오버 외부를 클릭하면 팝오버가 닫힙니다
  *
  */

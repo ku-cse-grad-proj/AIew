@@ -5,7 +5,8 @@ import { createContext, ReactNode, useContext } from 'react'
 type InterviewActionsContextValue = {
   removeInterview: (id: string) => Promise<void>
   getInterview: (id: string, cache: boolean) => Promise<Interview>
-  updateInterviewCache: (id: string) => void
+  revalidateInterview: (id: string) => void
+  revalidateInterviewAndReports: (id: string) => void
 }
 
 const InterviewActionsContext =

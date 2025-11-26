@@ -1,0 +1,38 @@
+import LineGraph from '../../_components/graph/LineGraph'
+import EmptyMessage from '../../dashboard/_components/EmptyMessage'
+
+export default function ReportsGraph({
+  data,
+}: {
+  data: {
+    labels: string[]
+    scores: number[]
+    durations: number[]
+  }
+}) {
+  const { labels, scores, durations } = data
+  const graphData = [labels, scores, durations] as [
+    string[],
+    number[],
+    number[],
+  ]
+  const hasData = data && data.labels && data.labels.length > 0
+
+  return (
+    <div
+      className={
+        'w-full h-full bg-neutral-card shadow-box rounded-[20px] flex items-center justify-center'
+      }
+    >
+      {hasData ? (
+        <LineGraph data={graphData} />
+      ) : (
+        <EmptyMessage
+          main=" No result to display"
+          sub="complete an interview to generate a report"
+          showIcon
+        />
+      )}
+    </div>
+  )
+}

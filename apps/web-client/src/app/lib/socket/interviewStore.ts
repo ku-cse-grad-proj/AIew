@@ -52,7 +52,11 @@ type InterviewState = {
   error: ServerError
 
   // actions
-  connect: (sessionId: string, s?: IInterviewSocket) => void
+  connect: (
+    sessionId: string,
+    revalidate: (id: string) => void,
+    s?: IInterviewSocket,
+  ) => void
   disconnect: (s?: IInterviewSocket) => void
   emitElapsedSec: (s?: IInterviewSocket) => void
   submitAnswer: (
@@ -96,7 +100,7 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
 
   setElapsedSec: (sec) => set({ elapsedSec: sec }),
 
-  connect: (sessionId, s = interviewSocket) => {
+  connect: (sessionId, revalidate, s = interviewSocket) => {
     const url = env('NEXT_PUBLIC_SOCKET_URL') ?? ''
 
     // 1) 연결 수립 (+ 연결 시 방 참가는 socket 구현이 처리)
@@ -189,7 +193,10 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       })
 
       // 종료
-      s.on('server:interview-finished', () => set({ finished: true }))
+      s.on('server:interview-finished', () => {
+        revalidate(get().sessionId)
+        set({ finished: true })
+      })
 
       // 에러 처리
       s.on('server:error', (err: unknown) => {
