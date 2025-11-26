@@ -7,7 +7,12 @@ import TableBody from './_components/table/ReportTableBody'
 import TableBodySkeleton from './_components/table/ReportTableBodySkeleton'
 import TableHeader from './_components/table/ReportTableHeader'
 import { getTotalPage } from './_lib/api'
-import { getQuery, getQueryWithoutPage } from './_lib/utils'
+import {
+  getPage,
+  getQuery,
+  getQueryWithoutPage,
+  setPageInQuery,
+} from './_lib/utils'
 import { Query, SearchParams } from './_types'
 
 export default async function ReportsPage({
@@ -17,10 +22,16 @@ export default async function ReportsPage({
 }) {
   const params = await searchParams
 
-  const query: Query = getQuery(params)
+  let query: Query = getQuery(params)
   const queryWithoutPage = getQueryWithoutPage(params)
 
   const totalPages = await getTotalPage(query)
+  const page = getPage(params)
+
+  // 현재 페이지가 총 페이지 수보다 클 경우, 마지막 페이지로 설정
+  if (page > totalPages && totalPages > 0) {
+    query = setPageInQuery(query, totalPages)
+  }
 
   return (
     <article className="w-full flex-1 min-h-0 flex flex-col items-center gap-24">
