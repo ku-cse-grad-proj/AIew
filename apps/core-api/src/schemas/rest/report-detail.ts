@@ -86,6 +86,34 @@ export const S_ReportDetailResponse = Type.Object(
   { $id: SchemaId.ReportDetailResponse, description: '리포트 상세 정보' },
 )
 
+// 감정 분석 그래프 데이터
+export const S_EmotionGraphData = Type.Object(
+  {
+    times: Type.Array(Type.Number({ minimum: 0 }), {
+      description: '프레임별 시간 배열 (초)',
+    }),
+    happy: Type.Array(Type.Number({ minimum: 0, maximum: 1 }), {
+      description: 'happy 감정 확률 배열',
+    }),
+    sad: Type.Array(Type.Number({ minimum: 0, maximum: 1 }), {
+      description: 'sad 감정 확률 배열',
+    }),
+    neutral: Type.Array(Type.Number({ minimum: 0, maximum: 1 }), {
+      description: 'neutral 감정 확률 배열',
+    }),
+    angry: Type.Array(Type.Number({ minimum: 0, maximum: 1 }), {
+      description: 'angry 감정 확률 배열',
+    }),
+    fear: Type.Array(Type.Number({ minimum: 0, maximum: 1 }), {
+      description: 'fear 감정 확률 배열',
+    }),
+    surprise: Type.Array(Type.Number({ minimum: 0, maximum: 1 }), {
+      description: 'surprise 감정 확률 배열',
+    }),
+  },
+  { $id: SchemaId.EmotionGraphData },
+)
+
 // 리포트 질문 상세 (재귀적 구조)
 export const S_ReportDetailQuestion = Type.Recursive(
   (This) =>
@@ -157,6 +185,9 @@ export const S_ReportDetailQuestion = Type.Recursive(
         interviewSessionId: Type.String({ description: '인터뷰 세션 ID' }),
         parentStepId: Type.Union([Type.String(), Type.Null()], {
           description: '부모 질문 ID (메인 질문의 경우 null)',
+        }),
+        emotionGraphData: Type.Union([S_EmotionGraphData, Type.Null()], {
+          description: '감정 분석 그래프 데이터 (없을 경우 null)',
         }),
         tailSteps: Type.Array(This, { description: '꼬리 질문 목록' }),
       },

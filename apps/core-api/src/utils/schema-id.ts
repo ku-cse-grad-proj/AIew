@@ -26,6 +26,7 @@ enum SchemaId {
   ReportDetailQuestion = 'ReportDetailQuestion',
   ReportQuestionsResponse = 'ReportQuestionsResponse',
   ReportGraphData = 'ReportGraphData',
+  EmotionGraphData = 'EmotionGraphData',
   AuthLogoutResponse = 'AuthLogoutResponse',
 
   // WebSocket Schemas

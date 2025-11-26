@@ -325,7 +325,7 @@ export class ReportService {
 
     const { title } = session
 
-    // 메인 질문들 조회 (tailSteps 포함)
+    // 메인 질문들 조회 (tailSteps, emotionAnalysis 포함)
     const mainQuestions = await prisma.interviewStep.findMany({
       where: {
         interviewSessionId: sessionId,
@@ -333,8 +333,24 @@ export class ReportService {
       },
       orderBy: { aiQuestionId: 'asc' },
       include: {
+        emotionAnalysis: {
+          include: {
+            frames: {
+              orderBy: { time: 'asc' },
+            },
+          },
+        },
         tailSteps: {
           orderBy: { aiQuestionId: 'asc' },
+          include: {
+            emotionAnalysis: {
+              include: {
+                frames: {
+                  orderBy: { time: 'asc' },
+                },
+              },
+            },
+          },
         },
       },
     })
@@ -362,6 +378,7 @@ export class ReportService {
       feedback: mainQ.feedback,
       interviewSessionId: mainQ.interviewSessionId,
       parentStepId: mainQ.parentStepId,
+      emotionGraphData: this.transformEmotionFrames(mainQ.emotionAnalysis),
       tailSteps: mainQ.tailSteps.map((tailQ) => ({
         id: tailQ.id,
         aiQuestionId: tailQ.aiQuestionId,
@@ -384,6 +401,7 @@ export class ReportService {
         feedback: tailQ.feedback,
         interviewSessionId: tailQ.interviewSessionId,
         parentStepId: tailQ.parentStepId,
+        emotionGraphData: this.transformEmotionFrames(tailQ.emotionAnalysis),
         tailSteps: [], // 꼬리질문의 꼬리질문은 없음
       })),
     }))
@@ -536,6 +554,46 @@ export class ReportService {
 
     // 유효하지 않은 필드는 기본 정렬
     return { createdAt: 'desc' }
+  }
+
+  /**
+   * EmotionAnalysis를 그래프 데이터 형식으로 변환합니다
+   */
+  private transformEmotionFrames(
+    emotionAnalysis: {
+      frames: {
+        time: number
+        happy: number
+        sad: number
+        neutral: number
+        angry: number
+        fear: number
+        surprise: number
+      }[]
+    } | null,
+  ): {
+    times: number[]
+    happy: number[]
+    sad: number[]
+    neutral: number[]
+    angry: number[]
+    fear: number[]
+    surprise: number[]
+  } | null {
+    if (!emotionAnalysis || emotionAnalysis.frames.length === 0) {
+      return null
+    }
+
+    const { frames } = emotionAnalysis
+    return {
+      times: frames.map((f) => f.time),
+      happy: frames.map((f) => f.happy),
+      sad: frames.map((f) => f.sad),
+      neutral: frames.map((f) => f.neutral),
+      angry: frames.map((f) => f.angry),
+      fear: frames.map((f) => f.fear),
+      surprise: frames.map((f) => f.surprise),
+    }
   }
 }
 
