@@ -27,18 +27,10 @@ const S_InterviewPostBody = Type.Object({
     isFile: true,
     description: '포트폴리오 파일 (PDF)',
   }),
-  company: Type.String({
-    description: '회사 정보 (JSON 문자열)',
-  }),
-  jobTitle: Type.String({
-    description: '직무명 (JSON 문자열)',
-  }),
-  jobSpec: Type.String({
-    description: '세부 직무 (JSON 문자열)',
-  }),
-  idealTalent: Type.String({
-    description: '회사 인재상 (JSON 문자열)',
-  }),
+  company: Type.Any({ description: '회사 정보 (JSON 문자열)' }),
+  jobTitle: Type.Any({ description: '직무명 (JSON 문자열)' }),
+  jobSpec: Type.Any({ description: '세부 직무 (JSON 문자열)' }),
+  idealTalent: Type.Any({ description: '회사 인재상 (JSON 문자열)' }),
 })
 
 const controller: FastifyPluginAsync = async (fastify) => {

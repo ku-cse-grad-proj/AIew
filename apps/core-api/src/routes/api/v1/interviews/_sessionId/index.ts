@@ -39,31 +39,11 @@ const S_InterviewPatchMultipartBody = Type.Object({
       description: '포트폴리오 파일 (PDF)',
     }),
   ),
-  title: Type.Optional(
-    Type.String({
-      description: '면접 세션 제목',
-    }),
-  ),
-  company: Type.Optional(
-    Type.String({
-      description: '회사명',
-    }),
-  ),
-  jobTitle: Type.Optional(
-    Type.String({
-      description: '직무명',
-    }),
-  ),
-  jobSpec: Type.Optional(
-    Type.String({
-      description: '세부 직무',
-    }),
-  ),
-  idealTalent: Type.Optional(
-    Type.String({
-      description: '회사 인재상',
-    }),
-  ),
+  title: Type.Optional(Type.Any({ description: '면접 세션 제목' })),
+  company: Type.Optional(Type.Any({ description: '회사명' })),
+  jobTitle: Type.Optional(Type.Any({ description: '직무명' })),
+  jobSpec: Type.Optional(Type.Any({ description: '세부 직무' })),
+  idealTalent: Type.Optional(Type.Any({ description: '회사 인재상' })),
 })
 
 const controller: FastifyPluginAsyncTypebox = async (
