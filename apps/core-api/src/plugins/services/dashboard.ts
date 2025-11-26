@@ -223,9 +223,8 @@ export class DashboardService {
       },
     })
 
-    // 없으면 빈 객체 반환
     if (!session) {
-      return {} as DashboardInterview
+      return null
     }
 
     return {
