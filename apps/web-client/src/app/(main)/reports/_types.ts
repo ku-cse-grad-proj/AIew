@@ -42,6 +42,21 @@ export type ReportResponse = {
   graphData: graphData
 }
 
+export type EmotionGraphData = {
+  times: (string | number)[]
+  angry: number[]
+  fear: number[]
+  happy: number[]
+  neutral: number[]
+  sad: number[]
+  surprise: number[]
+}
+
+export type EmotionGraphDataWithId = {
+  id: string
+  graphData: EmotionGraphData
+}
+
 export type ReportQuestionsResponse = {
   title: string
   questions: ReportQuestionStep[]
@@ -70,4 +85,5 @@ export type ReportQuestionStep = {
   interviewSessionId: string
   parentStepId: string | null
   tailSteps: ReportQuestionStep[]
+  emotionGraphData: EmotionGraphData
 }

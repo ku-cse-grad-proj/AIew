@@ -36,7 +36,7 @@ type EmotionKey = 'angry' | 'fear' | 'happy' | 'neutral' | 'sad' | 'surprise'
  * ```tsx
  * <EmotionGraph
  *   data={{
- *     labels: ['0s', '1s', '2s', '3s'],
+ *     times: ['0s', '1s', '2s', '3s'],
  *     angry:    [0.1, 0.2, 0.05, 0.0],
  *     fear:     [0.0, 0.1, 0.2,  0.3],
  *     happy:    [0.4, 0.3, 0.5,  0.6],
@@ -49,7 +49,7 @@ type EmotionKey = 'angry' | 'fear' | 'happy' | 'neutral' | 'sad' | 'surprise'
  */
 
 export interface EmotionGraphData {
-  labels: (string | number)[]
+  times: (string | number)[]
   angry: number[]
   fear: number[]
   happy: number[]
@@ -81,7 +81,7 @@ const baseOptions: ChartOptions<'line'> = {
     tooltip: {
       callbacks: {
         label: (ctx) => {
-          const label = ctx.dataset.label ?? ''
+          const label = `${ctx.dataset.label} s`
           const value = ctx.parsed.y ?? 0
           // 0~1 값을 퍼센트로 표시 (0~100으로 들어오면 아래를 바꿔도 됨)
           const percent = (value * 100).toFixed(1)
@@ -115,7 +115,8 @@ export default function EmotionGraph({ data }: EmotionGraphProps) {
     throw new Error('EmotionGraph data가 필요합니다.')
   }
 
-  const { labels, angry, fear, happy, neutral, sad, surprise } = data
+  const { times, angry, fear, happy, neutral, sad, surprise } = data
+  console.log('EmotionGraph data:', data)
 
   const series: Record<EmotionKey, number[]> = {
     angry,
@@ -128,7 +129,7 @@ export default function EmotionGraph({ data }: EmotionGraphProps) {
 
   // 모든 배열 길이 검증
   const lengths = [
-    labels.length,
+    times.length,
     angry.length,
     fear.length,
     happy.length,
@@ -141,7 +142,7 @@ export default function EmotionGraph({ data }: EmotionGraphProps) {
   if (!allSameLength) {
     throw new Error(
       `EmotionGraph data의 배열 길이가 모두 동일해야 합니다.
-(labels: ${labels.length}, angry: ${angry.length}, fear: ${fear.length}, happy: ${happy.length},
+(labels: ${times.length}, angry: ${angry.length}, fear: ${fear.length}, happy: ${happy.length},
  neutral: ${neutral.length}, sad: ${sad.length}, surprise: ${surprise.length})`,
     )
   }
@@ -149,7 +150,7 @@ export default function EmotionGraph({ data }: EmotionGraphProps) {
   // 옵션들을 복사해서 사용
   // data의 값이 변경될 때마다 해당 값을 반영한 chart가 생성되도록 함
   const chartData: ChartData<'line'> = {
-    labels,
+    labels: times.map((t) => `${t}s`),
     datasets: (Object.keys(series) as EmotionKey[]).map((emotion) => ({
       label: emotion,
       data: series[emotion],
