@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { getLineGraph } from '../../_lib/api'
 import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
+import EmptyMessage from '../EmptyMessage'
 import ShortcutLink from '../ShortcutLink'
 
 import LineGraph from '@/app/(main)/_components/graph/LineGraph'
@@ -41,8 +42,15 @@ async function GraphArea() {
   ]
 
   return (
-    <div className="flex-1 min-h-250 w-full">
-      <LineGraph data={graphData} />
+    <div className="flex-1 min-h-250 w-full flex items-center justify-center">
+      {labels.length ? (
+        <LineGraph data={graphData} />
+      ) : (
+        <EmptyMessage
+          main="No reports yet"
+          sub="Finish an interview to create one"
+        />
+      )}
     </div>
   )
 }

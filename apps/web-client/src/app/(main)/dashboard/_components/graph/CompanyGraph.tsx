@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { getCompanyGraph } from '../../_lib/api'
 import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
+import EmptyMessage from '../EmptyMessage'
 
 import DoughnutGraph from '@/app/(main)/_components/graph/DoughnutGraph'
 
@@ -31,8 +32,15 @@ async function GraphArea() {
   const companyCount = [labels, counts] as [string[], number[]]
 
   return (
-    <div className="flex-1 min-h-250 w-full">
-      <DoughnutGraph data={companyCount} />
+    <div className="flex-1 min-h-250 w-full flex items-center justify-center">
+      {labels.length ? (
+        <DoughnutGraph data={companyCount} />
+      ) : (
+        <EmptyMessage
+          main="Create one to start!"
+          sub="No ongoing or ready interviews"
+        />
+      )}
     </div>
   )
 }
