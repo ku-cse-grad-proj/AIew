@@ -31,14 +31,15 @@ export default async function UserInfos({ className }: { className?: string }) {
     >
       <h3 className="sr-only">user informations</h3>
 
-      <div className={`h-full col-span-2 bg-neutral-card flex ${styles.card}`}>
-        <div className="min-w-0 flex-3 relative w-full h-full">
+      <div
+        className={`h-full p-16 gap-16 col-span-2 bg-neutral-card flex ${styles.card}`}
+      >
+        <div className="flex-3 relative aspect-square max-w-[80px] lg:max-w-[100px] self-center rounded-full overflow-hidden">
           <Image
             src={profileImg}
             fill
             alt={`${name} profile image`}
-            style={{ objectFit: 'contain' }}
-            className="p-16 lg:p-24 rounded-full"
+            className="object-cover"
           />
         </div>
         <div className="flex-5 h-full flex flex-col justify-center gap-4 p-8">
