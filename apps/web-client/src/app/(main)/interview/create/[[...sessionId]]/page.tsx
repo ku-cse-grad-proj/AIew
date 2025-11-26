@@ -21,9 +21,5 @@ export default async function CreateInterviewPage({
     }
   }
 
-  return (
-    <div className="w-full h-full p-24">
-      <Form interview={interview} onSubmitAction={handleSubmit} />
-    </div>
-  )
+  return <Form interview={interview} onSubmitAction={handleSubmit} />
 }

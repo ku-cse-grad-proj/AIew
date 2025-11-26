@@ -40,7 +40,7 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
   const dot = `w-8 h-8 rounded-full bg-gray-300`
 
   return (
-    <section className="w-full flex-1 relative">
+    <section className="w-full flex-1 min-h-0 flex flex-col relative">
       {/* Carousel 좌 우 로 이동하는 버튼 */}
       <PrevButton onClick={onPrevButtonClick} disabled={prevBtnDisabled} />
       <NextButton onClick={onNextButtonClick} disabled={nextBtnDisabled} />
@@ -51,8 +51,11 @@ export default function EmblaCarousel({ cards }: { cards: Interview[] }) {
         </div>
       )}
 
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex">
+      <div
+        className="overflow-hidden flex-1 min-h-620 flex flex-col"
+        ref={emblaRef}
+      >
+        <div className="flex flex-1 min-h-620">
           {groups.map((group, groupIdx) => (
             <div
               key={`group-${groupIdx}`}

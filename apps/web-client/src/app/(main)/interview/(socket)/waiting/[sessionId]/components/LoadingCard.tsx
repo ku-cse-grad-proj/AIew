@@ -11,7 +11,7 @@ import { useInterviewStore } from '@/app/lib/socket/interviewStore'
 export default function LoadingCard() {
   const questions = useInterviewStore((state) => state.questions)
   return (
-    <Card className="w-full h-full flex flex-col items-center justify-center relative">
+    <Card className="w-full flex flex-col items-center justify-center relative">
       <div className="flex-1 flex flex-col items-center justify-center gap-48">
         <LoadingCircle />
         <span

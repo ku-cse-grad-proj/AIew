@@ -10,7 +10,7 @@ export default function WaitingPage({
   params: Promise<{ sessionId: string }>
 }) {
   return (
-    <div className="w-full h-full flex flex-col lg:flex-row p-24 gap-24">
+    <div className="w-full flex-1 min-h-0 flex flex-col lg:flex-row gap-24">
       <Suspense fallback={<CardSkeleton />}>
         <InterviewInfo params={params} />
       </Suspense>

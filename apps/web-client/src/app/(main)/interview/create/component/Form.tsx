@@ -47,12 +47,12 @@ export default function InterviewForm({
 
   return (
     <form
-      className="w-full h-full flex flex-col lg:flex-row gap-24 m-auto"
+      className="w-full flex-1 flex flex-col lg:flex-row gap-24 m-auto"
       onSubmit={handleSubmit}
     >
       {/* 왼쪽 card
        직업, 회사명, 인재상을 입력함*/}
-      <Card className="flex-1 flex flex-col justify-between">
+      <Card className="flex flex-col justify-between">
         {isEdit && (
           <Label text="Title">
             <input
@@ -111,7 +111,7 @@ export default function InterviewForm({
         <Label text="Ideal Talent" className="basis-[40%] flex flex-col">
           <textarea
             name="idealTalent"
-            className="mt-1 block w-full flex-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none hover:shadow-md"
+            className="mt-1 block w-full flex-1 min-h-240 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none hover:shadow-md"
             placeholder="Describe the ideal talent"
             defaultValue={interview?.idealTalent}
           ></textarea>
