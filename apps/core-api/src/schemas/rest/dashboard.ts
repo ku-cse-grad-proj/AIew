@@ -67,7 +67,9 @@ export const S_DashboardReportItem = Type.Object(
 export const S_DashboardResponse = Type.Object(
   {
     userInfos: S_DashboardUserInfos,
-    interview: S_DashboardInterview,
+    interview: Type.Union([S_DashboardInterview, Type.Null()], {
+      description: '가장 최근에 접근한 인터뷰 (없으면 null)',
+    }),
     reports: Type.Array(S_DashboardReportItem, {
       description: '최근 완료된 리포트 (최대 2개)',
       maxItems: 2,
