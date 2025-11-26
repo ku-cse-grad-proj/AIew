@@ -9,6 +9,7 @@ import {
   S_ReportsSummaryResponse,
   S_ReportDetailResponse,
   S_ReportQuestionsResponse,
+  S_ReportsGraphResponse,
 } from '@/schemas/rest'
 
 // TypeBox 스키마에서 타입 추출
@@ -17,6 +18,7 @@ type ReportItem = Static<typeof S_ReportItem>
 type ReportsSummary = Static<typeof S_ReportsSummaryResponse>
 type ReportDetailResponse = Static<typeof S_ReportDetailResponse>
 type ReportQuestionsResponse = Static<typeof S_ReportQuestionsResponse>
+type ReportsGraphResponse = Static<typeof S_ReportsGraphResponse>
 
 export class ReportService {
   private fastify: FastifyInstance
@@ -409,6 +411,41 @@ export class ReportService {
     return {
       title,
       questions,
+    }
+  }
+
+  /**
+   * 필터 조건에 맞는 리포트들의 그래프 데이터를 반환합니다
+   * 페이지네이션 없이 모든 매칭 데이터 반환 (updatedAt 오름차순 정렬)
+   */
+  public async getReportsGraph(
+    userId: string,
+    params: ReportQueryParams,
+  ): Promise<ReportsGraphResponse> {
+    const { prisma } = this.fastify
+
+    const where = this.buildWhereClause(userId, params)
+
+    // 완료된 면접 세션 조회 (updatedAt 오름차순 정렬 - 시간순 그래프용)
+    const sessions = await prisma.interviewSession.findMany({
+      where,
+      orderBy: { updatedAt: 'asc' },
+      select: {
+        title: true,
+        updatedAt: true,
+        averageScore: true,
+        totalTimeSec: true,
+      },
+    })
+
+    return {
+      labels: sessions.map(
+        (s) => s.updatedAt.toISOString().split('T')[0], // YYYY-MM-DD
+      ),
+      scores: sessions.map((s) => s.averageScore ?? 0),
+      durations: sessions.map((s) =>
+        s.totalTimeSec ? Math.round(s.totalTimeSec / 60) : 0,
+      ),
     }
   }
 

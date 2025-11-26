@@ -138,3 +138,22 @@ export const S_ReportsSummaryResponse = Type.Object(
   },
   { $id: SchemaId.ReportsSummaryResponse },
 )
+
+// --- GET /api/v1/reports/graph ---
+export const S_ReportsGraphResponse = Type.Object(
+  {
+    labels: Type.Array(Type.String(), {
+      description: '리포트 라벨 배열 (날짜 또는 제목)',
+    }),
+    scores: Type.Array(Type.Number({ minimum: 0, maximum: 5 }), {
+      description: '각 리포트의 평균 점수 배열',
+    }),
+    durations: Type.Array(Type.Number({ minimum: 0 }), {
+      description: '각 리포트의 소요 시간 배열 (분)',
+    }),
+  },
+  {
+    $id: SchemaId.ReportsGraphResponse,
+    description: '필터 조건에 맞는 리포트 그래프 데이터',
+  },
+)
