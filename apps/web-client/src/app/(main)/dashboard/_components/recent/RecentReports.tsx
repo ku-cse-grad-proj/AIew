@@ -1,7 +1,7 @@
+import EmptyMessage from '../../../_components/EmptyMessage'
 import { getDashboard } from '../../_lib/api'
 import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
-import EmptyMessage from '../EmptyMessage'
 import ShortcutLink from '../ShortcutLink'
 
 import ReportCard from './ReportCard'

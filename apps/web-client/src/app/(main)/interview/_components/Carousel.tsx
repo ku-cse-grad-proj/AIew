@@ -3,7 +3,7 @@
 import useEmblaCarousel from 'embla-carousel-react'
 import { useMemo } from 'react'
 
-import EmptyMessage from '../../dashboard/_components/EmptyMessage'
+import EmptyMessage from '../../_components/EmptyMessage'
 
 import InterviewCard from './InterviewCard'
 

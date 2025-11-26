@@ -3,8 +3,8 @@ import { Suspense } from 'react'
 import { getCompanyGraph } from '../../_lib/api'
 import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
-import EmptyMessage from '../EmptyMessage'
 
+import EmptyMessage from '@/app/(main)/_components/EmptyMessage'
 import DoughnutGraph from '@/app/(main)/_components/graph/DoughnutGraph'
 
 export default async function CompanyGraph({

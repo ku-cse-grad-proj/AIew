@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import EmptyMessage from '../EmptyMessage'
+import EmptyMessage from '../../../_components/EmptyMessage'
 
 export default function EmptyInterview() {
   return (

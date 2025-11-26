@@ -6,7 +6,7 @@ import ReportOptionButton from '../ReportOptionButton'
 
 import styles from './table.module.css'
 
-import EmptyMessage from '@/app/(main)/dashboard/_components/EmptyMessage'
+import EmptyMessage from '@/app/(main)/_components/EmptyMessage'
 
 export default async function TableBody({ query }: { query: Query }) {
   const reports = await getReports(query)

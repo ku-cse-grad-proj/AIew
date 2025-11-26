@@ -1,5 +1,5 @@
+import EmptyMessage from '../../_components/EmptyMessage'
 import LineGraph from '../../_components/graph/LineGraph'
-import EmptyMessage from '../../dashboard/_components/EmptyMessage'
 import { GraphData } from '../_types'
 
 export default function ReportGraph({

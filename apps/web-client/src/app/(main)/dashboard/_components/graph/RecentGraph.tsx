@@ -3,9 +3,9 @@ import { Suspense } from 'react'
 import { getLineGraph } from '../../_lib/api'
 import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
-import EmptyMessage from '../EmptyMessage'
 import ShortcutLink from '../ShortcutLink'
 
+import EmptyMessage from '@/app/(main)/_components/EmptyMessage'
 import LineGraph from '@/app/(main)/_components/graph/LineGraph'
 
 export default async function RecentGraph({
