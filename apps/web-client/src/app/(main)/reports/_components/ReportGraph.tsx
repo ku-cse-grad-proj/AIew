@@ -1,11 +1,12 @@
 import LineGraph from '../../_components/graph/LineGraph'
+import { graphData } from '../_types'
 
 export default function ReportGraph({
   className,
   data,
 }: {
   className?: string
-  data: { labels: string[]; scores: number[]; durations: number[] }
+  data: graphData
 }) {
   const { labels, scores, durations } = data
   const graphData = [labels, scores, durations] as [

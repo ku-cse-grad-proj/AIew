@@ -30,9 +30,16 @@ export type OverviewInfo = {
   metricsInfo: MetricsInfo
 }
 
+export type graphData = {
+  labels: string[]
+  scores: number[]
+  durations: number[]
+}
+
 export type ReportResponse = {
   overviewInfo: OverviewInfo
   feedback: string
+  graphData: graphData
 }
 
 export type ReportQuestionsResponse = {
