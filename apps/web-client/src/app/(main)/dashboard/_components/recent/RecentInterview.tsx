@@ -23,7 +23,7 @@ export default async function RecentInterview({
         className="bg-neutral-gray absolute right-12 top-12"
       />
 
-      {interview.id ? (
+      {interview && interview.id ? (
         <InterviewCard interview={interview} />
       ) : (
         <EmptyInterview />
