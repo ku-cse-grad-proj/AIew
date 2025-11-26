@@ -19,7 +19,9 @@ export default function InfoSection({
   const info =
     questionInfos.find((question) => question.id === id) ?? questionInfos[0]
   return (
-    <section className={`w-full h-full p-16 flex flex-col gap-8 ${className}`}>
+    <section
+      className={`w-full h-full p-16 flex flex-col gap-8 overflow-auto ${className}`}
+    >
       <header className="flex justify-between items-center">
         <h1 className="text-[24px] font-medium leading-[36px]">
           {questionReview.title} answer review

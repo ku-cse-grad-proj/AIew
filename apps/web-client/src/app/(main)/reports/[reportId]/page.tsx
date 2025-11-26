@@ -19,10 +19,11 @@ export default async function ReportPage({
     durations: [2, 4, 5, 7, 10],
   }
 
-  const cardStyle = 'w-full h-full bg-neutral-card rounded-[20px] shadow-box'
+  const cardStyle =
+    'w-full flex-1 min-h-0 bg-neutral-card rounded-[20px] shadow-box'
 
   return (
-    <div className={`w-full h-full flex flex-col gap-24`}>
+    <div className={`w-full flex-1 min-h-0 flex flex-col gap-24`}>
       <OverviewSection
         className={`flex-7 min-h-0 ${cardStyle}`}
         overview={{ ...reportData.overviewInfo, id: reportId }}

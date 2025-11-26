@@ -17,7 +17,7 @@ export default function OverviewSection({
 
   return (
     <section
-      className={`w-full h-full flex flex-col py-16 pr-24 overflow-auto ${className}`}
+      className={`w-full flex-1 min-h-0 flex flex-col py-16 pr-24 overflow-auto ${className}`}
     >
       <header className="pb-24 flex pl-8 justify-between items-center">
         <div className="flex gap-4">
@@ -29,7 +29,7 @@ export default function OverviewSection({
         <ReportOptionButton id={overview.id} />
       </header>
       <div className="flex-1 min-h-0 flex pl-36 gap-24">
-        <dl className="flex-1 h-full flex flex-col gap-8">
+        <dl className="flex-1 min-h-0 flex flex-col gap-8">
           <div>
             <dt className={dtStyle}>job</dt>
             <dd>
@@ -50,7 +50,7 @@ export default function OverviewSection({
           </div>
         </dl>
         <MetricsPannel
-          className="flex-1 min-w-0 h-full min-h-168"
+          className="flex-1 min-w-0 min-h-168"
           metricsInfo={overview.metricsInfo}
         />
       </div>

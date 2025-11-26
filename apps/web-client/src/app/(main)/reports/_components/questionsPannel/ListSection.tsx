@@ -24,8 +24,8 @@ export default function ListSection({
   const isReport = questionId == null
 
   return (
-    <section className={`w-full h-full flex flex-col ${className}`}>
-      <div className="w-full min-h-64 pt-16 px-16 pb-8 flex items-center justify-between relative">
+    <section className={`w-full flex-1 min-h-0 flex flex-col ${className}`}>
+      <div className="w-full min-h-64 pt-16 px-16 flex items-center justify-between relative">
         {isReport ? (
           <>
             <h2 className="text-[20px] font-medium">Questions</h2>
@@ -41,24 +41,26 @@ export default function ListSection({
           </Link>
         )}
       </div>
-      <ul className="w-full flex-1 min-h-0 px-16 pb-16  overflow-auto">
-        {questionList.map((main: QuestionList, i) => (
-          <li key={main.id} className="pl-8 py-8">
-            <ItemLink questionItem={main}>
-              Q{i + 1}. {main.question}
-            </ItemLink>
-            <ul>
-              {main.followUps.map((follow: QuestionItem, j) => (
-                <li key={follow.id} className="pl-16 py-4">
-                  <ItemLink questionItem={follow}>
-                    Q{i + 1}-{j + 1}. {follow.question}
-                  </ItemLink>
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
+      <div className="w-full flex-1 min-h-0 relative">
+        <ul className="absolute inset-0 w-full h-full px-16 overflow-auto">
+          {questionList.map((main: QuestionList, i) => (
+            <li key={main.id} className="pl-8 py-8">
+              <ItemLink questionItem={main}>
+                Q{i + 1}. {main.question}
+              </ItemLink>
+              <ul>
+                {main.followUps.map((follow: QuestionItem, j) => (
+                  <li key={follow.id} className="pl-16 py-4">
+                    <ItemLink questionItem={follow}>
+                      Q{i + 1}-{j + 1}. {follow.question}
+                    </ItemLink>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   )
 }

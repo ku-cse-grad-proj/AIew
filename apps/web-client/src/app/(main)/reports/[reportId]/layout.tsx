@@ -11,9 +11,9 @@ export default function ReportLayout({
   params: Promise<{ reportId: string }>
 }) {
   return (
-    <div className="w-full h-full flex p-24 gap-24">
-      <div className="flex-7">{children}</div>
-      <div className="flex-3 min-h-0">
+    <div className="w-full flex-1 min-h-0 flex gap-24">
+      <div className="flex-7 min-h-0 flex flex-col">{children}</div>
+      <div className="flex-3 shrink-0 min-h-0 flex flex-col">
         <Suspense fallback={<QuestionsPanelSkeleton />}>
           <QuestionsPanel params={params} />
         </Suspense>

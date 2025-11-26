@@ -20,12 +20,7 @@ export default async function QuestionsPanel({
     })),
   }))
 
-  const cardStyle = 'w-full h-full bg-neutral-card rounded-[20px] shadow-box'
+  const cardStyle = 'bg-neutral-card rounded-[20px] shadow-box'
 
-  return (
-    <ListSection
-      className={`flex-3 min-h-0 shrink-0 ${cardStyle}`}
-      questionList={questionList}
-    />
-  )
+  return <ListSection className={`${cardStyle}`} questionList={questionList} />
 }

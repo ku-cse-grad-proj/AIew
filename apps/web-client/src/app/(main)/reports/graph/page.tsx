@@ -14,7 +14,7 @@ export default async function ReportGraphPage({
   const graphData = await getReportsGraph(queryWithoutPage)
 
   return (
-    <article className="w-full h-full flex flex-col gap-24">
+    <article className="w-full flex-1 min-h-0 flex flex-col gap-24">
       <ReportHeader query={queryWithoutPage} />
       <ReportsGraph data={graphData} />
     </article>

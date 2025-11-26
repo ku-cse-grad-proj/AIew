@@ -18,7 +18,7 @@ export default function FeedbackSection({
   const feedback: QuestionFeedback =
     feedbacks.find((feedback) => feedback.id === id) ?? feedbacks[0]
   return (
-    <section className="w-full h-full flex flex-col px-16 py-10">
+    <section className="w-full h-full flex flex-col px-16 py-10 overflow-auto">
       <h2 className="font-medium">feedback</h2>
 
       {/* redFlags가 존재할 때에만 redFlag 표시 */}

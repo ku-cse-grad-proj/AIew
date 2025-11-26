@@ -21,7 +21,7 @@ export default function ReportsGraph({
   return (
     <div
       className={
-        'w-full h-full bg-neutral-card shadow-box rounded-[20px] flex items-center justify-center'
+        'w-full flex-1 min-h-0 bg-neutral-card shadow-box rounded-[20px] flex items-center justify-center'
       }
     >
       {hasData ? (
