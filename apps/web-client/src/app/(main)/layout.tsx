@@ -8,9 +8,11 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="w-full h-dvh flex flex-col">
+    <div className="w-full min-h-dvh flex flex-col items-center">
       <Header />
-      <main className={`flex-1 min-h-0 w-full max-w-1248 mx-auto px-24 pb-24`}>
+      <main
+        className={`w-full flex-1 min-h-0 max-w-1248 px-16 sm:px-24 pb-24 flex flex-col`}
+      >
         {children}
       </main>
     </div>
