@@ -547,6 +547,21 @@ export class InterviewService {
       )
     }
 
+    // R2에서 관련 파일들 삭제
+    const { fileService } = this.fastify
+    try {
+      await Promise.all([
+        fileService.deleteByPrefix(`coverLetter/${sessionId}/`),
+        fileService.deleteByPrefix(`portfolio/${sessionId}/`),
+      ])
+      log.info(`[${sessionId}] R2 files deleted successfully.`)
+    } catch (error) {
+      log.error(
+        { error },
+        `[${sessionId}] Failed to delete R2 files, but proceeding with DB deletion`,
+      )
+    }
+
     return prisma.interviewSession.delete({
       where: { id: sessionId },
     })
@@ -1007,6 +1022,12 @@ export default fp(
   },
   {
     name: 'interviewService',
-    dependencies: ['aiClientService', 'prisma', 'r2', 'ttsService'],
+    dependencies: [
+      'aiClientService',
+      'fileService',
+      'prisma',
+      'r2',
+      'ttsService',
+    ],
   },
 )
