@@ -67,6 +67,16 @@ export class FileService {
       const ext = this.getExtensionFromContentType(contentType)
       const fileKey = `profilePictures/${userId}/avatar.${ext}`
 
+      // 기존 프로필 사진 삭제 (확장자가 바뀌면 고아 파일이 되므로)
+      try {
+        await this.deleteByPrefix(`profilePictures/${userId}/`)
+      } catch {
+        // 삭제 실패해도 업로드는 진행
+        this.fastify.log.warn(
+          `Failed to delete old profile pictures for user ${userId}, proceeding with upload`,
+        )
+      }
+
       const publicUrl = await this.uploadToR2(fileKey, buffer, contentType)
 
       this.fastify.log.info(
