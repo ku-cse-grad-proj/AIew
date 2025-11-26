@@ -234,6 +234,25 @@ export class ReportService {
       mainQuestions.length +
       mainQuestions.reduce((sum, q) => sum + q.tailSteps.length, 0)
 
+    // 그래프 데이터용 쿼리 (모든 질문을 flat하게 조회, DB에서 정렬)
+    const allSteps = await prisma.interviewStep.findMany({
+      where: { interviewSessionId: sessionId },
+      orderBy: { aiQuestionId: 'asc' },
+      select: {
+        aiQuestionId: true,
+        score: true,
+        answerDurationSec: true,
+      },
+    })
+
+    const graphData = {
+      labels: allSteps.map((step) => step.aiQuestionId),
+      scores: allSteps.map((step) => step.score ?? 0),
+      durations: allSteps.map(
+        (step) => Math.round(((step.answerDurationSec ?? 0) / 60) * 10) / 10,
+      ),
+    }
+
     return {
       overviewInfo: {
         interviewInfo: {
@@ -262,6 +281,7 @@ export class ReportService {
         },
       },
       feedback: session.finalFeedback ?? '',
+      graphData,
     }
   }
 

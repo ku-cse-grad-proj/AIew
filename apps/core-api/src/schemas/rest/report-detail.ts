@@ -60,11 +60,28 @@ export const S_ReportDetailOverviewInfo = Type.Object(
   { $id: SchemaId.ReportDetailOverviewInfo },
 )
 
+// 리포트 상세 - 그래프 데이터
+export const S_ReportGraphData = Type.Object(
+  {
+    labels: Type.Array(Type.String(), {
+      description: '질문 라벨 배열 (예: ["q1", "q1-1", "q1-2", "q2"])',
+    }),
+    scores: Type.Array(Type.Number({ minimum: 0, maximum: 5 }), {
+      description: '각 질문별 점수 배열 (0~5, 미채점 시 0)',
+    }),
+    durations: Type.Array(Type.Number({ minimum: 0 }), {
+      description: '각 질문별 소요 시간 배열 (분)',
+    }),
+  },
+  { $id: SchemaId.ReportGraphData },
+)
+
 // 리포트 상세 - 메인 응답
 export const S_ReportDetailResponse = Type.Object(
   {
     overviewInfo: S_ReportDetailOverviewInfo,
     feedback: Type.String({ description: '전체 피드백' }),
+    graphData: S_ReportGraphData,
   },
   { $id: SchemaId.ReportDetailResponse, description: '리포트 상세 정보' },
 )
