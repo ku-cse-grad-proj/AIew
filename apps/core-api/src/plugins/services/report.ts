@@ -432,16 +432,13 @@ export class ReportService {
       orderBy: { updatedAt: 'asc' },
       select: {
         title: true,
-        updatedAt: true,
         averageScore: true,
         totalTimeSec: true,
       },
     })
 
     return {
-      labels: sessions.map(
-        (s) => s.updatedAt.toISOString().split('T')[0], // YYYY-MM-DD
-      ),
+      labels: sessions.map((s) => s.title),
       scores: sessions.map((s) => s.averageScore ?? 0),
       durations: sessions.map((s) =>
         s.totalTimeSec ? Math.round(s.totalTimeSec / 60) : 0,
