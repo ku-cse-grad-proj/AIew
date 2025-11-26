@@ -479,8 +479,8 @@ export class ReportService {
     | Prisma.InterviewSessionOrderByWithRelationInput
     | Prisma.InterviewSessionOrderByWithRelationInput[] {
     if (!sort) {
-      // 기본: 최신순
-      return { createdAt: 'desc' }
+      // 기본: 완료된 순서
+      return { updatedAt: 'desc' }
     }
 
     const [field, order] = sort.split('-')
