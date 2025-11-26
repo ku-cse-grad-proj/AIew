@@ -1,3 +1,4 @@
+import { MultipartFile, MultipartValue } from '@fastify/multipart'
 import {
   FastifyPluginAsyncTypebox,
   TypeBoxTypeProvider,
@@ -12,6 +13,38 @@ import {
   S_InterviewSessionPatchBody,
 } from '@/schemas/rest/interview'
 import SchemaId from '@/utils/schema-id'
+
+// attachFieldsToBody: true 사용 시 PATCH body 타입
+interface InterviewPatchMultipartBody {
+  coverLetter?: MultipartFile
+  portfolio?: MultipartFile
+  title?: MultipartValue<string>
+  company?: MultipartValue<string>
+  jobTitle?: MultipartValue<string>
+  jobSpec?: MultipartValue<string>
+  idealTalent?: MultipartValue<string>
+}
+
+// PATCH /interviews/:sessionId body 스키마
+const S_InterviewPatchMultipartBody = Type.Object({
+  coverLetter: Type.Optional(
+    Type.Any({
+      isFile: true,
+      description: '자기소개서 파일 (PDF)',
+    }),
+  ),
+  portfolio: Type.Optional(
+    Type.Any({
+      isFile: true,
+      description: '포트폴리오 파일 (PDF)',
+    }),
+  ),
+  title: Type.Optional(Type.Any({ description: '면접 세션 제목' })),
+  company: Type.Optional(Type.Any({ description: '회사명' })),
+  jobTitle: Type.Optional(Type.Any({ description: '직무명' })),
+  jobSpec: Type.Optional(Type.Any({ description: '세부 직무' })),
+  idealTalent: Type.Optional(Type.Any({ description: '회사 인재상' })),
+})
 
 const controller: FastifyPluginAsyncTypebox = async (
   fastify: FastifyInstance,
@@ -67,6 +100,7 @@ const controller: FastifyPluginAsyncTypebox = async (
         '`sessionId`에 해당하는 면접 세션의 정보를 수정합니다. **본인의 면접 세션만 수정할 수 있습니다.**',
       params: C_Params,
       consumes: ['multipart/form-data'],
+      body: S_InterviewPatchMultipartBody,
       response: {
         200: S_InterviewSessionItem,
         403: C_ResErr,
@@ -77,36 +111,55 @@ const controller: FastifyPluginAsyncTypebox = async (
       const { sessionId } = request.params
       const { userId } = request.user
 
-      const body = {} as Static<typeof S_InterviewSessionPatchBody>
+      // attachFieldsToBody: true 사용 시 body에서 직접 접근
+      const multipartBody = request.body as InterviewPatchMultipartBody
+
+      // 파일 처리
       const files: {
         coverLetter?: { buffer: Buffer; filename: string }
         portfolio?: { buffer: Buffer; filename: string }
       } = {}
 
-      const parts = request.parts()
-      for await (const part of parts) {
-        if (part.type === 'file') {
-          if (part.mimetype !== 'application/pdf') {
-            // 스트림을 소비해야 에러가 전파되지 않음
-            void part.file.resume()
-            throw fastify.httpErrors.unsupportedMediaType(
-              `Unsupported Media Type: '${part.filename}'. Only PDF files are allowed.`,
-            )
-          }
-          const buffer = await part.toBuffer()
-          if (part.fieldname === 'coverLetter') {
-            files.coverLetter = { buffer, filename: part.filename }
-          } else if (part.fieldname === 'portfolio') {
-            files.portfolio = { buffer, filename: part.filename }
-          }
-        } else {
-          if (part.value) {
-            const key = part.fieldname as keyof Static<
-              typeof S_InterviewSessionPatchBody
-            >
-            body[key] = JSON.parse(part.value as string)
-          }
+      if (multipartBody.coverLetter) {
+        if (multipartBody.coverLetter.mimetype !== 'application/pdf') {
+          throw fastify.httpErrors.unsupportedMediaType(
+            `Unsupported Media Type: '${multipartBody.coverLetter.filename}'. Only PDF files are allowed.`,
+          )
         }
+        files.coverLetter = {
+          buffer: await multipartBody.coverLetter.toBuffer(),
+          filename: multipartBody.coverLetter.filename,
+        }
+      }
+
+      if (multipartBody.portfolio) {
+        if (multipartBody.portfolio.mimetype !== 'application/pdf') {
+          throw fastify.httpErrors.unsupportedMediaType(
+            `Unsupported Media Type: '${multipartBody.portfolio.filename}'. Only PDF files are allowed.`,
+          )
+        }
+        files.portfolio = {
+          buffer: await multipartBody.portfolio.toBuffer(),
+          filename: multipartBody.portfolio.filename,
+        }
+      }
+
+      // 텍스트 필드 추출 (MultipartValue에서 value 추출 후 JSON 파싱)
+      const body: Static<typeof S_InterviewSessionPatchBody> = {}
+      if (multipartBody.title?.value) {
+        body.title = JSON.parse(multipartBody.title.value)
+      }
+      if (multipartBody.company?.value) {
+        body.company = JSON.parse(multipartBody.company.value)
+      }
+      if (multipartBody.jobTitle?.value) {
+        body.jobTitle = JSON.parse(multipartBody.jobTitle.value)
+      }
+      if (multipartBody.jobSpec?.value) {
+        body.jobSpec = JSON.parse(multipartBody.jobSpec.value)
+      }
+      if (multipartBody.idealTalent?.value) {
+        body.idealTalent = JSON.parse(multipartBody.idealTalent.value)
       }
 
       const updatedSession =

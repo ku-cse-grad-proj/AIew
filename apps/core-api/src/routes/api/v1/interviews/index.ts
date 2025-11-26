@@ -1,9 +1,37 @@
+import { MultipartFile, MultipartValue } from '@fastify/multipart'
+import { Type } from '@sinclair/typebox'
 import { FastifyPluginAsync, FastifySchema, RouteHandler } from 'fastify'
 
 import { Tag } from '@/configs/swagger-option'
 import { S_InterviewSessionList } from '@/schemas/rest/interview'
 import { InterviewRequestBody } from '@/types/interview.types'
 import SchemaId from '@/utils/schema-id'
+
+// attachFieldsToBody: true 사용 시 body 타입
+interface InterviewMultipartBody {
+  coverLetter?: MultipartFile
+  portfolio?: MultipartFile
+  company?: MultipartValue<string>
+  jobTitle?: MultipartValue<string>
+  jobSpec?: MultipartValue<string>
+  idealTalent?: MultipartValue<string>
+}
+
+// POST /interviews body 스키마
+const S_InterviewPostBody = Type.Object({
+  coverLetter: Type.Any({
+    isFile: true,
+    description: '자기소개서 파일 (PDF)',
+  }),
+  portfolio: Type.Any({
+    isFile: true,
+    description: '포트폴리오 파일 (PDF)',
+  }),
+  company: Type.Any({ description: '회사 정보 (JSON 문자열)' }),
+  jobTitle: Type.Any({ description: '직무명 (JSON 문자열)' }),
+  jobSpec: Type.Any({ description: '세부 직무 (JSON 문자열)' }),
+  idealTalent: Type.Any({ description: '회사 인재상 (JSON 문자열)' }),
+})
 
 const controller: FastifyPluginAsync = async (fastify) => {
   // GET /interviews
@@ -41,6 +69,7 @@ const controller: FastifyPluginAsync = async (fastify) => {
       '파일 업로드 및 AI 질문 생성은 백그라운드에서 비동기적으로 처리되며, 완료 시 WebSocket으로 클라이언트에게 알림을 보냅니다.<br>' +
       '자기소개서와 포트폴리오는 PDF 파일만 업로드 가능합니다.',
     consumes: ['multipart/form-data'],
+    body: S_InterviewPostBody,
     response: {
       '201': {
         description: '성공적으로 면접 세션이 생성되었습니다.',
@@ -66,42 +95,51 @@ const controller: FastifyPluginAsync = async (fastify) => {
 
   const postHandler: RouteHandler = async (request, reply) => {
     const { interviewService } = fastify
-    const body = {} as InterviewRequestBody
-    const files: {
-      coverLetter?: { buffer: Buffer; filename: string }
-      portfolio?: { buffer: Buffer; filename: string }
-    } = {}
 
     try {
-      const parts = request.parts()
-      for await (const part of parts) {
-        if (part.type === 'file') {
-          if (part.mimetype !== 'application/pdf') {
-            // 스트림을 소비해야 에러가 전파되지 않음
-            void part.file.resume()
-            throw fastify.httpErrors.unsupportedMediaType(
-              `Unsupported Media Type: '${part.filename}'. Only PDF files are allowed.`,
-            )
-          }
-          const buffer = await part.toBuffer()
-          if (part.fieldname === 'coverLetter') {
-            files.coverLetter = { buffer, filename: part.filename }
-          } else if (part.fieldname === 'portfolio') {
-            files.portfolio = { buffer, filename: part.filename }
-          }
-        } else {
-          if (part.value) {
-            const key = part.fieldname as keyof InterviewRequestBody
-            body[key] = JSON.parse(part.value as string)
-          }
-        }
-      }
+      // attachFieldsToBody: true 사용 시 body에서 직접 접근
+      const multipartBody = request.body as InterviewMultipartBody
 
-      // 필수 파일 확인
-      if (!files.coverLetter || !files.portfolio) {
+      // 파일 검증 및 추출
+      const coverLetterFile = multipartBody.coverLetter
+      const portfolioFile = multipartBody.portfolio
+
+      if (!coverLetterFile || !portfolioFile) {
         throw fastify.httpErrors.badRequest(
           'Both coverLetter and portfolio files are required.',
         )
+      }
+
+      // PDF 타입 검증
+      if (coverLetterFile.mimetype !== 'application/pdf') {
+        throw fastify.httpErrors.unsupportedMediaType(
+          `Unsupported Media Type: '${coverLetterFile.filename}'. Only PDF files are allowed.`,
+        )
+      }
+      if (portfolioFile.mimetype !== 'application/pdf') {
+        throw fastify.httpErrors.unsupportedMediaType(
+          `Unsupported Media Type: '${portfolioFile.filename}'. Only PDF files are allowed.`,
+        )
+      }
+
+      // 파일 버퍼 추출
+      const files = {
+        coverLetter: {
+          buffer: await coverLetterFile.toBuffer(),
+          filename: coverLetterFile.filename,
+        },
+        portfolio: {
+          buffer: await portfolioFile.toBuffer(),
+          filename: portfolioFile.filename,
+        },
+      }
+
+      // 텍스트 필드 추출 (MultipartValue에서 value 추출 후 JSON 파싱)
+      const body: InterviewRequestBody = {
+        company: JSON.parse(multipartBody.company?.value || '{}'),
+        jobTitle: JSON.parse(multipartBody.jobTitle?.value || '{}'),
+        jobSpec: JSON.parse(multipartBody.jobSpec?.value || '{}'),
+        idealTalent: JSON.parse(multipartBody.idealTalent?.value || '{}'),
       }
 
       // 면접 세션 초기화 및 즉시 응답
@@ -117,10 +155,7 @@ const controller: FastifyPluginAsync = async (fastify) => {
       void interviewService.processInterviewInBackground(
         session.id,
         body,
-        files as {
-          coverLetter: { buffer: Buffer; filename: string }
-          portfolio: { buffer: Buffer; filename: string }
-        },
+        files,
       )
     } catch (error) {
       fastify.log.error({ error }, `[${request.id}] Error in postHandler`)
