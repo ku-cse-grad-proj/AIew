@@ -1,13 +1,13 @@
 import LineGraph from '../../_components/graph/LineGraph'
 import EmptyMessage from '../../dashboard/_components/EmptyMessage'
-import { graphData } from '../_types'
+import { GraphData } from '../_types'
 
 export default function ReportGraph({
   className,
   data,
 }: {
   className?: string
-  data: graphData
+  data: GraphData
 }) {
   const { labels, scores, durations } = data
   const graphData = [labels, scores, durations] as [
