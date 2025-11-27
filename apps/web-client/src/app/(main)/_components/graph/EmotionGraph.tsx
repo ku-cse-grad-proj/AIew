@@ -116,7 +116,6 @@ export default function EmotionGraph({ data }: EmotionGraphProps) {
   }
 
   const { times, angry, fear, happy, neutral, sad, surprise } = data
-  console.log('EmotionGraph data:', data)
 
   const series: Record<EmotionKey, number[]> = {
     angry,
