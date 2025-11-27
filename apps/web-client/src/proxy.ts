@@ -10,6 +10,7 @@ export async function proxy(req: NextRequest) {
 
   //auth 검사 필요 없는 page 및 api
   if (
+    pathname == '/' ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/v1/refresh') ||
     pathname.startsWith('/mock-api')
