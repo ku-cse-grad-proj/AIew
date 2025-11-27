@@ -13,14 +13,18 @@
   "dependencies": {
     "@openai/agents": "^0.1.0",
     "chart.js": "^4.5.1",
+    "clsx": "^2.1.1",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "lucide-react": "^0.555.0",
+    "motion": "^12.23.24",
     "next": "16.0.3",
     "next-runtime-env": "^3.3.0",
     "react": "19.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.0",
     "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^3.4.0",
     "use-debounce": "^10.0.6",
     "zod": "^3.25.76",
     "zustand": "^5.0.8"
