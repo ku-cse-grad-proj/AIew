@@ -15,9 +15,10 @@ export default function ReportGraph({
     number[],
     number[],
   ]
+  const hasData = graphData[0].length
   return (
     <section className={`w-full h-full px-8 pt-8 pb-32 ${className}`}>
-      {graphData ? (
+      {hasData ? (
         <LineGraph data={graphData} />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
