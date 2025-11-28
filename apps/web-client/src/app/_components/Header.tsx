@@ -1,11 +1,13 @@
 import Link from 'next/link'
 
+import Logo from './Logo'
+
 export function Header() {
   return (
     <header className="bg-white border-b border-[var(--color-neutral-border)] sticky top-0 z-50 shadow-sm">
       <div className="max-w-[1280px] mx-auto px-[24px] py-[16px] flex items-center justify-between relative">
         <div className="flex items-center gap-[8px]">
-          <span className="text-primary text-4xl font-bold">AIew</span>
+          <Logo />
         </div>
 
         <nav className="hidden md:flex items-center gap-80 absolute left-1/2 -translate-x-1/2">

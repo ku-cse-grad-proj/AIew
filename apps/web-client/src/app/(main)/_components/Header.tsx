@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 
 import Nav from './Nav'
 
+import Logo from '@/app/_components/Logo'
 import { privateFetch } from '@/app/lib/fetch'
 import { CACHE_TAG } from '@/constants/cacheTags'
 
@@ -14,9 +15,10 @@ export default function MainHeader() {
         sm:max-w-1248 sm:h-96 sm:p-24 sm:grid-cols-[1fr_auto_1fr]"
     >
       {/* Left (span) */}
-      <span className="order-1 justify-self-start text-primary text-4xl font-bold sm:order-none">
-        AIew
-      </span>
+      <Logo
+        href="/dashboard"
+        className="order-1 justify-self-start sm:order-none"
+      />
 
       {/* Center (Nav) */}
       <Nav
