@@ -3,8 +3,8 @@ import { useSearchParams } from 'next/navigation'
 
 import { EmotionGraphDataWithId } from '../../../_types'
 
+import EmptyMessage from '@/app/(main)/_components/EmptyMessage'
 import EmotionGraph from '@/app/(main)/_components/graph/EmotionGraph'
-import EmptyMessage from '@/app/(main)/dashboard/_components/EmptyMessage'
 
 export default function EmotionSection({
   dataWithId,

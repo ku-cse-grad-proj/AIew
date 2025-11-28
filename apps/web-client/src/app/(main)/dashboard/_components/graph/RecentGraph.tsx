@@ -5,6 +5,7 @@ import CardSection from '../CardSection'
 import styles from '../dashboard.module.css'
 import ShortcutLink from '../ShortcutLink'
 
+import EmptyMessage from '@/app/(main)/_components/EmptyMessage'
 import LineGraph from '@/app/(main)/_components/graph/LineGraph'
 
 export default async function RecentGraph({
@@ -41,8 +42,15 @@ async function GraphArea() {
   ]
 
   return (
-    <div className="flex-1 min-h-250 w-full">
-      <LineGraph data={graphData} />
+    <div className="flex-1 min-h-250 w-full flex items-center justify-center">
+      {labels.length ? (
+        <LineGraph data={graphData} />
+      ) : (
+        <EmptyMessage
+          main="No reports yet"
+          sub="Finish an interview to create one"
+        />
+      )}
     </div>
   )
 }
