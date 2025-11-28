@@ -2,6 +2,6 @@
 
 import Error from '../_components/Error'
 
-export default function DashboardError() {
+export default function InterviewError() {
   return <Error />
 }
