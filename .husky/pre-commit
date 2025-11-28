@@ -1,3 +1,1 @@
-poetry --directory apps/ai-server lock
-git add apps/ai-server/poetry.lock
 pnpm lint-staged
