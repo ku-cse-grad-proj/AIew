@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 import { getUser } from '../_lib/api'
 
@@ -20,9 +21,12 @@ export default async function ProfileMenuPopover() {
         <p className="text-[20px] font-bold">hi, {me.name}</p>
       </div>
       <div className="w-full flex flex-col gap-16">
-        <button className="border border-neutral-subtext w-full py-8 rounded-[10px]">
+        <Link
+          className="border border-neutral-subtext w-full py-8 rounded-[10px] inline-flex items-center justify-center"
+          href={'/profile/edit'}
+        >
           <span>edit profile</span>
-        </button>
+        </Link>
         <SignOutButton />
       </div>
     </div>
