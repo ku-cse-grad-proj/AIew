@@ -2,10 +2,9 @@ import Image from 'next/image'
 import { Suspense } from 'react'
 
 import Nav from './Nav'
+import Profile from './Profile'
 
 import Logo from '@/app/_components/Logo'
-import { privateFetch } from '@/app/lib/fetch'
-import { CACHE_TAG } from '@/constants/cacheTags'
 
 export default function MainHeader() {
   return (
@@ -45,26 +44,5 @@ export default function MainHeader() {
         </Suspense>
       </div>
     </header>
-  )
-}
-
-//TODO:: logout시 cache 파기
-async function Profile() {
-  const { CORE_API_URL, API_PREFIX } = process.env
-  const res = await privateFetch(`${CORE_API_URL}/${API_PREFIX}/me`, {
-    cache: 'force-cache',
-    next: { tags: [CACHE_TAG.USER] },
-  })
-  const me = res.ok ? await res.json() : null
-  const src = me?.pic_url ?? 'profile.svg'
-
-  return (
-    <Image
-      className="justify-self-end rounded-full"
-      src={src}
-      alt="profile img"
-      width={48}
-      height={48}
-    />
   )
 }
