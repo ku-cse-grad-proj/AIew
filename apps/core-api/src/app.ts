@@ -1,37 +1,28 @@
-import { join } from 'node:path'
-
-import AutoLoad, { AutoloadPluginOptions } from '@fastify/autoload'
 import { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
+import fp from 'fastify-plugin'
 
-export interface AppOptions
-  extends FastifyServerOptions,
-    Partial<AutoloadPluginOptions> {}
-// Pass --options via CLI arguments in command to enable these options.
-const options: AppOptions = {}
+import { Tag } from './configs/swagger-option'
 
-const app: FastifyPluginAsync<AppOptions> = async (
-  fastify,
-  opts,
-): Promise<void> => {
-  // Place here your custom code!
+export type AppOptions = FastifyServerOptions & Partial<unknown>
 
-  // Do not touch the following lines
-
-  // This loads all plugins defined in plugins
-  // those should be support plugins that are reused
-  // through your application
-  void fastify.register(AutoLoad, {
-    dir: join(__dirname, 'plugins'),
-    options: opts,
-  })
-
-  // This loads all plugins defined in routes
-  // define your routes in one of these
-  void fastify.register(AutoLoad, {
-    dir: join(__dirname, 'routes'),
-    options: opts,
+/**
+ * @description All app-level plugins & hooks should be registered here
+ */
+const app: FastifyPluginAsync<AppOptions> = async (fastify): Promise<void> => {
+  // 플러그인으로 인해 자동 등록되는 oauth2 관련 routes 숨김처리
+  fastify.addHook('onRoute', (routeOptions) => {
+    if (
+      routeOptions.path === '/api/v1/oauth2/google' ||
+      routeOptions.path === '/api/v1/oauth2/github'
+    ) {
+      routeOptions.schema = {
+        ...routeOptions.schema,
+        tags: [Tag.Oauth],
+        summary: '각 OAuth 서비스 제공사에 등록된 Route',
+      }
+    }
   })
 }
 
-export default app
-export { app, options }
+export default fp(app)
+export { app }

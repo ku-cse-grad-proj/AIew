@@ -63,3 +63,11 @@ test/types/index.js
 
 # compiled app
 dist
+
+# Environment variables
+.env
+
+/src/generated/prisma
+
+# Prisma
+/prisma/*.db

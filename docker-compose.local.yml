@@ -1,0 +1,31 @@
+# 로컬 개발 환경용 오버라이드
+services:
+  core-api:
+    env_file:
+      - .env.local # 모든 환경변수는 이 파일에서 로드
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./apps/core-api/src:/app/apps/core-api/src # 핫 리로드용
+
+  ai-server:
+    env_file:
+      - .env.local # 모든 환경변수는 이 파일에서 로드
+    environment:
+      PYTHONUNBUFFERED: 1
+    volumes:
+      - ./apps/ai-server/app:/app/app # 핫 리로드용
+
+  web-client:
+    env_file:
+      - .env.local # 모든 환경변수는 이 파일에서 로드
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./apps/web-client/src:/app/apps/web-client/src # 핫 리로드용
+
+  nginx:
+    ports:
+      - '3001:80' # 로컬에서는 3001 포트 사용
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro

@@ -1,10 +1,11 @@
 {
-  "name": "ai-interview",
+  "name": "aiew",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "concurrently -n web,api,ai -c cyan,green,magenta \"pnpm --filter ./apps/web-client run dev\" \"pnpm --filter ./apps/core-api run dev\" \"poetry --directory apps/ai-server run uvicorn app.main:app --reload --port 8000\"",
+    "start": "concurrently -n web,api,ai -c cyan,green,magenta \"pnpm --filter ./apps/web-client run start --port 4000\" \"pnpm --filter ./apps/core-api run dev\" \"poetry --directory apps/ai-server run uvicorn app.main:app --reload --port 8000\"",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:ai": "poetry --directory apps/ai-server run ruff format .",
     "lint": "pnpm lint:node && pnpm lint:ai",
@@ -21,7 +22,7 @@
     ],
     "apps/ai-server/**/*.py": [
       "poetry --directory apps/ai-server run ruff format",
-      "poetry --directory apps/ai-server run ruff check --fix"
+      "poetry --directory apps/ai-server run ruff check . --fix"
     ],
     "**/*.{js,jsx,json,md,yml,yaml}": [
       "prettier --write"
@@ -34,16 +35,23 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@typescript-eslint/eslint-plugin": "^8.35.1",
-    "@typescript-eslint/parser": "^8.35.1",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
     "concurrently": "^9.2.0",
-    "eslint": "^9.29.0",
-    "eslint-config-prettier": "^10.1.5",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "^7.1.11",
+      "@types/react": "19.2.4",
+      "@types/react-dom": "19.2.3"
+    }
   }
 }

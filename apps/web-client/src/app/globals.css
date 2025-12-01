@@ -1,26 +1,216 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f1f1f1;
+  --foreground: #333333;
+}
+
+@theme {
+  --spacing: 1px;
+
+  /* Color styles */
+  --color-box-stroke: rgba(255, 255, 255, 0.4000000059604645);
+  --color-box-fill: rgba(255, 255, 255, 0.05000000074505806);
+  --color-selected-text-color: rgba(25, 112, 163, 1);
+  --color-navy: rgba(36, 70, 109, 1);
+  --color-dark-base: rgba(153, 188, 211, 1);
+  --color-base: rgba(204, 228, 247, 1);
+  --color-bright: rgba(245, 247, 248, 1);
+  --color-dark: rgba(114, 115, 113, 1);
+  --color-black: rgba(51, 51, 51, 1);
+  --color-success: rgba(76, 175, 80, 1);
+  --color-warning: rgba(255, 152, 0, 1);
+  --color-error: rgba(244, 67, 54, 1);
+
+  /* Primary */
+  --color-primary: #333d71;
+  --color-primary-hover: #2a315a;
+
+  /* Secondary */
+  --color-secondary: #3A76A2;
+  --color-secondary-hover: #3a739c;
+
+  /* Neutral */
+  --color-neutral-background: #f1f1f1; /* 전체 페이지 배경 */
+  --color-neutral-card: #f5f7f8; /* 카드/패널 배경 */
+  --color-neutral-border: #e0e3e7; /* divider, input border */
+  --color-neutral-text: #333333; /* 본문 텍스트 */
+  --color-neutral-subtext: #666666; /* 보조 텍스트 */
+  --color-neutral-inverse: #f5f7f8; /* 짙은 배경 위에 쓰는 텍스트 */
+  --color-neutral-gray: #d1d5dc; /* 회색 요소 */
+
+  /* State */
+  --color-success: #4caf50;
+  --color-success-hover: #3e8e41;
+
+  --color-warning: #ffc107;
+  --color-warning-hover: #e0a800;
+
+  --color-error: #f44336;
+  --color-error-hover: #d32f2f;
+
+  /* Effect styles */
+  --selected-box: 0px 4px 20px rgba(0, 0, 0, 0.25);
+  --shadow-box: 0px 8px 24px rgba(0, 0, 0, 0.07);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-pretendard: var(--font-pretendard);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* --background: #0a0a0a; */
+    /* --foreground: #ededed; */
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* custom select icon */
+select,
+::picker(select) {
+  appearance: base-select;
+}
+
+select {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 10px;
+  transition: 0.4s;
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+select:not(:disabled):hover {
+  background: #d1d5dc;
+  cursor: pointer;
+}
+
+select::picker-icon {
+  content: '';
+  width: 20px;
+  height: 20px;
+  background-image: url('/icons/select_tag.svg');
+  background-size: 20px 20px;
+  background-repeat: no-repeat;
+  transition: 0.4s rotate;
+}
+
+select:open::picker-icon {
+  rotate: -180deg;
+}
+
+::picker(select) {
+  border: 1px solid #d1d5dc;
+  border-radius: 10px;
+  box-shadow: var(--shadow-box);
+  margin-top: 4px;
+}
+
+option {
+  display: flex;
+  height: 40px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+/* Calmer breathing variants */
+@keyframes breath-calm {
+  0%,
+  100% {
+    transform: scale(0.98);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+@keyframes breathDelay-calm {
+  0%,
+  100% {
+    transform: scale(0.975);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.035);
+    opacity: 0.95;
+  }
+}
+.animate-breath-calm {
+  animation: breath-calm 2.8s cubic-bezier(0.22, 0, 0.15, 1) infinite;
+}
+.animate-breath-delay-calm {
+  animation: breathDelay-calm 2.8s cubic-bezier(0.22, 0, 0.15, 1) infinite;
+  animation-delay: 0.4s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-breath-calm,
+  .animate-breath-delay-calm {
+    animation: none;
+  }
+}
+
+.shimmer-text {
+  position: relative;
+}
+
+.shimmer-text::after {
+  content: attr(data-content);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(245, 247, 248, 0.9) 50%,
+    rgba(191, 191, 191, 0) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+
+  mix-blend-mode: screen;
+
+  animation: shimmer var(--shimmer-speed, 2.8s) cubic-bezier(0.22, 0, 0.15, 1)
+    infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position-x: 200%;
+  }
+  100% {
+    background-position-x: -200%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text::after {
+    animation: none;
+  }
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

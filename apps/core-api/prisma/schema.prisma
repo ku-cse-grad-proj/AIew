@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 질문의 종류를 나타내는 Enum
+enum QuestionType {
+  TECHNICAL
+  PERSONALITY
+  TAILORED
+}
+
+// 면접 세션의 진행 상태를 나타내는 Enum
+enum InterviewSessionStatus {
+  PENDING     // AI 질문 생성 중
+  READY       // 면접 시작 가능
+  IN_PROGRESS // 면접 진행 중
+  COMPLETED   // 면접 완료
+  FAILED      // AI 질문 생성 실패
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  name              String?
+  pic_url           String             @default("https://api.dicebear.com/7.x/adventurer-neutral/svg?seed=mail@ashallendesign.co.uk")
+  provider          String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  // Relation to InterviewSession
+  interviewSessions InterviewSession[]
+}
+
+model InterviewSession {
+  id                   String   @id @default(cuid())
+  title                String   // 예: "토스뱅크 interview 1"
+  company              String
+  jobTitle             String
+  jobSpec              String
+  idealTalent          String?
+  coverLetter          String? // Path to the stored file
+  portfolio            String? // Path to the stored file
+  currentQuestionIndex Int      @default(0)
+  finalFeedback        String? // 모든 면접 완료 후 생성될 총평
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  status               InterviewSessionStatus @default(PENDING)
+  totalTimeSec         Int?            // 면접 전체 소요 시간 (초)
+  averageScore         Float?          // 전체 평균 점수 (소수 1자리)
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  steps   InterviewStep[] // 이 세션에 속한 모든 질문/답변 목록
+
+  @@unique([userId, title])
+}
+
+// 질문과 답변, 평가를 한 세트로 묶는 모델
+model InterviewStep {
+  id             String       @id @default(cuid())
+  aiQuestionId   String       // AI가 생성한 질문의 고유 ID
+  type           QuestionType // 질문 유형 (기술, 인성, 맞춤)
+  question       String       // AI가 생성한 질문 내용
+  answer         String?      // 사용자의 답변 내용
+  score          Int?         // AI가 평가한 총점 (1~5)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // ++ 추가: 질문 생성 시의 메타데이터
+  rationale              String?   // 질문 선정 근거
+  criteria               String[]  // 평가 기준 키워드 목록
+  skills                 String[]  // 측정 역량 태그 목록
+  estimatedAnswerTimeSec Int?      // 예상 답변 시간 (초)
+
+  // ++ 추가: 답변 및 평가에 대한 상세 정보
+  answerDurationSec      Int?      // 실제 사용자 답변 시간 (초)
+  answerStartedAt        DateTime? // 답변 시작 시간
+  answerEndedAt          DateTime? // 답변 종료 시간
+  strengths              String[]  // AI가 평가한 강점 목록
+  improvements           String[]  // AI가 평가한 개선점 목록
+  redFlags               String[]  // AI가 발견한 위험 신호 목록
+  feedback               String?   // AI가 생성한 답변별 텍스트 피드백
+
+  // --- 관계 정의 ---
+
+  // 1. InterviewSession과의 관계 (Many-to-One)
+  interviewSession   InterviewSession @relation(fields: [interviewSessionId], references: [id], onDelete: Cascade)
+  interviewSessionId String
+
+  // 2. 꼬리 질문을 위한 자기 참조 관계 (One-to-Many)
+  // 이 단계로부터 파생된 꼬리 질문 단계 목록
+  tailSteps      InterviewStep[] @relation("FollowUp")
+  
+  // 이 단계가 어떤 부모 단계로부터 파생된 꼬리 질문인지 명시
+  // 이 필드가 존재하면 꼬리 질문임
+  parentStep     InterviewStep?  @relation("FollowUp", fields: [parentStepId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentStepId   String?
+
+  // ++ 추가: 세부 평가 기준 점수와의 관계
+  criterionEvaluations CriterionEvaluation[]
+
+  // ++ 추가: 답변 영상 감정 분석 결과와의 관계 (One-to-One)
+  emotionAnalysis EmotionAnalysis?
+}
+
+// ++ 신규 모델: 세부 평가 기준별 점수를 저장하는 모델
+model CriterionEvaluation {
+  id        String @id @default(cuid())
+  name      String // 평가 기준명 (예: 명확성, 깊이)
+  score     Int    // 1~5 정수 점수
+  reason    String // 해당 기준 점수 부여 이유
+
+  // Relations
+  interviewStep   InterviewStep @relation(fields: [interviewStepId], references: [id], onDelete: Cascade)
+  interviewStepId String
+}
+
+// ++ 신규 모델: 답변 영상 감정 분석 결과를 저장하는 모델
+model EmotionAnalysis {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Relations
+  interviewStep   InterviewStep @relation(fields: [interviewStepId], references: [id], onDelete: Cascade)
+  interviewStepId String        @unique // One-to-One 관계
+  frames          EmotionFrame[] // 프레임별 감정 분석 결과
+}
+
+// ++ 신규 모델: 프레임별 감정 확률을 저장하는 모델
+model EmotionFrame {
+  id       String @id @default(cuid())
+  frame    Int    // 프레임 번호
+  time     Float  // 해당 프레임의 시간(초)
+  happy    Float  // happy 감정 확률 (0.0~1.0)
+  sad      Float  // sad 감정 확률 (0.0~1.0)
+  neutral  Float  // neutral 감정 확률 (0.0~1.0)
+  angry    Float  // angry 감정 확률 (0.0~1.0)
+  fear     Float  // fear 감정 확률 (0.0~1.0)
+  surprise Float  // surprise 감정 확률 (0.0~1.0)
+
+  // Relations
+  emotionAnalysis   EmotionAnalysis @relation(fields: [emotionAnalysisId], references: [id], onDelete: Cascade)
+  emotionAnalysisId String
+}

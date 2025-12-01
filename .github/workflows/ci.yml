@@ -5,13 +5,26 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch: #수동 실행 가능
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Use pnpm
         uses: pnpm/action-setup@v4
@@ -23,7 +36,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install node dependencies
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Use Python
         uses: actions/setup-python@v5
@@ -48,5 +61,14 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Migrate Database
+        run: pnpm --filter core-api exec prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Test
         run: pnpm test
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          AI_SERVER_URL: ${{ secrets.AI_SERVER_URL }}

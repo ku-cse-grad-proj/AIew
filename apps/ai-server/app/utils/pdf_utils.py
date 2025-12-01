@@ -1,0 +1,98 @@
+import re
+import io
+from io import BytesIO
+from typing import List
+
+import fitz # PyMuPDF
+import pytesseract
+from PIL import Image
+
+
+def is_digital_pdf(
+    file_bytes: bytes
+) -> bool:
+    
+    doc = fitz.open("pdf", file_bytes)
+    for page in doc:
+        if page.get_text("text").strip():
+            return True
+    return False
+
+
+
+def extract_text_from_digital_pdf(
+    file_bytes: bytes
+) -> str:
+    
+    with fitz.open(stream=BytesIO(file_bytes), filetype="pdf") as doc:
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        return text
+
+
+
+def extract_text_from_image_pdf(
+    file_bytes: bytes
+) -> str:
+    
+    doc = fitz.open("pdf", file_bytes)
+    full_text = ""
+
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        pix = page.get_pixmap(dpi=300)
+        img_data = pix.tobytes("png")
+        image = Image.open(io.BytesIO(img_data))
+
+        text = pytesseract.image_to_string(image, lang="eng+kor")
+        full_text += text + "\n"
+
+    return full_text
+
+
+def preprocess_text(
+    text: str
+) -> List[str]:
+    """
+    문장 병합 및 정제
+    - 문장 중간에서 끊긴 줄은 이어 붙이고, 의미 있는 개행은 유지
+    - 조사/종결어미/동사 등으로 끝나는 줄은 다음 줄과 이어 붙일 가능성 높음
+    """
+    lines = text.splitlines()
+    processed_text = ""
+    i = 0
+
+    while i < len(lines):
+        line = lines[i].strip()
+        if not line:
+            processed_text += "\n"
+            i += 1
+            continue
+
+        next_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
+
+        # 조건1: 종결 부호로 끝나지 않음 (문장 중간)
+        cond1 = not re.search(r"[.?!…]$", line)
+
+        # 조건2: 조사/동사/전치사/부사 등 문맥상 이어질 가능성
+        cond2 = re.search(
+            r"(은|는|이|가|을|를|고|도|지만|하며|하고|되어|한다|했다|있다|같은|되며|및|하거나|위한|에서|으로|으로서|수|때문)$",
+            line,
+        )
+
+        # 조건3: 다음 줄이 자연스럽게 이어질 수 있는 시작어
+        cond3 = re.match(r"^[a-zA-Z가-힣0-9]", next_line) and not re.match(
+            r"^[ㄱ-ㅎㅏ-ㅣ]", next_line
+        )
+
+        if next_line and (cond1 or cond2 or cond3):
+            processed_text += line + " "
+            i += 1
+        else:
+            processed_text += line + "\n"
+            i += 1
+
+    preprocessed_text = "".join(processed_text)
+
+    return preprocessed_text

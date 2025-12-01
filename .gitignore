@@ -8,6 +8,11 @@ __pycache__/
 
 # vscode
 .vscode/
+GEMINI.md
 
 # OS
 .DS_Store
+
+*.pem
+.env.production
+.env.local

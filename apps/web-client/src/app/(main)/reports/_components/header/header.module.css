@@ -1,0 +1,13 @@
+@reference "../../../../globals.css";
+
+.outline {
+  @apply border border-1 border-neutral-gray rounded-[10px];
+}
+
+.popoverContent {
+  @apply flex flex-col absolute bg-neutral-card right-0 mt-4 p-16 gap-8 rounded-[10px] shadow-box z-100;
+}
+
+.labelText {
+  @apply text-[14px] text-neutral-subtext;
+}

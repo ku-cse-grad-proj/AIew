@@ -1,0 +1,70 @@
+# 공통 서비스 정의 (로컬/프로덕션 공유)
+services:
+  # Core API (Fastify)
+  core-api:
+    build:
+      context: .
+      dockerfile: apps/core-api/Dockerfile
+    container_name: aiew-core-api
+    expose:
+      - 3000
+    networks:
+      - backend
+      - frontend
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AI Server (FastAPI)
+  ai-server:
+    build:
+      context: .
+      dockerfile: apps/ai-server/Dockerfile
+    container_name: aiew-ai-server
+    expose:
+      - 8000
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Web Client (Next.js)
+  web-client:
+    build:
+      context: .
+      dockerfile: apps/web-client/Dockerfile
+    container_name: aiew-web-client
+    expose:
+      - 4000
+    networks:
+      - frontend
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4000/']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: aiew-nginx
+    depends_on:
+      - web-client
+      - core-api
+    networks:
+      - frontend
+    restart: unless-stopped
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
