@@ -371,7 +371,7 @@ export class InterviewService {
         userId,
         NOT: { status: 'COMPLETED' },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
     })
 
     // 파일명 추출 로직 추가 (헬퍼 사용)
