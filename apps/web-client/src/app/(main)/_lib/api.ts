@@ -15,3 +15,14 @@ export async function getUser(): Promise<UserResponse> {
   }
   return await res.json()
 }
+
+export async function signOut() {
+  const { CORE_API_URL, API_PREFIX } = process.env
+  const res = await privateFetch(`${CORE_API_URL}/${API_PREFIX}/auth/logout`, {
+    method: 'POST',
+  })
+
+  if (!res.ok) {
+    throw new Error('로그아웃 중 문제가 발생했습니다.')
+  }
+}

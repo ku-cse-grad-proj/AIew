@@ -5,8 +5,8 @@ import { getUser } from '../_lib/api'
 import Popover from './popover/Popover'
 import PopoverContent from './popover/PopoverContent'
 import PopoverTriggeButton from './popover/PopoverTriggerButton'
+import ProfileMenuPopover from './ProfileMenuPopover'
 
-//TODO:: logout시 cache 파기
 export default async function Profile() {
   const me = await getUser()
 
@@ -21,7 +21,9 @@ export default async function Profile() {
           height={48}
         />
       </PopoverTriggeButton>
-      <PopoverContent className="right-0 w-320 h-320 bg-neutral-card z-100 shadow-box rounded-[20px]"></PopoverContent>
+      <PopoverContent className="right-0 w-320 h-320 bg-neutral-card z-100 shadow-box rounded-[20px]">
+        <ProfileMenuPopover />
+      </PopoverContent>
     </Popover>
   )
 }
