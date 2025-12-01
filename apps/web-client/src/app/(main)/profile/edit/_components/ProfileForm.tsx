@@ -1,5 +1,6 @@
 'use client'
 
+import { Camera } from 'lucide-react'
 import Form from 'next/form'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -19,9 +20,11 @@ const MAX_FILE_SIZE = 3 * 1024 * 1024 // 3MB
 export default function ProfileForm({
   user,
   action,
+  isModal = false,
 }: {
   user: UserResponse
   action: (formData: FormData) => void | Promise<void>
+  isModal?: boolean
 }) {
   const router = useRouter()
   const [picUrl, setPicUrl] = useState(user.pic_url)
@@ -45,32 +48,60 @@ export default function ProfileForm({
     setPicUrl(newUrl)
   }
   return (
-    <Form action={action} className="w-full flex flex-col items-center">
-      {/* profile */}
-      <div className="w-full min-w-240 max-w-320 flex flex-col gap-24 items-center justify-center p-24">
-        <div className="relative w-120 h-120 rounded-full overflow-hidden">
-          <Image
-            src={picUrl}
-            alt={'user profile'}
-            fill
-            className="object-cover"
-            sizes="160px"
-          />
+    <Form
+      action={action}
+      className="w-full flex-1 min-h-320 flex flex-col items-center justify-between gap-48"
+    >
+      <div
+        className={`w-full flex-1 min-h-0 flex flex-col items-center gap-24 ${!isModal ? 'lg:flex-row' : ''}`}
+      >
+        {/* profile */}
+        <div className="w-full min-w-240 flex flex-col gap-24 items-center justify-center pt-24">
+          <label className="group hover:cursor-pointer rounded-full relative hover:bg-blue-200">
+            <div className="relative w-120 h-120 rounded-full overflow-hidden">
+              <Image
+                src={picUrl}
+                alt={'user profile'}
+                fill
+                className="object-cover"
+                sizes="160px"
+              />
+            </div>
+            <input
+              type="file"
+              name="avatar"
+              accept={ALLOWED_TYPES.join(',')}
+              onChange={handleFileChange}
+              hidden
+            />
+            <span className="absolute right-4 bottom-4 bg-neutral-background rounded-full p-4 hover:bg-blue-200 group-hover:bg-blue-200">
+              <Camera width={24} height={24} />
+            </span>
+          </label>
         </div>
-        <label className="w-full py-8 border border-subtext rounded-[10px] hover:cursor-pointer inline-flex items-center justify-center">
-          <input
-            type="file"
-            name="avatar"
-            accept={ALLOWED_TYPES.join(',')}
-            onChange={handleFileChange}
-            hidden
-          />
-          <span className="text-subtext">change profile</span>
-        </label>
+        {/* name */}
+        <div className="flex w-full lg:min-w-592 items-center justify-center">
+          <label className="inline-flex flex-col justify-center w-full max-w-480 lg:max-w-592 gap-8">
+            <span>name</span>
+            <input
+              type="text"
+              name="name"
+              defaultValue={user.name}
+              className="h-48 w-full px-12 rounded-[10px] border border-neutral-gray"
+            />
+          </label>
+        </div>
       </div>
-      <div>
-        <button onClick={() => router.back()}>cancel</button>
-        <button className="bg-primary">save</button>
+      <div className="w-full flex justify-center lg:justify-end gap-24">
+        <button
+          className="h-48 flex-1 max-w-228 lg:max-w-284 border border-neutral-gray rounded-[10px]"
+          onClick={() => router.back()}
+        >
+          <span className="text-subtext">cancel</span>
+        </button>
+        <button className="h-48 flex-1 max-w-228 lg:max-w-284 bg-primary rounded-[10px]">
+          <span className="text-neutral-background">save</span>{' '}
+        </button>
       </div>
     </Form>
   )

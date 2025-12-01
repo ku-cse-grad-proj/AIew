@@ -5,7 +5,7 @@ import EditProfileSection from '@/app/(main)/profile/edit/_components/EditProfil
 export default function ProfileEditPage() {
   return (
     <Modal>
-      <EditProfileSection />
+      <EditProfileSection isModal />
     </Modal>
   )
 }

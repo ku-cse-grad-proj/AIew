@@ -29,7 +29,7 @@ export default function Modal({ children }: { children: ReactNode }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full h-full bg-neutral-card relative sm:w-480 sm:h-480 sm:rounded-[20px]"
+        className="w-full h-full bg-neutral-card relative sm:w-640 sm:max-h-640 sm:rounded-[20px]"
       >
         <button
           type="button"
