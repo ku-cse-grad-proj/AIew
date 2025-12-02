@@ -1,9 +1,10 @@
-import Image from 'next/image'
-
+import { getUser } from '../../_lib/api'
 import { getDashboard } from '../_lib/api'
 
 import styles from './dashboard.module.css'
 import InfoCard from './InfoCard'
+
+import CircleProfile from '@/app/_components/CircleProfile'
 
 type UserInfos = {
   name: string
@@ -16,6 +17,7 @@ type UserInfos = {
 
 export default async function UserInfos({ className }: { className?: string }) {
   const { userInfos }: { userInfos: UserInfos } = await getDashboard()
+  const { updatedAt } = await getUser()
   const {
     name,
     mostJobTitle,
@@ -34,14 +36,12 @@ export default async function UserInfos({ className }: { className?: string }) {
       <div
         className={`h-full p-16 gap-16 col-span-2 bg-neutral-card flex ${styles.card}`}
       >
-        <div className="flex-3 relative aspect-square max-w-[80px] lg:max-w-[100px] self-center rounded-full overflow-hidden">
-          <Image
-            src={profileImg}
-            fill
-            alt={`${name} profile image`}
-            className="object-cover"
-          />
-        </div>
+        <CircleProfile
+          src={profileImg}
+          updatedAt={updatedAt}
+          name={name}
+          className="flex-3  max-w-[80px] lg:max-w-[100px] self-center"
+        />
         <div className="flex-5 h-full flex flex-col justify-center gap-4 p-8">
           <p className="font-bold text-[20px]">{name}</p>
           <p className="font-medium text-[18px] text-neutral-subtext">

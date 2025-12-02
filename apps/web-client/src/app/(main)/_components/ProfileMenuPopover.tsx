@@ -1,9 +1,10 @@
-import Image from 'next/image'
 import Link from 'next/link'
 
 import { getUser } from '../_lib/api'
 
 import SignOutButton from './SignOutButton'
+
+import CircleProfile from '@/app/_components/CircleProfile'
 
 export default async function ProfileMenuPopover() {
   const me = await getUser()
@@ -11,10 +12,10 @@ export default async function ProfileMenuPopover() {
   return (
     <div className="w-full h-full flex flex-col items-center justify-between p-24">
       <div className="flex flex-col gap-16 pt-16">
-        <Image
-          className="rounded-full"
+        <CircleProfile
           src={me.pic_url}
-          alt="profile img"
+          updatedAt={me.updatedAt}
+          name={me.name}
           width={72}
           height={72}
         />
