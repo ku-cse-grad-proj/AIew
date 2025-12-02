@@ -1001,6 +1001,9 @@ export class InterviewService {
             finalFeedback: 'Error: Failed to generate session feedback.',
           },
         })
+
+        // 프론트에 세션 평가가 종료되었음을 알림
+        io.to(sessionId).emit('server:evaluation-finished', { sessionId })
       }
     } else {
       log.info(
