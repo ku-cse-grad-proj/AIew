@@ -7,6 +7,7 @@ export type ServerEvent =
   | 'server:question-audio-ready'
   | 'server:next-question'
   | 'server:interview-finished'
+  | 'server:evaluation-finished'
   | 'server:error'
 
 // 클라이언트에서 보내는 이벤트

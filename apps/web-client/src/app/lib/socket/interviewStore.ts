@@ -48,6 +48,7 @@ type InterviewState = {
   questions: QuestionBundle[]
   current?: CurrentQuestion
   finished: boolean
+  reportReady: boolean
   elapsedSec: number
   error: ServerError
 
@@ -74,6 +75,7 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
   questions: [],
   current: undefined,
   finished: false,
+  reportReady: false,
   elapsedSec: 0,
   error: null,
 
@@ -196,6 +198,12 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
       s.on('server:interview-finished', () => {
         revalidate(get().sessionId)
         set({ finished: true })
+      })
+
+      // reports 준비 완료
+      s.on('server:evaluation-finished', () => {
+        revalidate(get().sessionId)
+        set({ reportReady: true })
       })
 
       // 에러 처리
