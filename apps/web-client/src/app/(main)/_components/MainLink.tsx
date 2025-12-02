@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 
 export default function MainLink({
   href,
@@ -11,9 +11,13 @@ export default function MainLink({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const from = searchParams.get('from')
 
-  //href와 동일한 주소 이거나, 그 하위 주소일 경우 active
-  const isActive = pathname === href || pathname.startsWith(href + '/')
+  //href와 동일한 주소 이거나, 그 하위 주소일 경우,
+  //또는 searchParams의 from과 동일한 주소일 경우 active
+  const isActive =
+    pathname === href || pathname.startsWith(href + '/') || '/' + from === href
 
   const basicStyle =
     'flex-1 h-42 font-32 leading-42 flex items-center justify-center'

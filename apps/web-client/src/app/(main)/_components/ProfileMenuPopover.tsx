@@ -1,7 +1,6 @@
-import Link from 'next/link'
-
 import { getUser } from '../_lib/api'
 
+import EditProfileLink from './EditProfileLink'
 import SignOutButton from './SignOutButton'
 
 import CircleProfile from '@/app/_components/CircleProfile'
@@ -22,12 +21,7 @@ export default async function ProfileMenuPopover() {
         <p className="text-[20px] font-bold">hi, {me.name}</p>
       </div>
       <div className="w-full flex flex-col gap-16">
-        <Link
-          className="border border-neutral-subtext w-full py-8 rounded-[10px] inline-flex items-center justify-center"
-          href={'/profile/edit'}
-        >
-          <span>edit profile</span>
-        </Link>
+        <EditProfileLink />
         <SignOutButton />
       </div>
     </div>
