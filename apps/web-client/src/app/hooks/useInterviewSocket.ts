@@ -41,8 +41,7 @@ export function useInterviewSocket(sessionId: string) {
             setIsConnected(false)
           })
 
-          const handleQuestionsReady = (data: QuestionsReadyEvent) => {
-            console.log('Questions are ready', data)
+          const handleQuestionsReady = () => {
             setIsQuestionsReady(true)
           }
 

@@ -42,7 +42,7 @@ export default function InterviewerPannel({
         .then(() => setIsSpeaking(true))
         .catch((err) => {
           setIsSpeaking(false)
-          console.log('audio autoplay error', err)
+          throw new Error(err)
         })
     }
 

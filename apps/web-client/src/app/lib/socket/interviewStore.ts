@@ -81,7 +81,6 @@ export const useInterviewStore = create<InterviewState>((set, get, store) => ({
 
   disconnect: (s = interviewSocket) => {
     get().emitElapsedSec()
-    console.log('interview disconnect', get().elapsedSec)
     s.disconnect()
     set(store.getInitialState()) //store, 초기값으로 설정
     handlersBound.value = false // removeAllListeners() 했으므로 재바인딩 허용
