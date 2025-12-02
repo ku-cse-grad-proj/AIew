@@ -14,12 +14,7 @@ export default async function EditProfileSection({
   return (
     <section className="w-full h-full flex flex-col p-24 bg-neutral-card rounded-[20px] overflow-auto">
       <h2 className="text-[24px] font-medium pb-24">edit profile</h2>
-      <ProfileForm
-        key={me.updatedAt}
-        user={me}
-        action={updateProfile}
-        isModal={isModal}
-      />
+      <ProfileForm user={me} action={updateProfile} isModal={isModal} />
     </section>
   )
 }

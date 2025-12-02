@@ -1,12 +1,14 @@
 'use client'
 
 import { Camera } from 'lucide-react'
-import Form from 'next/form'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import { UpdateProfileAction } from '../_lib/action'
+
 import { UserResponse } from '@/app/(main)/_types'
+import CircleProfile from '@/app/_components/CircleProfile'
+import useProfileForm from '@/app/hooks/useProfileForm'
 
 const ALLOWED_TYPES = [
   'image/jpeg',
@@ -23,11 +25,13 @@ export default function ProfileForm({
   isModal = false,
 }: {
   user: UserResponse
-  action: (formData: FormData) => void | Promise<void>
+  action: UpdateProfileAction
   isModal?: boolean
 }) {
   const router = useRouter()
-  const [picUrl, setPicUrl] = useState(user.pic_url)
+  const [picUrl, setPicUrl] = useState<string | null>(null)
+  const src = picUrl ?? `${user.pic_url}?v=${user.updatedAt}`
+  const { formAction, isPending } = useProfileForm(action)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -47,9 +51,10 @@ export default function ProfileForm({
     const newUrl = URL.createObjectURL(file)
     setPicUrl(newUrl)
   }
+
   return (
-    <Form
-      action={action}
+    <form
+      action={formAction}
       className="w-full flex-1 min-h-320 flex flex-col items-center justify-between gap-48"
     >
       <div
@@ -58,15 +63,12 @@ export default function ProfileForm({
         {/* profile */}
         <div className="w-full min-w-240 flex flex-col gap-24 items-center justify-center pt-24">
           <label className="group hover:cursor-pointer rounded-full relative hover:bg-blue-200">
-            <div className="relative w-120 h-120 rounded-full overflow-hidden">
-              <Image
-                src={picUrl}
-                alt={'user profile'}
-                fill
-                className="object-cover"
-                sizes="160px"
-              />
-            </div>
+            <CircleProfile
+              key={user.updatedAt}
+              src={src}
+              width={120}
+              height={120}
+            />
             <input
               type="file"
               name="avatar"
@@ -93,16 +95,21 @@ export default function ProfileForm({
         </div>
       </div>
       <div className="w-full flex justify-center lg:justify-end gap-24">
+        {/* cancel button */}
         <button
           className="h-48 flex-1 max-w-228 lg:max-w-284 border border-neutral-gray rounded-[10px]"
           onClick={() => router.back()}
         >
           <span className="text-subtext">cancel</span>
         </button>
-        <button className="h-48 flex-1 max-w-228 lg:max-w-284 bg-primary rounded-[10px]">
+        {/* save button */}
+        <button
+          className="h-48 flex-1 max-w-228 lg:max-w-284 bg-primary rounded-[10px]"
+          disabled={isPending}
+        >
           <span className="text-neutral-background">save</span>{' '}
         </button>
       </div>
-    </Form>
+    </form>
   )
 }
