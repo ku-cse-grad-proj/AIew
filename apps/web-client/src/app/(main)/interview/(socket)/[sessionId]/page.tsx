@@ -34,7 +34,7 @@ export default async function InterviewPage({
 
 function ErrorPage({ reason }: { reason: string }) {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-24">
+    <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-24">
       {reason}
       <Link
         href={'/interview'}
