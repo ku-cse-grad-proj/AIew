@@ -1,1 +1,2 @@
+poetry check --lock --directory apps/ai-server
 pnpm lint-staged
