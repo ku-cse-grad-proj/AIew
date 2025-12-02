@@ -6,7 +6,7 @@ import { useActionState, useEffect, useRef } from 'react'
 import {
   UpdateProfileAction,
   UpdateProfileState,
-} from '../(main)/profile/edit/_lib/action'
+} from '../profile/edit/_lib/action'
 
 export default function useProfileForm(action: UpdateProfileAction) {
   const router = useRouter()
