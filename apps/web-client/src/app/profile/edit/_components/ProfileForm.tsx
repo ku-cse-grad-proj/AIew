@@ -2,7 +2,7 @@
 
 import { Camera } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { UpdateProfileAction } from '../_lib/action'
 
@@ -50,9 +50,22 @@ export default function ProfileForm({
       e.target.value = ''
       return
     }
+    //기존 blob URL 정리
+    if (picUrl) {
+      URL.revokeObjectURL(picUrl)
+    }
+
     const newUrl = URL.createObjectURL(file)
     setPicUrl(newUrl)
   }
+
+  useEffect(() => {
+    return () => {
+      if (picUrl) {
+        URL.revokeObjectURL(picUrl)
+      }
+    }
+  }, [picUrl])
 
   return (
     <>
