@@ -195,7 +195,9 @@ function stopAllTracks(stream?: MediaStream | null) {
     try {
       t.stop()
     } catch (e) {
-      throw new Error(`track.stop() failed ${e}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('track.stop() failed', e)
+      }
     }
     try {
       stream.removeTrack?.(t)
