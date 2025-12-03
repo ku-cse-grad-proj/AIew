@@ -20,12 +20,14 @@ export default function EditProfileLink() {
 
   return (
     <Link
-      className={`border border-neutral-subtext w-full py-8 rounded-[10px] inline-flex items-center justify-center ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`border border-neutral-subtext w-full py-8 rounded-[10px] inline-flex items-center justify-center transition-colors ${isUpdating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-neutral-subtext hover:text-neutral-card'}`}
       href={`/profile/edit?from=${from}`}
       aria-disabled={isUpdating}
       onClick={handleClick}
     >
-      <span>{isUpdating ? 'updating profile...' : 'edit profile'}</span>
+      <span className="transition-colors">
+        {isUpdating ? 'updating profile...' : 'edit profile'}
+      </span>
     </Link>
   )
 }

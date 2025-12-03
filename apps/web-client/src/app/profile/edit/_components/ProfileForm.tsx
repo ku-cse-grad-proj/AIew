@@ -66,7 +66,6 @@ export default function ProfileForm({
       }
     }
   }, [picUrl])
-
   return (
     <>
       {isUpdating && <LoadingPopover />}
@@ -116,15 +115,18 @@ export default function ProfileForm({
           {/* cancel button */}
           <button
             type="button"
-            className="h-48 flex-1 max-w-228 lg:max-w-284 border border-neutral-gray rounded-[10px]"
+            className="group h-48 flex-1 max-w-228 lg:max-w-284 border border-neutral-gray rounded-[10px] transition-colors hover:bg-neutral-gray"
             onClick={() => router.back()}
           >
-            <span className="text-subtext">cancel</span>
+            <span className="text-subtext transition-colors group-hover:text-neutral-card">
+              cancel
+            </span>
           </button>
           {/* save button */}
           <button
-            className="h-48 flex-1 max-w-228 lg:max-w-284 bg-primary rounded-[10px]"
+            className="h-48 flex-1 max-w-228 lg:max-w-284 bg-primary/90 rounded-[10px] transition-colors hover:bg-primary"
             disabled={isPending}
+            aria-disabled={isPending}
           >
             <span className="text-neutral-background">save</span>{' '}
           </button>
