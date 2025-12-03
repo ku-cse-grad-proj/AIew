@@ -23,11 +23,8 @@ export function getSocket(): Socket {
       withCredentials: true,
     })
 
-    newSocket.on('connect', () => {
-      console.log('[socket] connected', newSocket.id)
-    })
-    newSocket.on('disconnect', (reason) => {
-      console.log('[socket] disconnected', reason)
+    newSocket.on('connect', () => {})
+    newSocket.on('disconnect', () => {
       socket = null
     })
     newSocket.on('connect_error', (err) => {

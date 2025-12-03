@@ -47,7 +47,6 @@ export async function updateInterview(
 
   //변경된 값이 없을 경우 바로 waiting room으로 넘어감
   if ([...newFormData.keys()].length === 0) {
-    console.log('No changes detected')
     redirectToWaiting(interview.id)
   }
 

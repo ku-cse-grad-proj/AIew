@@ -42,7 +42,6 @@ export const useSttStore = create<sttState>((set, get, store) => ({
     }
     track.enabled = false
     set({ isMicPaused: true })
-    console.log('마이크 종료')
   },
 
   resumeMic: () => {
@@ -59,7 +58,6 @@ export const useSttStore = create<sttState>((set, get, store) => ({
   disconnect: () => {
     //이미 종료된 상태면 무시
     if (!(dataChannel || peerConnection || mediaStream)) return
-    console.log('sst disconnect')
 
     // if (!get().canStopSession) {
     //   new Error('세션은 모든 작업이 완료된 후에 종료할 수 있습니다')
@@ -73,7 +71,6 @@ export const useSttStore = create<sttState>((set, get, store) => ({
       peerConnection.getSenders().forEach((sender) => {
         if (sender.track) {
           sender.track.stop()
-          console.log('sender stop')
         }
       })
       peerConnection.close()
@@ -90,7 +87,6 @@ export const useSttStore = create<sttState>((set, get, store) => ({
 
   connect: async (sessionId: string, sttToken: string) => {
     if (isConnecting) {
-      console.log('stt 연결 중입니다')
       return
     }
 
@@ -161,8 +157,6 @@ export const useSttStore = create<sttState>((set, get, store) => ({
       if (
         event.type === 'conversation.item.input_audio_transcription.completed'
       ) {
-        console.log(event.transcript)
-
         // setSentences((prev) => prev + ' ' + event.transcript)
         set((prev) => ({ sentences: prev.sentences + ' ' + event.transcript }))
 
@@ -189,7 +183,6 @@ export const useSttStore = create<sttState>((set, get, store) => ({
     mediaStream = ms
     dataChannel = dc
 
-    console.log('sttConnet')
     isConnecting = false
   },
 }))
@@ -201,9 +194,10 @@ function stopAllTracks(stream?: MediaStream | null) {
   tracks.forEach((t) => {
     try {
       t.stop()
-      console.log('track stop')
     } catch (e) {
-      console.warn('track.stop() failed', e)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('track.stop() failed', e)
+      }
     }
     try {
       stream.removeTrack?.(t)

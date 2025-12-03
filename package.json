@@ -13,7 +13,8 @@
     "lint:ai": "poetry --directory apps/ai-server run ruff check . --fix",
     "build": "pnpm --filter \"./apps/**\" build",
     "test": "pnpm --filter \"./apps/core-api\" test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release": "bash scripts/release.sh"
   },
   "lint-staged": {
     "apps/**/*.{ts,tsx}": [
@@ -51,7 +52,20 @@
     "overrides": {
       "vite": "^7.1.11",
       "@types/react": "19.2.4",
-      "@types/react-dom": "19.2.3"
-    }
+      "@types/react-dom": "19.2.3",
+      "hono@<4.9.7": ">=4.9.7",
+      "hono@>=1.1.0 <4.10.2": ">=4.10.2",
+      "valibot@>=0.31.0 <1.2.0": ">=1.2.0",
+      "hono@<4.10.3": ">=4.10.3",
+      "express@>=5.0.0 <5.2.0": ">=5.2.0"
+    },
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "protobufjs",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }

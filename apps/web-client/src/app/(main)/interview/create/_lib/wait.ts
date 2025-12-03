@@ -23,8 +23,6 @@ export async function waitUntilFilesProcessed(
     const coverLetterFilename = (formData.get('coverLetter') as File).name
     const portfolioFilename = (formData.get('portfolio') as File).name
 
-    console.log('left time', Date.now() - start - timeoutMs, timeoutMs)
-
     if (coverLetterFilename && portfolioFilename) {
       if (
         processedInterview.coverLetterFilename === coverLetterFilename &&

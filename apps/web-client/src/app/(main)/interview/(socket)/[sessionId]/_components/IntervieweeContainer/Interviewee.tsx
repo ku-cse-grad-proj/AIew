@@ -108,7 +108,6 @@ export default function Interviewee() {
     rec.ondataavailable = async (e) => {
       if (e.data && e.data.size > 0) {
         chunksRef.current.push(e.data)
-        console.log(e.data.size)
         const arrayBuffer = await e.data.arrayBuffer()
         interviewSocket.emit('client:upload-chunk', {
           stepId,
@@ -120,13 +119,6 @@ export default function Interviewee() {
 
     rec.onstop = async () => {
       try {
-        const fullBlob = new Blob(chunksRef.current, { type: rec.mimeType })
-        const filename = `record-${crypto.randomUUID()}`
-        const file = new File([fullBlob], filename, {
-          type: rec.mimeType,
-          lastModified: Date.now(),
-        })
-
         interviewSocket.emit('client:upload-finish', {
           stepId,
           type: rec.mimeType,
@@ -141,7 +133,6 @@ export default function Interviewee() {
         // document.body.appendChild(a)
         // a.click()
 
-        console.log(file)
         chunksRef.current = []
       } catch (e) {
         console.error(e)
