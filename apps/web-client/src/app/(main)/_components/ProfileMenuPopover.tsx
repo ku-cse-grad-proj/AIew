@@ -10,7 +10,7 @@ export default async function ProfileMenuPopover() {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-between p-24">
-      <div className="flex flex-col gap-16 pt-16">
+      <div className="flex flex-col gap-16 pt-16 items-center">
         <CircleProfile
           src={me.pic_url}
           updatedAt={me.updatedAt}
