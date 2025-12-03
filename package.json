@@ -13,7 +13,8 @@
     "lint:ai": "poetry --directory apps/ai-server run ruff check . --fix",
     "build": "pnpm --filter \"./apps/**\" build",
     "test": "pnpm --filter \"./apps/core-api\" test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release": "bash scripts/release.sh"
   },
   "lint-staged": {
     "apps/**/*.{ts,tsx}": [
