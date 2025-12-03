@@ -40,7 +40,7 @@ export default async function UserInfos({ className }: { className?: string }) {
           src={profileImg}
           updatedAt={updatedAt}
           name={name}
-          className="flex-3  max-w-[80px] lg:max-w-[100px] self-center"
+          className="flex-3 max-w-[80px] lg:max-w-[100px] self-center"
         />
         <div className="flex-5 h-full flex flex-col justify-center gap-4 p-8">
           <p className="font-bold text-[20px]">{name}</p>
