@@ -2,17 +2,30 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { MouseEvent } from 'react'
+
+import { useProfileUpdatingStore } from '@/app/lib/useProfileUpdatingStore'
 
 export default function EditProfileLink() {
   const pathname = usePathname()
-  //dashboard, interview, reports 중 하나
   const from = pathname.split('/')[1]
+  const isUpdating = useProfileUpdatingStore((state) => state.isUpdating)
+
+  const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!isUpdating) return
+    e.preventDefault()
+    // TODO: toast 같은 걸로 "프로필 저장 중입니다" 안내
+    alert('프로필을 저장하는 중입니다. 잠시만 기다려주세요.')
+  }
+
   return (
     <Link
-      className="border border-neutral-subtext w-full py-8 rounded-[10px] inline-flex items-center justify-center"
+      className={`border border-neutral-subtext w-full py-8 rounded-[10px] inline-flex items-center justify-center ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
       href={`/profile/edit?from=${from}`}
+      aria-disabled={isUpdating}
+      onClick={handleClick}
     >
-      <span>edit profile</span>
+      <span>{isUpdating ? 'updating profile...' : 'edit profile'}</span>
     </Link>
   )
 }

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useRef } from 'react'
 
+import { useProfileUpdatingStore } from '../lib/useProfileUpdatingStore'
 import {
   UpdateProfileAction,
   UpdateProfileState,
@@ -15,6 +16,7 @@ export default function useProfileForm(action: UpdateProfileAction) {
     FormData
   >(action, { ok: false })
 
+  const setIsUpdating = useProfileUpdatingStore((state) => state.setIsUpdating)
   const hadPendingRef = useRef(false)
 
   //isPending을 이용해 모달 닫는 규칙 정의
@@ -23,12 +25,14 @@ export default function useProfileForm(action: UpdateProfileAction) {
   useEffect(() => {
     if (isPending) {
       hadPendingRef.current = true
+      setIsUpdating(true)
       return
     }
 
     if (!hadPendingRef.current) return
 
     hadPendingRef.current = false
+    setIsUpdating(false)
 
     if (state.ok) {
       router.back()
@@ -37,7 +41,7 @@ export default function useProfileForm(action: UpdateProfileAction) {
       //TODO::toast나 다른 알림 메시지로 변경
       throw new Error(state.error)
     }
-  }, [isPending, state.error, router, state.ok])
+  }, [isPending, state.error, router, state.ok, setIsUpdating])
 
   return { formAction, isPending }
 }
