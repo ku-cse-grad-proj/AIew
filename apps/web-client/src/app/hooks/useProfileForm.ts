@@ -39,7 +39,7 @@ export default function useProfileForm(action: UpdateProfileAction) {
     } else {
       //업로드 했는데 실패할 경우 error 호출
       //TODO::toast나 다른 알림 메시지로 변경
-      throw new Error(state.error)
+      alert(state.error)
     }
   }, [isPending, state.error, router, state.ok, setIsUpdating])
 

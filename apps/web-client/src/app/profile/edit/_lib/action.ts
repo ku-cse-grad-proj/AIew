@@ -29,6 +29,13 @@ export async function updateProfile(
     const nextName = typeof nameValue === 'string' ? nameValue.trim() : ''
     const avatarFile = formData.get('avatar')
 
+    if (!nextName) {
+      return {
+        ok: false,
+        error: '이름을 입력해주세요.',
+      }
+    }
+
     if (nextName !== user.name) {
       await patchUserProfile(user.id, { name: nextName })
     }
