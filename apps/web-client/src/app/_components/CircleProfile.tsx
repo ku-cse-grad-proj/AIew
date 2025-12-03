@@ -39,7 +39,7 @@ export default function CircleProfile({
     >
       <Image
         src={picUrl}
-        alt={`${name ?? name} profile image`}
+        alt={`${name ?? 'user'} profile image`}
         fill
         sizes="120px"
         className="object-cover"
