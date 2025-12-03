@@ -102,6 +102,7 @@ export default function ProfileForm({
         <div className="w-full flex justify-center lg:justify-end gap-24">
           {/* cancel button */}
           <button
+            type="button"
             className="h-48 flex-1 max-w-228 lg:max-w-284 border border-neutral-gray rounded-[10px]"
             onClick={() => router.back()}
           >
