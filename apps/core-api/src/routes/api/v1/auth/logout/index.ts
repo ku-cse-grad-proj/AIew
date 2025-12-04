@@ -14,8 +14,7 @@ const controller: FastifyPluginAsync = async (fastify) => {
   const postSchema: FastifySchema = {
     tags: [Tag.Auth],
     summary: '로그아웃',
-    description:
-      '로그인된 사용자를 로그아웃 처리합니다. accessToken과 refreshToken 쿠키를 삭제합니다.',
+    description: '로그인된 사용자를 로그아웃 처리합니다.',
     response: {
       200: S_AuthLogoutResponse,
       401: { description: '인증 실패', $ref: SchemaId.Error },
@@ -25,14 +24,11 @@ const controller: FastifyPluginAsync = async (fastify) => {
   const postHandler: RouteHandler = async (request, reply) => {
     const { userId } = request.user
 
-    // 비즈니스 로직 실행 (로그 기록)
+    // TODO: Redis 도입 시 refresh token 블랙리스트 처리 추가
     const result = await fastify.authService.logout(userId)
 
-    // HTTP 관련 작업 (쿠키 삭제)
-    reply
-      .clearCookie('accessToken', { path: '/' })
-      .clearCookie('refreshToken', { path: '/' })
-      .send(result)
+    // 쿠키 삭제는 Next.js Server Action에서 처리
+    reply.send(result)
   }
 
   const postOpts: RouteOptions = {
