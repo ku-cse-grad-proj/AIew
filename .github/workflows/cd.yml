@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch: # 수동 실행 가능
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false # 배포는 완료까지 대기
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ku-cse-grad-proj/AIew

@@ -7,6 +7,10 @@ on:
     branches: [main, develop]
   workflow_dispatch: #수동 실행 가능
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true # 새로운 요청이 들어오면 실행중이던 CI를 취소하고 가장 최근 액션 실행
+
 jobs:
   build:
     runs-on: ubuntu-latest
