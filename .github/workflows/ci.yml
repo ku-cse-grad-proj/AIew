@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.repository == 'ku-cse-grad-proj/AIew'
     runs-on: ubuntu-latest
 
     steps:
