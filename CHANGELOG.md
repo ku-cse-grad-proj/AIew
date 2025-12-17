@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.2.0...aiew-v1.2.1) (2025-12-17)
+
+
+### CI/CD
+
+* release-please에 packages:write 권한 추가 ([b652291](https://github.com/ku-cse-grad-proj/AIew/commit/b652291f8cb0e919c7e24d5f330c24f577489829))
+* release-please에서 CD workflow 직접 호출하도록 변경 ([0502729](https://github.com/ku-cse-grad-proj/AIew/commit/05027294f97e5c101abd4df78b9bf80f806aa92a))
+
 ## [1.2.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.1.0...aiew-v1.2.0) (2025-12-17)
 
 
