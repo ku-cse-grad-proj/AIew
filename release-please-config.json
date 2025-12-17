@@ -20,6 +20,5 @@
     { "type": "ci", "section": "CI/CD", "hidden": false },
     { "type": "chore", "section": "Chores", "hidden": false }
   ],
-  "pull-request-title-pattern": "chore: release ${version}",
-  "pull-request-header": "## Release ${version}\n\n이 PR을 머지하면 GitHub Release가 생성되고 CD가 트리거됩니다."
+  "pull-request-title-pattern": "chore: release ${version}"
 }
