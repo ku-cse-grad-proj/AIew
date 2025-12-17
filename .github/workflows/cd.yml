@@ -1,8 +1,8 @@
 name: CD
 
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
   workflow_dispatch: # 수동 실행 가능
 
 concurrency:
@@ -98,9 +98,9 @@ jobs:
           script: |
             cd ~/aiew
 
-            # Pull latest code (force fast-forward)
-            git fetch origin ${{ github.ref_name }}
-            git reset --hard origin/${{ github.ref_name }}
+            # Pull latest code and checkout release tag
+            git fetch origin --tags
+            git checkout ${{ github.ref_name }}
 
             # Login to GitHub Container Registry
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
