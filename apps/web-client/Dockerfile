@@ -30,7 +30,8 @@ WORKDIR /app
 
 # Set environment to production
 ENV NODE_ENV=production \
-    PORT=4000
+    PORT=4000 \
+    HOSTNAME=0.0.0.0
 # The Next.js app will run on port 4000
 EXPOSE 4000
 
