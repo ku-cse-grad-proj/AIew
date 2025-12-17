@@ -1,0 +1,64 @@
+name: PR Title Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  check:
+    if: github.repository == 'ku-cse-grad-proj/AIew'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title follows Conventional Commits
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Conventional commit types
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          # Allowed scopes
+          scopes: |
+            web
+            core
+            ai
+            deps
+          # Scope is optional
+          requireScope: false
+          # Don't allow WIP
+          disallowScopes: |
+            wip
+          # Subject validation (no constraints for now)
+          subjectPattern: .+
+          subjectPatternError: |
+            PR 제목이 Conventional Commits 형식을 따르지 않습니다.
+
+            올바른 형식: <type>: <description>
+
+            예시:
+              feat: 웹소켓 종료 기능 추가
+              fix: API 경로 인식 오류 수정
+              docs: README 업데이트
+
+            사용 가능한 type:
+              feat     새로운 기능
+              fix      버그 수정
+              docs     문서 변경
+              style    코드 스타일 변경 (포맷팅 등)
+              refactor 리팩토링
+              perf     성능 개선
+              test     테스트 추가/수정
+              build    빌드 설정 변경
+              ci       CI/CD 설정 변경
+              chore    기타 변경
+              revert   커밋 되돌리기
