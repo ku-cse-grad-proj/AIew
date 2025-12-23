@@ -12,5 +12,10 @@ export default defineConfig({
     deps: {
       inline: ['@fastify/autoload'],
     },
+    env: {
+      DATABASE_URL: 'postgresql://test:test@localhost:5433/aiew_test',
+      AI_SERVER_URL: 'http://mock-ai-server.com',
+      JWT_SECRET: 'test-jwt-secret',
+    },
   },
 })
