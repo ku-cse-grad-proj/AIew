@@ -14,6 +14,9 @@ jobs:
   deploy:
     if: github.repository == 'ku-cse-grad-proj/AIew'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Deploy to OCI
