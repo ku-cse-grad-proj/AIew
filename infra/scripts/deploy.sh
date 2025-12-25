@@ -163,31 +163,33 @@ docker compose -f "$COMPOSE_FILE" --profile "$CURRENT_ENV" down
 log_success "이전 환경 종료됨"
 
 # -----------------------------------------------------------------------------
-# 8. GHCR에 이미지 푸시 (백업용)
+# 8. GHCR에 이미지 푸시 (백업용, 선택적)
 # -----------------------------------------------------------------------------
 if [ -n "$GITHUB_TOKEN" ]; then
     log_info "GHCR에 이미지 푸시 중..."
 
-    echo "$GITHUB_TOKEN" | docker login "$REGISTRY" -u "github-actions" --password-stdin
+    if echo "$GITHUB_TOKEN" | docker login "$REGISTRY" -u "github-actions" --password-stdin 2>/dev/null; then
+        # 이미지 태그 (/ 를 - 로 변환)
+        IMAGE_TAG=$(echo "$TAG" | sed 's/\//-/g')
 
-    # 이미지 태그 (/ 를 - 로 변환)
-    IMAGE_TAG=$(echo "$TAG" | sed 's/\//-/g')
+        for SERVICE in core-api ai-server web-client; do
+            LOCAL_IMAGE="infra-${SERVICE}-${NEXT_ENV}"
+            REMOTE_IMAGE="$REGISTRY/$IMAGE_PREFIX/$SERVICE:$IMAGE_TAG"
 
-    for SERVICE in core-api ai-server web-client; do
-        LOCAL_IMAGE="infra-${SERVICE}-${NEXT_ENV}"
-        REMOTE_IMAGE="$REGISTRY/$IMAGE_PREFIX/$SERVICE:$IMAGE_TAG"
+            if docker tag "$LOCAL_IMAGE" "$REMOTE_IMAGE" && docker push "$REMOTE_IMAGE"; then
+                # latest 태그도 푸시
+                docker tag "$LOCAL_IMAGE" "$REGISTRY/$IMAGE_PREFIX/$SERVICE:latest"
+                docker push "$REGISTRY/$IMAGE_PREFIX/$SERVICE:latest" || true
+                log_info "  - $SERVICE:$IMAGE_TAG 푸시 완료"
+            else
+                log_warning "  - $SERVICE 푸시 실패 (계속 진행)"
+            fi
+        done
 
-        docker tag "$LOCAL_IMAGE" "$REMOTE_IMAGE"
-        docker push "$REMOTE_IMAGE"
-
-        # latest 태그도 푸시
-        docker tag "$LOCAL_IMAGE" "$REGISTRY/$IMAGE_PREFIX/$SERVICE:latest"
-        docker push "$REGISTRY/$IMAGE_PREFIX/$SERVICE:latest"
-
-        log_info "  - $SERVICE:$IMAGE_TAG 푸시 완료"
-    done
-
-    log_success "GHCR 푸시 완료"
+        log_success "GHCR 푸시 완료"
+    else
+        log_warning "GHCR 로그인 실패. 푸시를 건너뜁니다."
+    fi
 fi
 
 # -----------------------------------------------------------------------------
