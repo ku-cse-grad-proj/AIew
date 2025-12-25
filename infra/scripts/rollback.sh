@@ -64,11 +64,14 @@ if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 1. 이전 환경 시작
+# 1. 이전 환경 시작 (앱 서비스만)
 # -----------------------------------------------------------------------------
 echo -e "${YELLOW}[START]${NC} $ROLLBACK_ENV 환경 시작 중..."
 
-docker compose -f "$COMPOSE_FILE" --profile "$ROLLBACK_ENV" up -d
+docker compose -f "$COMPOSE_FILE" --profile "$ROLLBACK_ENV" up -d --no-deps \
+    core-api-"$ROLLBACK_ENV" \
+    ai-server-"$ROLLBACK_ENV" \
+    web-client-"$ROLLBACK_ENV"
 
 # -----------------------------------------------------------------------------
 # 2. 헬스체크
@@ -90,11 +93,14 @@ echo -e "${YELLOW}[SWITCH]${NC} Nginx upstream 전환..."
 echo "$ROLLBACK_ENV" > "$ACTIVE_ENV_FILE"
 
 # -----------------------------------------------------------------------------
-# 5. 현재 환경 종료
+# 5. 현재 환경 종료 (nginx 제외)
 # -----------------------------------------------------------------------------
 echo -e "${YELLOW}[STOP]${NC} $CURRENT_ENV 환경 종료 중..."
 
-docker compose -f "$COMPOSE_FILE" --profile "$CURRENT_ENV" down
+docker compose -f "$COMPOSE_FILE" rm -sf \
+    core-api-"$CURRENT_ENV" \
+    ai-server-"$CURRENT_ENV" \
+    web-client-"$CURRENT_ENV"
 
 # -----------------------------------------------------------------------------
 # 완료
