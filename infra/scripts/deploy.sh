@@ -104,13 +104,16 @@ docker compose -f "$COMPOSE_FILE" --profile "$NEXT_ENV" build --no-cache
 log_success "빌드 완료"
 
 # -----------------------------------------------------------------------------
-# 3. 새 환경 시작
+# 3. 새 환경 시작 (nginx 제외 - 앱 서비스만)
 # -----------------------------------------------------------------------------
-log_info "[$NEXT_ENV] 환경 시작 중..."
+log_info "[$NEXT_ENV] 환경 시작 중... (앱 서비스만)"
 
-docker compose -f "$COMPOSE_FILE" --profile "$NEXT_ENV" up -d
+docker compose -f "$COMPOSE_FILE" --profile "$NEXT_ENV" up -d --no-deps \
+    core-api-"$NEXT_ENV" \
+    ai-server-"$NEXT_ENV" \
+    web-client-"$NEXT_ENV"
 
-log_success "컨테이너 시작됨"
+log_success "앱 컨테이너 시작됨"
 
 # -----------------------------------------------------------------------------
 # 4. 헬스체크
@@ -122,11 +125,25 @@ log_info "헬스체크 대기 중... (최대 120초)"
 log_success "헬스체크 통과"
 
 # -----------------------------------------------------------------------------
-# 5. Nginx upstream 전환
+# 5. Nginx upstream 전환 및 시작
 # -----------------------------------------------------------------------------
-log_info "Nginx upstream 전환: $CURRENT_ENV → $NEXT_ENV"
+log_info "Nginx upstream 설정: $NEXT_ENV"
 
-"$SCRIPT_DIR/switch-upstream.sh" "$NEXT_ENV"
+# upstream 심볼릭 링크 변경
+NGINX_DIR="$INFRA_DIR/nginx"
+cd "$NGINX_DIR"
+ln -sf "upstream-${NEXT_ENV}.conf" upstream.conf
+log_info "upstream.conf → upstream-${NEXT_ENV}.conf"
+
+# nginx 시작 또는 reload
+if docker ps --format '{{.Names}}' | grep -q "^aiew-nginx$"; then
+    log_info "Nginx reload 중..."
+    docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t
+    docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -s reload
+else
+    log_info "Nginx 시작 중..."
+    docker compose -f "$COMPOSE_FILE" up -d nginx
+fi
 
 log_success "트래픽 전환 완료"
 
