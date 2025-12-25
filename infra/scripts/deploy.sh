@@ -154,11 +154,15 @@ echo "$NEXT_ENV" > "$ACTIVE_ENV_FILE"
 log_info "활성 환경 업데이트: $NEXT_ENV"
 
 # -----------------------------------------------------------------------------
-# 7. 이전 환경 종료
+# 7. 이전 환경 종료 (nginx 제외)
 # -----------------------------------------------------------------------------
 log_info "[$CURRENT_ENV] 이전 환경 종료 중..."
 
-docker compose -f "$COMPOSE_FILE" --profile "$CURRENT_ENV" down
+# nginx를 제외하고 이전 환경의 앱 서비스만 종료
+docker compose -f "$COMPOSE_FILE" rm -sf \
+    core-api-"$CURRENT_ENV" \
+    ai-server-"$CURRENT_ENV" \
+    web-client-"$CURRENT_ENV"
 
 log_success "이전 환경 종료됨"
 
