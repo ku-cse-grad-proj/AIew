@@ -1,0 +1,210 @@
+# =============================================================================
+# 프로덕션 환경 - Blue-Green 배포
+# =============================================================================
+#
+# 사용법:
+#   # Blue 환경 시작
+#   docker compose -f infra/docker-compose.production.yml --profile blue up -d
+#
+#   # Green 환경 시작
+#   docker compose -f infra/docker-compose.production.yml --profile green up -d
+#
+#   # Nginx만 시작 (프로파일 없이)
+#   docker compose -f infra/docker-compose.production.yml up -d nginx
+#
+#   # 특정 환경 빌드
+#   docker compose -f infra/docker-compose.production.yml --profile blue build
+#
+# Blue-Green 배포 흐름:
+#   1. 현재 활성 환경 확인 (blue or green)
+#   2. 비활성 환경에 새 버전 빌드 & 시작
+#   3. 헬스체크 통과 확인
+#   4. Nginx upstream 전환 (심볼릭 링크 변경 + reload)
+#   5. 이전 환경 종료
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 공통 설정 템플릿 (YAML Anchors)
+# -----------------------------------------------------------------------------
+# x- 접두사: Docker Compose가 서비스로 인식하지 않음 (템플릿 용도)
+# &이름: 앵커 정의 (이 설정을 "이름"으로 저장)
+# <<: *이름: 앵커 참조 (저장된 설정을 여기에 복사)
+# -----------------------------------------------------------------------------
+
+x-core-api: &core-api # 빌드 설정: 프로젝트 루트에서 Dockerfile 경로 지정
+  build:
+    context: ..
+    dockerfile: apps/core-api/Dockerfile
+  # 환경변수 파일 (프로젝트 루트 기준)
+  env_file:
+    - ../.env.production
+  environment:
+    NODE_ENV: production
+  # 네트워크: backend(ai-server 통신), frontend(nginx 통신)
+  # aliases로 blue/green 관계없이 "core-api"로 접근 가능
+  networks:
+    backend:
+      aliases:
+        - core-api
+    frontend:
+      aliases:
+        - core-api
+  restart: unless-stopped
+  # 헬스체크: 컨테이너가 정상 동작하는지 확인
+  # Docker가 주기적으로 이 명령 실행, 실패 시 unhealthy 상태
+  healthcheck:
+    test:
+      [
+        'CMD',
+        'node',
+        '-e',
+        "require('http').get('http://localhost:3000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+      ]
+    interval: 30s # 체크 간격
+    timeout: 10s # 타임아웃
+    retries: 3 # 실패 허용 횟수
+    start_period: 40s # 시작 후 이 시간 동안은 실패해도 무시 (앱 초기화 시간)
+
+x-ai-server: &ai-server
+  build:
+    context: ..
+    dockerfile: apps/ai-server/Dockerfile
+  env_file:
+    - ../.env.production
+  environment:
+    PYTHONUNBUFFERED: 1 # Python 출력 버퍼링 비활성화 (로그 즉시 출력)
+  networks:
+    backend:
+      aliases:
+        - ai-server
+  restart: unless-stopped
+  healthcheck:
+    test:
+      [
+        'CMD',
+        'python',
+        '-c',
+        'import urllib.request; urllib.request.urlopen("http://localhost:8000/")',
+      ]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 60s # AI 서버는 모델 로딩 등으로 시작이 느림
+
+x-web-client: &web-client
+  build:
+    context: ..
+    dockerfile: apps/web-client/Dockerfile
+  env_file:
+    - ../.env.production
+  environment:
+    NODE_ENV: production
+  networks:
+    - frontend
+  restart: unless-stopped
+  healthcheck:
+    test:
+      [
+        'CMD',
+        'node',
+        '-e',
+        "require('http').get('http://localhost:4000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+      ]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+# -----------------------------------------------------------------------------
+# 서비스 정의
+# -----------------------------------------------------------------------------
+
+services:
+  # ---------------------------------------------------------------------------
+  # Blue 환경
+  # ---------------------------------------------------------------------------
+  # profiles: ["blue"] → --profile blue 옵션으로만 시작됨
+  # container_name: 고유 이름 지정 (blue/green 구분)
+
+  core-api-blue:
+    <<: *core-api
+    container_name: aiew-core-api-blue
+    profiles:
+      - blue
+
+  ai-server-blue:
+    <<: *ai-server
+    container_name: aiew-ai-server-blue
+    profiles:
+      - blue
+
+  web-client-blue:
+    <<: *web-client
+    container_name: aiew-web-client-blue
+    profiles:
+      - blue
+
+  # ---------------------------------------------------------------------------
+  # Green 환경
+  # ---------------------------------------------------------------------------
+
+  core-api-green:
+    <<: *core-api
+    container_name: aiew-core-api-green
+    profiles:
+      - green
+
+  ai-server-green:
+    <<: *ai-server
+    container_name: aiew-ai-server-green
+    profiles:
+      - green
+
+  web-client-green:
+    <<: *web-client
+    container_name: aiew-web-client-green
+    profiles:
+      - green
+
+  # ---------------------------------------------------------------------------
+  # Nginx (항상 실행)
+  # ---------------------------------------------------------------------------
+  # profiles 없음 → 항상 시작됨
+  # Blue/Green 전환은 upstream.conf 심볼릭 링크 변경으로 처리
+
+  nginx:
+    image: nginx:alpine
+    container_name: aiew-nginx
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      # Nginx 메인 설정 파일
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      # upstream 설정 (심볼릭 링크로 blue/green 전환)
+      - ./nginx/upstream.conf:/etc/nginx/upstream.conf:ro
+      # SSL 인증서 (Cloudflare Origin Certificate)
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      # DH 파라미터 (SSL 보안 강화)
+      - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
+    networks:
+      - frontend
+      - backend # core-api health check를 위해 backend도 필요
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m' # 로그 파일 최대 크기
+        max-file: '3' # 로그 파일 최대 개수
+
+# -----------------------------------------------------------------------------
+# 네트워크 정의
+# -----------------------------------------------------------------------------
+# bridge: 기본 네트워크 드라이버, 같은 네트워크의 컨테이너끼리 통신 가능
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge

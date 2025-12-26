@@ -1,0 +1,139 @@
+# =============================================================================
+# 로컬 개발 환경
+# =============================================================================
+#
+# 사용법:
+#   docker compose -f infra/docker-compose.local.yml up -d
+#   docker compose -f infra/docker-compose.local.yml down
+#   docker compose -f infra/docker-compose.local.yml logs -f
+#
+# 특징:
+#   - Blue-Green 없이 단일 환경
+#   - 소스 코드 볼륨 마운트 (핫 리로드)
+#   - HTTP only (SSL 없음)
+#
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Core API (Fastify)
+  # ---------------------------------------------------------------------------
+  core-api:
+    build:
+      context: ..
+      dockerfile: apps/core-api/Dockerfile
+    container_name: aiew-core-api
+    env_file:
+      - ../.env.local
+    environment:
+      NODE_ENV: development
+    volumes:
+      # 핫 리로드: 소스 변경 시 자동 반영
+      - ../apps/core-api/src:/app/apps/core-api/src
+    expose:
+      - 3000
+    networks:
+      - backend
+      - frontend
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # AI Server (FastAPI)
+  # ---------------------------------------------------------------------------
+  ai-server:
+    build:
+      context: ..
+      dockerfile: apps/ai-server/Dockerfile
+    container_name: aiew-ai-server
+    env_file:
+      - ../.env.local
+    environment:
+      PYTHONUNBUFFERED: 1
+    volumes:
+      # 핫 리로드: 소스 변경 시 자동 반영
+      - ../apps/ai-server/app:/app/app
+    expose:
+      - 8000
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          'import urllib.request; urllib.request.urlopen("http://localhost:8000/")',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Web Client (Next.js)
+  # ---------------------------------------------------------------------------
+  web-client:
+    build:
+      context: ..
+      dockerfile: apps/web-client/Dockerfile
+    container_name: aiew-web-client
+    env_file:
+      - ../.env.local
+    environment:
+      NODE_ENV: development
+    volumes:
+      # 핫 리로드: 소스 변경 시 자동 반영
+      - ../apps/web-client/src:/app/apps/web-client/src
+    expose:
+      - 4000
+    networks:
+      - frontend
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:4000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Nginx (Reverse Proxy)
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: aiew-nginx
+    ports:
+      - '3001:80' # 로컬에서는 3001 포트로 접근
+    volumes:
+      - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web-client
+      - core-api
+    networks:
+      - frontend
+    restart: unless-stopped
+
+# -----------------------------------------------------------------------------
+# 네트워크
+# -----------------------------------------------------------------------------
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge

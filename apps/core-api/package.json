@@ -9,7 +9,12 @@
   "scripts": {
     "prepare": "prisma generate",
     "test": "vitest run --coverage && rimraf coverage",
+    "test:ci": "vitest run --coverage",
     "test:watch": "vitest --coverage",
+    "test:db:start": "docker run -d --name aiew-test-db -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=aiew_test -p 5433:5432 --tmpfs /var/lib/postgresql/data postgres:16-alpine && sleep 2",
+    "test:db:stop": "docker rm -f aiew-test-db || true",
+    "test:db:migrate": "DATABASE_URL=\"postgresql://test:test@localhost:5433/aiew_test\" prisma migrate deploy",
+    "test:with-db": "pnpm test:db:start && pnpm test:db:migrate && pnpm test; pnpm test:db:stop",
     "start": "node dist/server.js",
     "build": "rimraf dist && tsc && tsc-alias",
     "dev": "nodemon"
@@ -32,6 +37,7 @@
     "@fastify/type-provider-typebox": "^5.2.0",
     "@google-cloud/text-to-speech": "^6.3.0",
     "@paralleldrive/cuid2": "^2.2.2",
+    "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "7.0.0",
     "@prisma/extension-accelerate": "^3.0.0",
     "@sinclair/typebox": "^0.34.40",
