@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.3.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.2.1...aiew-v1.3.0) (2025-12-26)
+
+
+### Features
+
+* OCI 마이그레이션 및 Blue-Green 배포 구현 ([#154](https://github.com/ku-cse-grad-proj/AIew/issues/154)) ([6b30b9c](https://github.com/ku-cse-grad-proj/AIew/commit/6b30b9c8d1227f29747b06832b680d31403c6d66))
+
+
+### Tests
+
+* 테스트 DB 분리 ([#152](https://github.com/ku-cse-grad-proj/AIew/issues/152)) ([cd0fe9f](https://github.com/ku-cse-grad-proj/AIew/commit/cd0fe9ff48244c0eb22f038c3eefdbecce716ad5))
+
+
+### Chores
+
+* **deps:** bump langchain-core from 0.3.80 to 0.3.81 in /apps/ai-server ([#153](https://github.com/ku-cse-grad-proj/AIew/issues/153)) ([8dcbb05](https://github.com/ku-cse-grad-proj/AIew/commit/8dcbb05b3af69ea0139d4826863bf0bc0f347978))
+* **deps:** bump langchain-core in /apps/ai-server ([8dcbb05](https://github.com/ku-cse-grad-proj/AIew/commit/8dcbb05b3af69ea0139d4826863bf0bc0f347978))
+* **deps:** bump marshmallow from 3.26.1 to 3.26.2 in /apps/ai-server ([#151](https://github.com/ku-cse-grad-proj/AIew/issues/151)) ([7ed8fc3](https://github.com/ku-cse-grad-proj/AIew/commit/7ed8fc36bc09ab5c730aa3599785143ec68e272a))
+* release 2025-12-26_16:50 ([e7a2c66](https://github.com/ku-cse-grad-proj/AIew/commit/e7a2c661cbe03310d33a3484decdbcf4fa978d52))
+
 ## [1.2.1](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.2.0...aiew-v1.2.1) (2025-12-17)
 
 
