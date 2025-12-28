@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.3](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.2...aiew-v1.3.3) (2025-12-28)
+
+
+### Bug Fixes
+
+* **deploy:** nginx restart로 upstream 설정 반영 ([3cd7f9c](https://github.com/ku-cse-grad-proj/AIew/commit/3cd7f9c186c441368f7920b5af4ea26823ffa106))
+
+
+### Chores
+
+* release 2025-12-28_20:44 ([dd27856](https://github.com/ku-cse-grad-proj/AIew/commit/dd2785649e9c003fb91086ef8e3149b7dd74e2ab))
+
 ## [1.3.2](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.1...aiew-v1.3.2) (2025-12-28)
 
 
