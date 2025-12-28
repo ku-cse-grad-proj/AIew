@@ -65,36 +65,11 @@ cp "$UPSTREAM_FILE" "$NGINX_DIR/upstream.conf"
 echo -e "${GREEN}[OK]${NC} upstream.conf ← upstream-${ENV}.conf"
 
 # -----------------------------------------------------------------------------
-# 2. Nginx 컨테이너에 설정 복사 및 테스트
+# 2. Nginx 재시작
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[COPY]${NC} Nginx 컨테이너에 upstream 설정 복사 중..."
+echo -e "${YELLOW}[RESTART]${NC} Nginx 재시작 중... (upstream 설정 반영)"
 
-docker cp "$NGINX_DIR/upstream.conf" aiew-nginx:/etc/nginx/upstream.conf
+COMPOSE_FILE="$(dirname "$SCRIPT_DIR")/docker-compose.production.yml"
+docker compose -f "$COMPOSE_FILE" restart nginx
 
-echo -e "${YELLOW}[TEST]${NC} Nginx 설정 검증 중..."
-
-if ! docker exec aiew-nginx nginx -t; then
-    echo -e "${RED}[ERROR]${NC} Nginx 설정 오류! 이전 상태로 롤백합니다."
-
-    # 롤백: 다른 환경으로 복구
-    if [ "$ENV" = "blue" ]; then
-        cp "$NGINX_DIR/upstream-green.conf" "$NGINX_DIR/upstream.conf"
-        docker cp "$NGINX_DIR/upstream.conf" aiew-nginx:/etc/nginx/upstream.conf
-    else
-        cp "$NGINX_DIR/upstream-blue.conf" "$NGINX_DIR/upstream.conf"
-        docker cp "$NGINX_DIR/upstream.conf" aiew-nginx:/etc/nginx/upstream.conf
-    fi
-
-    exit 1
-fi
-
-echo -e "${GREEN}[OK]${NC} Nginx 설정 검증 통과"
-
-# -----------------------------------------------------------------------------
-# 3. Nginx Reload (무중단)
-# -----------------------------------------------------------------------------
-echo -e "${YELLOW}[RELOAD]${NC} Nginx reload 중..."
-
-docker exec aiew-nginx nginx -s reload
-
-echo -e "${GREEN}[SUCCESS]${NC} Nginx reload 완료. 트래픽이 $ENV 환경으로 전환되었습니다."
+echo -e "${GREEN}[SUCCESS]${NC} Nginx 재시작 완료. 트래픽이 $ENV 환경으로 전환되었습니다."

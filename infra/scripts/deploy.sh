@@ -134,13 +134,11 @@ NGINX_DIR="$INFRA_DIR/nginx"
 cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/upstream.conf"
 log_info "upstream.conf ← upstream-${NEXT_ENV}.conf"
 
-# nginx 시작 또는 reload
+# nginx 시작 또는 restart
 if docker ps --format '{{.Names}}' | grep -q "^aiew-nginx$"; then
-    log_info "Nginx 컨테이너에 upstream 설정 복사 및 reload 중..."
-    # Docker 볼륨 캐시 문제로 컨테이너 내부에 직접 복사
-    docker cp "$NGINX_DIR/upstream.conf" aiew-nginx:/etc/nginx/upstream.conf
-    docker exec aiew-nginx nginx -t
-    docker exec aiew-nginx nginx -s reload
+    log_info "Nginx 재시작 중... (upstream 설정 반영)"
+    # Docker 볼륨 마운트는 restart 시 새로 읽음
+    docker compose -f "$COMPOSE_FILE" restart nginx
 else
     log_info "Nginx 시작 중..."
     docker compose -f "$COMPOSE_FILE" up -d nginx
