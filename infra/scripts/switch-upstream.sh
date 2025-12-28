@@ -56,14 +56,13 @@ if [ ! -f "$UPSTREAM_FILE" ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 1. 심볼릭 링크 변경
+# 1. upstream 설정 파일 복사
 # -----------------------------------------------------------------------------
 echo -e "${YELLOW}[SWITCH]${NC} upstream 전환: $ENV"
 
-cd "$NGINX_DIR"
-ln -sf "upstream-${ENV}.conf" upstream.conf
+cp "$UPSTREAM_FILE" "$NGINX_DIR/upstream.conf"
 
-echo -e "${GREEN}[OK]${NC} 심볼릭 링크 업데이트: upstream.conf → upstream-${ENV}.conf"
+echo -e "${GREEN}[OK]${NC} upstream.conf ← upstream-${ENV}.conf"
 
 # -----------------------------------------------------------------------------
 # 2. Nginx 설정 테스트
@@ -75,9 +74,9 @@ if ! docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t; then
 
     # 롤백: 다른 환경으로 복구
     if [ "$ENV" = "blue" ]; then
-        ln -sf "upstream-green.conf" upstream.conf
+        cp "$NGINX_DIR/upstream-green.conf" "$NGINX_DIR/upstream.conf"
     else
-        ln -sf "upstream-blue.conf" upstream.conf
+        cp "$NGINX_DIR/upstream-blue.conf" "$NGINX_DIR/upstream.conf"
     fi
 
     exit 1
