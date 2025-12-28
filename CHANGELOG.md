@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.2](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.1...aiew-v1.3.2) (2025-12-28)
+
+
+### Bug Fixes
+
+* **deploy:** docker cp로 nginx 설정 직접 복사 ([3b93693](https://github.com/ku-cse-grad-proj/AIew/commit/3b93693bb40da3704e12ddf01746427553f1e29e))
+
+
+### Chores
+
+* release 2025-12-28_20:35 ([6247e30](https://github.com/ku-cse-grad-proj/AIew/commit/6247e3068058fee29d4144e91fd5cac8fc72a196))
+
 ## [1.3.1](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.0...aiew-v1.3.1) (2025-12-28)
 
 
