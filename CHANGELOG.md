@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.1](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.0...aiew-v1.3.1) (2025-12-28)
+
+
+### Bug Fixes
+
+* **deploy:** Docker 볼륨에서 심볼릭 링크 문제 수정 ([54155f8](https://github.com/ku-cse-grad-proj/AIew/commit/54155f8c1351afb448ee56492bcd626523696a90))
+
+
+### Chores
+
+* release 2025-12-28_20:18 ([ff92412](https://github.com/ku-cse-grad-proj/AIew/commit/ff924123d5b8d562abfd2e55929838dc16027024))
+
 ## [1.3.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.2.1...aiew-v1.3.0) (2025-12-26)
 
 
