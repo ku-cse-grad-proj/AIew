@@ -1,0 +1,38 @@
+/* Generated: Tailwind v4 theme (primitives) */
+@theme {
+  --color-blue-100: #e3f1fa;
+  --color-blue-200: #c1dcf1;
+  --color-blue-300: #9ac7e6;
+  --color-blue-400: #6baad4;
+  --color-blue-500: #4b8ebf;
+  --color-blue-600: #3f78a3;
+  --color-blue-700: #365f87;
+  --color-blue-800: #2f4e77;
+  --color-blue-900: #333d71;
+  --color-neutral-100: #f5f7f8;
+  --color-neutral-200: #f1f1f1;
+  --color-neutral-300: #e4e6e8;
+  --color-neutral-400: #d1d5dc;
+  --color-neutral-500: #b5bac2;
+  --color-neutral-600: #8a8e94;
+  --color-neutral-700: #666666;
+  --color-neutral-800: #4a4a4a;
+  --color-neutral-900: #333333;
+  --color-green-500: #4caf50;
+  --color-red-500: #f44336;
+  --color-yellow-500: #ffc107;
+  --color-transparent: rgba(0, 0, 0, 0);
+  --color-white-0: rgba(255, 255, 255, 0);
+  --color-white-20: rgba(255, 255, 255, 0.2);
+  --color-white-30: rgba(255, 255, 255, 0.3);
+  --color-black-0: rgba(0, 0, 0, 0);
+  --color-black-20: rgba(0, 0, 0, 0.2);
+  --color-black-30: rgba(0, 0, 0, 0.3);
+  --color: #ffffff;
+  --radius-8: 8px;
+  --radius-10: 10px;
+  --radius-16: 16px;
+  --radius-20: 20px;
+  --radius-none: 0px;
+  --radius-full: 9999px;
+}
