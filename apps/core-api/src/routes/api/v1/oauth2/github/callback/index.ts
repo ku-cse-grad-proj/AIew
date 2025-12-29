@@ -69,7 +69,9 @@ const controller: FastifyPluginAsyncTypebox = async (fastify) => {
         },
       )
 
-      server.log.info(userInfo)
+      server.log.info(
+        `GitHub OAuth user info received: ${userInfo.email ?? 'private'} (${userInfo.name ?? userInfo.login})`,
+      )
 
       // GitHub 사용자 이메일 조회 (주 이메일이 비공개인 경우 이메일 목록에서 가져옴)
       let userEmail = userInfo.email
