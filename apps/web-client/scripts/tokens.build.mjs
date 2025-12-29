@@ -192,6 +192,55 @@ StyleDictionary.registerFormat({
   },
 })
 
+StyleDictionary.registerFormat({
+  name: 'tw/components-vars',
+  format: ({ dictionary }) => {
+    const unfilteredTokens = dictionary.unfilteredTokens ?? dictionary.tokens
+
+    const lines = dictionary.allTokens
+      .map((token) => {
+        const originalValue = tokenOriginalVal(token)
+        let value = token.$value
+
+        const hasRef =
+          typeof originalValue === 'string' && usesReferences(originalValue)
+
+        if (hasRef) {
+          const refs = getReferences(originalValue, unfilteredTokens, {
+            usesDtcg: true,
+            unfilteredTokens,
+          })
+
+          let v = originalValue
+          refs.forEach((ref) => {
+            const refPath = Array.isArray(ref.ref) ? ref.ref.join('.') : null
+            if (!refPath) return
+            v = v.replaceAll(`{${refPath}}`, `var(--${ref.name})`)
+          })
+          value = v
+        } else if (typeof value === 'number') {
+          // Components layout numbers should be CSS lengths
+          value = `${value}px`
+        }
+
+        return {
+          key: `--${token.name}`,
+          line: `  --${token.name}: ${value};`,
+        }
+      })
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map((x) => x.line)
+
+    return [
+      '/* Generated: component variables (consume theme & semantic only) */',
+      ':root {',
+      ...lines,
+      '}',
+      '',
+    ].join('\n')
+  },
+})
+
 // -----------------------------
 // Factory
 // -----------------------------
@@ -275,6 +324,24 @@ const semanticInlineSD = makeSD({
   ],
 })
 
+const componentsVarsSD = makeSD({
+  // Include dependencies so references can be resolved.
+  source: [
+    'tokens/**/primitives.json',
+    'tokens/typography.json',
+    'tokens/semantic.light.json',
+    'tokens/components.json',
+  ],
+  transforms: ['name/kebab', 'name/typography-tailwind'],
+  files: [
+    {
+      destination: 'components.vars.css',
+      format: 'tw/components-vars',
+      filter: (t) => t.filePath?.endsWith('components.json'),
+    },
+  ],
+})
+
 // -----------------------------
 // Run
 // -----------------------------
@@ -283,6 +350,7 @@ await Promise.all([
   semanticLightSD.cleanAllPlatforms(),
   semanticDarkSD.cleanAllPlatforms(),
   semanticInlineSD.cleanAllPlatforms(),
+  componentsVarsSD.cleanAllPlatforms(),
 ])
 
 await Promise.all([
@@ -290,4 +358,5 @@ await Promise.all([
   semanticLightSD.buildAllPlatforms(),
   semanticDarkSD.buildAllPlatforms(),
   semanticInlineSD.buildAllPlatforms(),
+  componentsVarsSD.buildAllPlatforms(),
 ])

@@ -1,0 +1,30 @@
+/* Generated: component variables (consume theme & semantic only) */
+:root {
+  --button-link-outline-bg: var(--color-transparent);
+  --button-link-outline-disabled: var(--overlay-disabled);
+  --button-link-outline-hover: var(--overlay-hover);
+  --button-link-outline-press: var(--overlay-press);
+  --button-link-outline-text: var(--text-secondary);
+  --button-link-primary-bg: var(--primary);
+  --button-link-primary-disabled: var(--overlay-disabled);
+  --button-link-primary-hover: var(--overlay-hover);
+  --button-link-primary-press: var(--overlay-press);
+  --button-link-primary-text: var(--color-neutral-100);
+  --button-link-secondary-bg: var(--secondary);
+  --button-link-secondary-disabled: var(--overlay-disabled);
+  --button-link-secondary-hover: var(--overlay-hover);
+  --button-link-secondary-press: var(--overlay-press);
+  --button-link-secondary-text: var(--color-neutral-100);
+  --button-link-sizes-lg-font-size: var(--text-xl);
+  --button-link-sizes-lg-font-weight: var(--font-weight-medium);
+  --button-link-sizes-lg-height: 72px;
+  --button-link-sizes-lg-padding-x: 40px;
+  --button-link-sizes-lg-padding-y: 20px;
+  --button-link-sizes-lg-radius: var(--radius-20);
+  --button-link-sizes-md-font-size: var(--text-sm);
+  --button-link-sizes-md-font-weight: var(--font-weight-regular);
+  --button-link-sizes-md-height: 40px;
+  --button-link-sizes-md-padding-x: 20px;
+  --button-link-sizes-md-padding-y: 10px;
+  --button-link-sizes-md-radius: var(--radius-10);
+}
