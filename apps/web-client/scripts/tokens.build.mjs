@@ -11,6 +11,8 @@ const BUILD_PATH = 'src/styles/generated/'
 // -----------------------------
 const tokenVal = (t) => t.$value
 const tokenOriginalVal = (t) => t.original?.$value ?? t.original?.value
+const tokenType = (t) =>
+  t.original?.$type ?? t.original?.type ?? t.$type ?? t.type
 
 // -----------------------------
 // Transforms
@@ -95,6 +97,32 @@ StyleDictionary.registerFormat({
   format: makeSemanticFormat({ comment: 'dark', selector: '.dark' }),
 })
 
+StyleDictionary.registerFormat({
+  name: 'tw/semantic-inline',
+  format: ({ dictionary }) => {
+    const semanticColorTokens = dictionary.allTokens.filter(
+      (t) =>
+        t.filePath?.endsWith('semantic.light.json') && tokenType(t) === 'color',
+    )
+
+    const lines = semanticColorTokens
+      .map((token) => ({
+        key: `--color-${token.name}`,
+        line: `  --color-${token.name}: var(--${token.name});`,
+      }))
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map((x) => x.line)
+
+    return [
+      '/* Generated: Tailwind v4 semantic inline aliases */',
+      '@theme inline {',
+      ...lines,
+      '}',
+      '',
+    ].join('\n')
+  },
+})
+
 // -----------------------------
 // Factory
 // -----------------------------
@@ -160,6 +188,18 @@ const semanticDarkSD = makeSD({
   ],
 })
 
+const semanticInlineSD = makeSD({
+  source: ['tokens/**/primitives.json', 'tokens/semantic.light.json'],
+  transforms: ['name/kebab'],
+  files: [
+    {
+      destination: 'theme.inline.css',
+      format: 'tw/semantic-inline',
+      filter: (t) => t.filePath?.endsWith('semantic.light.json'),
+    },
+  ],
+})
+
 // -----------------------------
 // Run
 // -----------------------------
@@ -167,10 +207,12 @@ await Promise.all([
   themeSD.cleanAllPlatforms(),
   semanticLightSD.cleanAllPlatforms(),
   semanticDarkSD.cleanAllPlatforms(),
+  semanticInlineSD.cleanAllPlatforms(),
 ])
 
 await Promise.all([
   themeSD.buildAllPlatforms(),
   semanticLightSD.buildAllPlatforms(),
   semanticDarkSD.buildAllPlatforms(),
+  semanticInlineSD.buildAllPlatforms(),
 ])

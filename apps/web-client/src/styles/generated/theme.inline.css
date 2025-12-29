@@ -1,0 +1,16 @@
+/* Generated: Tailwind v4 semantic inline aliases */
+@theme inline {
+  --color-overlay-disabled: var(--overlay-disabled);
+  --color-overlay-hover: var(--overlay-hover);
+  --color-overlay-press: var(--overlay-press);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-surface-error: var(--surface-error);
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-success: var(--surface-success);
+  --color-surface-warning: var(--surface-warning);
+  --color-text-inverted: var(--text-inverted);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+}
