@@ -14,6 +14,16 @@ const tokenOriginalVal = (t) => t.original?.$value ?? t.original?.value
 const tokenType = (t) =>
   t.original?.$type ?? t.original?.type ?? t.$type ?? t.type
 
+const FONT_WEIGHT_VALUE_MAP = {
+  regular: 400,
+  medium: 500,
+  bold: 700,
+  extrabold: 800,
+}
+
+const normalizeWeightKey = (value) =>
+  String(value).replace(/\s+/g, '').toLowerCase()
+
 // -----------------------------
 // Transforms
 // -----------------------------
@@ -26,15 +36,74 @@ StyleDictionary.registerTransform({
   transform: (token) => `${tokenVal(token)}px`,
 })
 
+// Tailwind typography naming (map from name/kebab output)
+StyleDictionary.registerTransform({
+  name: 'name/typography-tailwind',
+  type: 'name',
+  filter: (token) => token.filePath?.endsWith('typography.json'),
+  transform: (token) => {
+    const name = token.name ?? ''
+
+    if (name.startsWith('font-family-')) {
+      return name.replace('font-family-', 'font-')
+    }
+
+    if (name.startsWith('font-size-')) {
+      return name.replace('font-size-', 'text-')
+    }
+
+    if (name.startsWith('font-line-height-')) {
+      const size = name.slice('font-line-height-'.length)
+      return `leading-${size}`
+    }
+
+    if (name.startsWith('font-letter-spacing-')) {
+      const size = name.slice('font-letter-spacing-'.length)
+      return `tracking-${size}`
+    }
+
+    return name
+  },
+})
+
+// Add px to numeric typography sizes/line-heights
+StyleDictionary.registerTransform({
+  name: 'value/typography-px',
+  type: 'value',
+  filter: (token) => {
+    const group = token.path?.[1]
+    return (
+      token.filePath?.endsWith('typography.json') &&
+      (group === 'size' || group === 'line-height') &&
+      typeof tokenVal(token) === 'number'
+    )
+  },
+  transform: (token) => `${tokenVal(token)}px`,
+})
+
+// Map typography font-weight labels to numeric values
+StyleDictionary.registerTransform({
+  name: 'value/font-weight-number',
+  type: 'value',
+  filter: (token) =>
+    token.filePath?.endsWith('typography.json') && token.path?.[1] === 'weight',
+  transform: (token) => {
+    const key = normalizeWeightKey(tokenVal(token))
+    return FONT_WEIGHT_VALUE_MAP[key] ?? tokenVal(token)
+  },
+})
+
 // -----------------------------
 // Formats
 // -----------------------------
 StyleDictionary.registerFormat({
   name: 'tw/v4-theme',
   format: ({ dictionary }) => {
-    const lines = dictionary.allTokens.map((t) => `  --${t.name}: ${t.$value};`)
+    const lines = dictionary.allTokens.map(
+      (token) => `  --${token.name}: ${token.$value};`,
+    )
     return [
-      '/* Generated: Tailwind v4 theme (primitives) */',
+      '/* Generated: Tailwind v4 theme (primitives, typography) */',
       '@theme {',
       ...lines,
       '}',
@@ -153,8 +222,14 @@ function makeSD({ source, transforms, files, options }) {
 // Build configs
 // -----------------------------
 const themeSD = makeSD({
-  source: ['tokens/**/primitives.json'],
-  transforms: ['name/kebab', 'value/radius-px'],
+  source: ['tokens/**/primitives.json', 'tokens/typography.json'],
+  transforms: [
+    'name/kebab',
+    'name/typography-tailwind',
+    'value/radius-px',
+    'value/typography-px',
+    'value/font-weight-number',
+  ],
   files: [
     {
       destination: 'theme.css',

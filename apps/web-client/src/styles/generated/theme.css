@@ -1,4 +1,4 @@
-/* Generated: Tailwind v4 theme (primitives) */
+/* Generated: Tailwind v4 theme (primitives, typography) */
 @theme {
   --color-blue-100: #e3f1fa;
   --color-blue-200: #c1dcf1;
@@ -35,4 +35,23 @@
   --radius-20: 20px;
   --radius-none: 0px;
   --radius-full: 9999px;
+  --font-title: Pretendard;
+  --font-body: Pretendard;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-extra-bold: 800;
+  --text-xs: 12px;
+  --text-sm: 16px;
+  --text-md: 18px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  --text-3xl: 40px;
+  --text-4xl: 48px;
+  --leading-xs: 16px;
+  --leading-sm: 24px;
+  --leading-md: 32px;
+  --leading-lg: 40px;
+  --leading-xl: 48px;
 }
