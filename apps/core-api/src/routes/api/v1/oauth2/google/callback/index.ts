@@ -55,7 +55,9 @@ const controller: FastifyPluginAsyncTypebox = async (fastify) => {
         },
       )
 
-      server.log.info(userInfo)
+      server.log.info(
+        `Google OAuth user info received: ${userInfo.email} (${userInfo.name})`,
+      )
 
       // AuthService를 통해 OAuth 로그인 처리 (사용자 생성 또는 조회 + JWT 발급)
       const { accessToken, refreshToken } =
