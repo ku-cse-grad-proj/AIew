@@ -1,0 +1,16 @@
+/* Generated: semantic (light) */
+:root {
+  --surface-success: var(--color-green-500);
+  --surface-primary: var(--color-neutral-200);
+  --surface-secondary: var(--color-neutral-100);
+  --surface-warning: var(--color-yellow-500);
+  --surface-error: var(--color-red-500);
+  --primary: var(--color-blue-900);
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-700);
+  --text-inverted: var(--color-neutral-100);
+  --overlay-disabled: var(--color-white-30);
+  --overlay-hover: var(--color-black-20);
+  --overlay-press: var(--color-black-30);
+  --secondary: var(--color-blue-500);
+}
