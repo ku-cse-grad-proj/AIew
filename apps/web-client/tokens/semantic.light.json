@@ -1,0 +1,60 @@
+{
+  "surface": {
+    "success": {
+      "$type": "color",
+      "$value": "{color.green.500}"
+    },
+    "primary": {
+      "$type": "color",
+      "$value": "{color.neutral.200}"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{color.neutral.100}"
+    },
+    "warning": {
+      "$type": "color",
+      "$value": "{color.yellow.500}"
+    },
+    "error": {
+      "$type": "color",
+      "$value": "{color.red.500}"
+    }
+  },
+  "primary": {
+    "$type": "color",
+    "$value": "{color.blue.900}"
+  },
+  "text": {
+    "primary": {
+      "$type": "color",
+      "$value": "{color.neutral.900}"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{color.neutral.700}"
+    },
+    "inverted": {
+      "$type": "color",
+      "$value": "{color.neutral.100}"
+    }
+  },
+  "overlay": {
+    "disabled": {
+      "$type": "color",
+      "$value": "{color.white.30}"
+    },
+    "hover": {
+      "$type": "color",
+      "$value": "{color.black.20}"
+    },
+    "press": {
+      "$type": "color",
+      "$value": "{color.black.30}"
+    }
+  },
+  "secondary": {
+    "$type": "color",
+    "$value": "{color.blue.500}"
+  }
+}
