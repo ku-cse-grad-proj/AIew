@@ -36,7 +36,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install
-        run: pnpm -w install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --filter ./apps/web-client
 
       - name: Build tokens (web-client)
         working-directory: apps/web-client
