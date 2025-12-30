@@ -13,7 +13,7 @@
 # 동작:
 #   1. upstream.conf 파일을 지정된 환경으로 복사
 #   2. Nginx 설정 테스트 (실패 시 롤백)
-#   3. Nginx reload (무중단)
+#   3. Nginx restart (bind mount inode 변경 반영)
 #
 # =============================================================================
 
@@ -105,15 +105,15 @@ fi
 echo -e "${GREEN}[OK]${NC} Nginx 설정 검증 통과"
 
 # -----------------------------------------------------------------------------
-# 3. Nginx reload (무중단)
+# 3. Nginx restart (bind mount 파일 inode 변경 반영 위해 restart 필요)
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[RELOAD]${NC} Nginx reload 중... (무중단)"
+echo -e "${YELLOW}[RESTART]${NC} Nginx restart 중..."
 
-docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -s reload
+docker compose -f "$COMPOSE_FILE" restart nginx
 
 # -----------------------------------------------------------------------------
 # 4. 활성 환경 기록
 # -----------------------------------------------------------------------------
 echo "$ENV" > "$ACTIVE_ENV_FILE"
 
-echo -e "${GREEN}[SUCCESS]${NC} Nginx reload 완료. 트래픽이 $ENV 환경으로 전환되었습니다."
+echo -e "${GREEN}[SUCCESS]${NC} Nginx restart 완료. 트래픽이 $ENV 환경으로 전환되었습니다."

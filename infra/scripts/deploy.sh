@@ -145,9 +145,9 @@ if docker ps --format '{{.Names}}' | grep -q "^aiew-nginx$"; then
         exit 1
     fi
 
-    # 무중단 reload
-    log_info "Nginx reload 중... (무중단)"
-    docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -s reload
+    # Nginx restart (bind mount 파일 inode 변경 반영을 위해 restart 필요)
+    log_info "Nginx restart 중..."
+    docker compose -f "$COMPOSE_FILE" restart nginx
 else
     # nginx가 없으면 새로 시작
     cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/upstream.conf"
