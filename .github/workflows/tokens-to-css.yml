@@ -68,6 +68,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add apps/web-client/src/styles/generated/**
+          git add ./src/styles/generated/**
           git commit -m "chore(tokens): update generated styles [skip ci]"
           git push
