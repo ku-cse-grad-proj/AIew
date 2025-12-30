@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 
-@import '@/../../styles/generated/theme.css';
-@import '@/../../styles/generated/semantic.light.css';
-@import '@/../../styles/generated/semantic.dark.css';
-@import '@/../../styles/generated/theme.inline.css';
+@import '../styles/generated/theme.css';
+@import '../styles/generated/semantic.light.css';
+@import '../styles/generated/semantic.dark.css';
+@import '../styles/generated/theme.inline.css';
 
 :root {
   --background: #f1f1f1;
