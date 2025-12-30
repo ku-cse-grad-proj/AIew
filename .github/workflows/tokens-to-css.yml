@@ -1,0 +1,75 @@
+name: Tokens split & generated CSS
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'apps/web-client/tokens/**'
+      - 'apps/web-client/scripts/**'
+      - 'apps/web-client/src/styles/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: tokens-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install
+        run: pnpm -w install --frozen-lockfile
+
+      - name: Build tokens (web-client)
+        working-directory: apps/web-client
+        run: |
+          node ./scripts/split-tokens.mjs
+          node ./scripts/tokens.build.mjs
+
+      - name: Detect generated changes
+        id: diff
+        working-directory: apps/web-client
+        shell: bash
+        run: |
+          CHANGED="$(git diff --name-only src/styles/generated || true)"
+          echo "changed<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ -n "$CHANGED" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit & push generated changes
+        if: steps.diff.outputs.has_changes == 'true'
+        working-directory: apps/web-client
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add apps/web-client/src/styles/generated/**
+          git commit -m "chore(tokens): update generated styles [skip ci]"
+          git push
