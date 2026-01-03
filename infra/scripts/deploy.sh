@@ -129,17 +129,29 @@ log_success "헬스체크 통과"
 # -----------------------------------------------------------------------------
 log_info "Nginx upstream 설정: $NEXT_ENV"
 
-# upstream 설정 파일 복사
 NGINX_DIR="$INFRA_DIR/nginx"
-cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/upstream.conf"
-log_info "upstream.conf ← upstream-${NEXT_ENV}.conf"
 
-# nginx 시작 또는 restart
+# nginx가 실행 중인지 확인
 if docker ps --format '{{.Names}}' | grep -q "^aiew-nginx$"; then
-    log_info "Nginx 재시작 중... (upstream 설정 반영)"
-    # Docker 볼륨 마운트는 restart 시 새로 읽음
+    # upstream 설정 파일 복사 (bind mount이므로 컨테이너에서 즉시 반영됨)
+    cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/upstream.conf"
+    log_info "upstream.conf ← upstream-${NEXT_ENV}.conf"
+
+    # 설정 테스트 (실패 시 롤백)
+    log_info "Nginx 설정 테스트 중..."
+    if ! docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t; then
+        log_error "Nginx 설정 오류! 롤백합니다."
+        cp "$NGINX_DIR/upstream-${CURRENT_ENV}.conf" "$NGINX_DIR/upstream.conf"
+        exit 1
+    fi
+
+    # Nginx restart (bind mount 파일 inode 변경 반영을 위해 restart 필요)
+    log_info "Nginx restart 중..."
     docker compose -f "$COMPOSE_FILE" restart nginx
 else
+    # nginx가 없으면 새로 시작
+    cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/upstream.conf"
+    log_info "upstream.conf ← upstream-${NEXT_ENV}.conf"
     log_info "Nginx 시작 중..."
     docker compose -f "$COMPOSE_FILE" up -d nginx
 fi
@@ -153,8 +165,12 @@ echo "$NEXT_ENV" > "$ACTIVE_ENV_FILE"
 log_info "활성 환경 업데이트: $NEXT_ENV"
 
 # -----------------------------------------------------------------------------
-# 7. 이전 환경 종료 (nginx 제외)
+# 7. 안정화 대기 후 이전 환경 종료
 # -----------------------------------------------------------------------------
+# 진행 중인 요청이 완료될 때까지 대기 (graceful shutdown)
+log_info "안정화 대기 중... (30초)"
+sleep 30
+
 log_info "[$CURRENT_ENV] 이전 환경 종료 중..."
 
 # nginx를 제외하고 이전 환경의 앱 서비스만 종료

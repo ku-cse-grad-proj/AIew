@@ -29,9 +29,10 @@ jobs:
           script: |
             cd ~/aiew
 
-            # 최신 코드 가져오기
+            # 최신 코드 가져오기 (서버 측 로컬 변경사항 무시하고 강제 체크아웃)
             git fetch origin --tags
-            git checkout ${{ github.ref_name }}
+            git reset --hard HEAD
+            git checkout -B ${{ github.ref_name }} origin/${{ github.ref_name }}
 
             # 배포 스크립트 실행
             ./infra/scripts/deploy.sh "${{ github.ref_name }}" "${{ secrets.GITHUB_TOKEN }}"

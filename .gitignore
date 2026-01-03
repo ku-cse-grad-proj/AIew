@@ -16,3 +16,6 @@ GEMINI.md
 *.pem
 .env.production
 .env.local
+
+# Blue-Green 배포용 (deploy.sh가 생성)
+infra/nginx/upstream.conf
