@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.4](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.3...aiew-v1.3.4) (2026-01-04)
+
+
+### Bug Fixes
+
+* Blue-Green 배포에서 활성 환경이 변경되지 않던 문제 해결 ([#161](https://github.com/ku-cse-grad-proj/AIew/issues/161)) ([f1daf6a](https://github.com/ku-cse-grad-proj/AIew/commit/f1daf6ad59edfebc4850c65a733da5114af27aab))
+
+
+### Refactoring
+
+* 로그인 로그 개선 작업 ([#159](https://github.com/ku-cse-grad-proj/AIew/issues/159)) ([25481dd](https://github.com/ku-cse-grad-proj/AIew/commit/25481dddaa4c0d04b7fc2f53ccbda3cbc7efb252))
+* 실제 클라이언트 IP 복원 & rate limit 완화 ([#160](https://github.com/ku-cse-grad-proj/AIew/issues/160)) ([50e1958](https://github.com/ku-cse-grad-proj/AIew/commit/50e195808e7856823c5cf40b60eb283d2ed089de))
+
+
+### Chores
+
+* release 2026-01-04_12:35 ([892c5ef](https://github.com/ku-cse-grad-proj/AIew/commit/892c5ef6cb07a7d674d3a8669898db015b24502d))
+* **web:** 디자인 시스템 구축(token to css) ([#162](https://github.com/ku-cse-grad-proj/AIew/issues/162)) ([3cf945a](https://github.com/ku-cse-grad-proj/AIew/commit/3cf945a7f6886c17e7300195a2d171ea76a7597d))
+
 ## [1.3.3](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.2...aiew-v1.3.3) (2025-12-28)
 
 
