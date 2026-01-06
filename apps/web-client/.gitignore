@@ -43,3 +43,8 @@ next-env.d.ts
 # token files
 tokens/**/*.json
 !tokens/tokens.json
+
+# storybook
+*storybook.log
+storybook-static
+/src/stories/*
