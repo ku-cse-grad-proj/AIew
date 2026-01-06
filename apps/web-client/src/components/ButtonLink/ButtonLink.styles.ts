@@ -7,12 +7,9 @@ import {
   stateLayerInteraction,
 } from '../stateLayer'
 
-export const VARIANT_OPTIONS = ['primary', 'secondary', 'outline'] as const
-export const SIZE_OPTIONS = ['md', 'lg'] as const
-
 export const buttonLinkStyleDefaults = {
-  variant: VARIANT_OPTIONS[0],
-  size: SIZE_OPTIONS[0],
+  variant: 'primary',
+  size: 'md',
   disabled: false,
 } as const
 

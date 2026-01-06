@@ -1,7 +1,6 @@
 import { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 import { ButtonLink } from './ButtonLink'
-import { SIZE_OPTIONS, VARIANT_OPTIONS } from './ButtonLink.styles'
 
 const meta = {
   component: ButtonLink,
@@ -12,12 +11,12 @@ const meta = {
     variant: {
       control: 'select',
       description: 'ButtonLink의 variant 스타일을 설정합니다.',
-      options: VARIANT_OPTIONS,
+      options: ['primary', 'secondary', 'outline'],
     },
     size: {
       control: 'radio',
       description: 'ButtonLink의 크기를 설정합니다.',
-      options: SIZE_OPTIONS,
+      options: ['md', 'lg'],
     },
   },
   tags: ['autodocs'],
