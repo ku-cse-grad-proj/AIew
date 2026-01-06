@@ -7,8 +7,8 @@
 @import '../styles/generated/components.vars.css';
 
 :root {
-  --background: #f1f1f1;
-  --foreground: #333333;
+  --background: var(--color-surface-primary);
+  --foreground: var(--color-text-primary);
 }
 
 @theme {
