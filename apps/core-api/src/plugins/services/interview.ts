@@ -115,12 +115,19 @@ export class InterviewService {
 
       const fileUrls = await this.uploadFilesToR2(sessionId, files)
       log.info(`[${sessionId}] Files uploaded successfully.`)
-      await prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: fileUrls,
-      })
+
       const parsedTexts = await this.parsePdfFiles(sessionId, files)
       log.info(`[${sessionId}] PDFs parsed successfully.`)
+
+      // 파일 URL과 파싱된 텍스트를 함께 저장
+      await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: {
+          ...fileUrls,
+          coverLetterText: parsedTexts.resume_text,
+          portfolioText: parsedTexts.portfolio_text,
+        },
+      })
       const questionRequestData = this.prepareQuestionRequest(
         interviewData,
         parsedTexts,
