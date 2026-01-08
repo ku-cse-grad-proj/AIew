@@ -69,16 +69,6 @@ class AnswerEvaluationRequest(BaseModel):
     question_text: str = Field(..., description="질문 텍스트")
     user_answer: str = Field(..., description="사용자 답변 텍스트")
     answer_duration_sec: int = Field(..., ge=0, description="사용자 답변 소요 시간(초)")
-    remaining_time_sec: Optional[int] = Field(
-        None, ge=0, description="남은 전체 시험 시간(초)"
-    )
-    remaining_main_questions: Optional[int] = Field(
-        None, ge=0, description="남은 메인 질문 수"
-    )
-    use_tailored_category: bool = Field(
-        False,
-        description="True면 평가 프롬프트에 전달되는 category를 'tailored'로 강제",
-    )
 
     model_config = {
         "json_schema_extra": {
@@ -90,9 +80,6 @@ class AnswerEvaluationRequest(BaseModel):
                 "question_text": "React와 TypeScript를 사용하여 UI 컴포넌트 설계 시 고려 사항은 무엇일까요?",
                 "user_answer": "재사용성, 타입 안전성, 접근성, 성능을 우선합니다.",
                 "answer_duration_sec": 70,
-                "remaining_time_sec": 480,
-                "remaining_main_questions": 3,
-                "use_tailored_category": False,
             }
         }
     }
