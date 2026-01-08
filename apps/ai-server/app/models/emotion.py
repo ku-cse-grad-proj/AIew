@@ -1,8 +1,6 @@
 from typing import List
-from pydantic import (
-    BaseModel, 
-    Field
-)
+
+from pydantic import BaseModel, Field
 
 
 class EmotionGroupScore(BaseModel):
@@ -15,6 +13,9 @@ class EmotionGroupScore(BaseModel):
     fear: float = Field(..., description="fear 감정 확률(0.0~1.0)")
     surprise: float = Field(..., description="surprise 감정 확률(0.0~1.0)")
 
+
 class EmotionGroupResult(BaseModel):
     file_name: str = Field(..., description="분석에 사용된 영상 파일명")
-    results: List[EmotionGroupScore] = Field(..., description="프레임별 감정 확률 리스트")
+    results: List[EmotionGroupScore] = Field(
+        ..., description="프레임별 감정 확률 리스트"
+    )
