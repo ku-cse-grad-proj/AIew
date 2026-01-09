@@ -110,9 +110,6 @@ export interface AnswerEvaluationRequest {
   question_text: string
   user_answer: string
   answer_duration_sec: number
-  remaining_time_sec?: number
-  remaining_main_questions?: number
-  use_tailored_category?: boolean
 }
 
 /**
@@ -138,12 +135,6 @@ export interface FollowupRequest {
   skills: string[]
   user_answer: string
   evaluation_summary?: string
-  remaining_time_sec?: number
-  remaining_main_questions?: number
-  depth?: number
-  use_tailored_category?: boolean
-  auto_sequence?: boolean
-  next_followup_index?: number
 }
 
 // --- AI 서버 메모리 로깅 관련 타입 ---

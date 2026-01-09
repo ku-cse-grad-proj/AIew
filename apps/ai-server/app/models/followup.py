@@ -15,17 +15,6 @@ class FollowupRequest(BaseModel):
     evaluation_summary: Optional[str] = Field(
         None, description="이전 평가 요약(강점/개선점/레드플래그 요약 텍스트)"
     )
-    remaining_time_sec: Optional[int] = Field(None, description="남은 면접 시간(초)")
-    remaining_main_questions: Optional[int] = Field(
-        None, description="남은 메인 질문 수"
-    )
-    depth: int = Field(
-        1, ge=1, le=3, description="꼬리질문 추궁 강도(1=가벼움, 3=깊게)"
-    )
-    use_tailored_category: bool = Field(
-        False,
-        description="True면 꼬리질문 category를 항상 'tailored'로 간주하여 프롬프트에 전달",
-    )
     auto_sequence: bool = Field(
         True, description="True면 기존 꼬리질문 수를 기준으로 fu 번호 자동 증가"
     )
@@ -45,10 +34,6 @@ class FollowupRequest(BaseModel):
                 "skills": ["Node.js", "Express", "Redis"],
                 "user_answer": "API 성능 최적화를 위해 여러 가지 접근을 시도했습니다. 먼저 데이터베이스 쿼리를 분석해 불필요한 풀스캔을 없애고, 필요한 곳에 인덱스를 추가했습니다. 또한 Redis를 활용해 자주 조회되는 데이터를 캐싱하여 응답 속도를 크게 줄였습니다. 네트워크 측면에서는 gzip 압축과 HTTP/2를 적용해 전송 효율을 높였고, 서버 운영 환경에서는 PM2 클러스터 모드로 멀티코어를 활용하며 무중단 배포를 구현했습니다. 마지막으로 New Relic을 이용해 성능 지표를 실시간 모니터링하며, 병목 구간이 발견되면 즉시 개선 작업을 진행했습니다.",
                 "evaluation_summary": "강점: 방법 다양. 개선: 수치/검증 근거 부족.",
-                "remaining_time_sec": 820,
-                "remaining_main_questions": 4,
-                "depth": 2,
-                "use_tailored_category": True,
             }
         }
     }

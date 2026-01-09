@@ -1,59 +1,43 @@
-from fastapi import (
-    APIRouter, 
-    Depends,
-    Header,
-    Body
-)
+from fastapi import APIRouter, Body, Depends, Header
 from langchain.memory import ConversationBufferMemory
 
-from app.services.memory_logger import MemoryManager
 from app.models.evaluation import (
-    AnswerEvaluationRequest, 
+    AnswerEvaluationRequest,
     AnswerEvaluationResult,
     SessionEvaluationResult,
 )
 from app.services.answer_evaluator import EvaluationService
+from app.services.memory_logger import MemoryManager
 
 router = APIRouter()
 
 
 @router.post(
-    "/answer-evaluating", 
+    "/answer-evaluating",
     response_model=AnswerEvaluationResult,
     tags=["Evaluation"],
-    summary="Evaluate User Answer"
+    summary="Evaluate User Answer",
 )
 def evaluate_answer(
     x_session_id: str = Header(...),
-    req: AnswerEvaluationRequest = Body(...), 
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep)
+    req: AnswerEvaluationRequest = Body(...),
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
 ) -> AnswerEvaluationResult:
-    
-    service = EvaluationService(
-        memory=memory, 
-        session_id=x_session_id
-    )
+    service = EvaluationService(memory=memory, session_id=x_session_id)
 
-    return service.evaluate_answer(
-        req, 
-        memory
-    )
+    return service.evaluate_answer(req, memory)
 
 
 @router.post(
-    "/session-evaluating", 
+    "/session-evaluating",
     response_model=SessionEvaluationResult,
     tags=["Evaluation"],
-    summary="Evaluate Entire Session"
+    summary="Evaluate Entire Session",
 )
 def evaluate_session(
     x_session_id: str = Header(...),
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep)
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
 ) -> SessionEvaluationResult:
+    service = EvaluationService(memory=memory, session_id=x_session_id)
 
-    service = EvaluationService(
-        memory=memory,
-        session_id=x_session_id
-    )
-        
     return service.evaluate_session(memory)

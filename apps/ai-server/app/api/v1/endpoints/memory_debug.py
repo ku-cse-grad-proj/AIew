@@ -1,36 +1,28 @@
-from typing import (
-    List, 
-    Dict, 
-    Any
-)
+from typing import Any, Dict, List
 
 from fastapi import (
-    APIRouter, 
-    Depends, 
-    Header, 
+    APIRouter,
+    Depends,
+    Header,
 )
 from langchain.memory import ConversationBufferMemory
 
-from app.models.memory import (
-    Message,
-    MemoryDump
-)
-from app.services.memory_logger import MemoryManager 
+from app.models.memory import MemoryDump, Message
+from app.services.memory_logger import MemoryManager
 
 router = APIRouter()
 
 
 @router.get(
-    "/dump", 
+    "/dump",
     response_model=MemoryDump,
     tags=["Session"],
-    summary="Get Session Memory Dump"
+    summary="Get Session Memory Dump",
 )
 def get_memory_dump(
     memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
     x_session_id: str = Header(...),
 ) -> MemoryDump:
-    
     vars = memory.load_memory_variables({})
     history_str = vars.get("history", "")
 
@@ -45,26 +37,17 @@ def get_memory_dump(
                 role = "ai"
             elif "system" in t:
                 role = "system"
-            
+
             messages_out.append(Message(role=role, content=str(m.content)))
 
     return MemoryDump(
-        session_id=x_session_id, 
-        history_str=history_str, 
-        messages=messages_out
+        session_id=x_session_id, history_str=history_str, messages=messages_out
     )
 
-@router.delete(
-    "/reset",
-    tags=["Session"],
-    summary="Reset Session Memory"
-)
-def reset_memory(
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep)
-) -> Dict[str, Any]:
 
+@router.delete("/reset", tags=["Session"], summary="Reset Session Memory")
+def reset_memory(
+    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+) -> Dict[str, Any]:
     memory.clear()
-    return {
-        "ok": True, 
-        "message": "memory cleared"
-    }
+    return {"ok": True, "message": "memory cleared"}

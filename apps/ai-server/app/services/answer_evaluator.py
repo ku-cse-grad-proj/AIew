@@ -235,22 +235,14 @@ class EvaluationService:
         raw_prompt = load_prompt_template(PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
-        category_for_prompt = "tailored" if req.use_tailored_category else req.category
-
         vars: Dict[str, Any] = {
             "question_id": req.question_id,
-            "category": category_for_prompt,
+            "category": req.category,
             "criteria_csv": (", ".join(req.criteria) if req.criteria else ""),
             "skills_csv": (", ".join(req.skills) if req.skills else ""),
             "question_text": req.question_text,
             "user_answer": req.user_answer,
             "answer_duration_sec": req.answer_duration_sec,
-            "remaining_time_sec": req.remaining_time_sec
-            if req.remaining_time_sec is not None
-            else "null",
-            "remaining_main_questions": req.remaining_main_questions
-            if req.remaining_main_questions is not None
-            else "null",
         }
 
         prompt_text = prompt_template.format(**vars)

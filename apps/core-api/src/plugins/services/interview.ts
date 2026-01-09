@@ -238,19 +238,11 @@ export class InterviewService {
         sessionId,
       )
 
-      // 남은 메인 질문 수 계산
-      const totalMainQuestions = await prisma.interviewStep.count({
-        where: { interviewSessionId: sessionId, parentStepId: null },
-      })
-      const remainingMainQuestions =
-        totalMainQuestions - (session.currentQuestionIndex + 1)
-
       const evaluationResult = await this.requestAnswerEvaluation(
         currentStep,
         answer,
         duration,
         sessionId,
-        remainingMainQuestions,
       )
       await this.saveEvaluationResult(stepId, evaluationResult)
 
@@ -815,7 +807,6 @@ export class InterviewService {
     answer: string,
     duration: number,
     sessionId: string,
-    remainingMainQuestions: number,
   ) {
     const request: AnswerEvaluationRequest = {
       question_id: step.aiQuestionId,
@@ -825,7 +816,6 @@ export class InterviewService {
       question_text: step.question,
       user_answer: answer,
       answer_duration_sec: duration,
-      remaining_main_questions: remainingMainQuestions,
     }
     return this.aiClient.evaluateAnswer(request, sessionId)
   }

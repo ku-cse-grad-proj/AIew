@@ -131,22 +131,14 @@ class FollowupGeneratorService:
         raw_prompt = load_prompt_template(PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
-        category_for_prompt = "tailored" if req.use_tailored_category else req.category
         vars = {
             "question_id": req.question_id,
-            "category": category_for_prompt,
+            "category": req.category,
             "question_text": req.question_text,
             "criteria_csv": ", ".join(req.criteria) if req.criteria else "",
             "skills_csv": ", ".join(req.skills) if req.skills else "",
             "user_answer": req.user_answer,
             "evaluation_summary": req.evaluation_summary or "",
-            "remaining_time_sec": req.remaining_time_sec
-            if req.remaining_time_sec is not None
-            else "null",
-            "remaining_main_questions": req.remaining_main_questions
-            if req.remaining_main_questions is not None
-            else "null",
-            "depth": req.depth,
         }
 
         prompt_text = prompt_template.format(**vars)
