@@ -1,11 +1,6 @@
-from typing import (
-    List, 
-    Literal
-)
-from pydantic import (
-    BaseModel,
-    Field
-)
+from typing import List, Literal
+
+from pydantic import BaseModel, Field
 
 
 # memory_debug.py 에서 사용되는 모델들
@@ -16,7 +11,9 @@ class Message(BaseModel):
 
 class MemoryDump(BaseModel):
     session_id: str = Field(..., description="세션 ID")
-    history_str: str = Field(..., description="ConversationBufferMemory가 합쳐서 내주는 문자열")
+    history_str: str = Field(
+        ..., description="ConversationBufferMemory가 합쳐서 내주는 문자열"
+    )
     messages: List[Message] = Field(..., description="원본 메시지 배열 (role, content)")
 
 

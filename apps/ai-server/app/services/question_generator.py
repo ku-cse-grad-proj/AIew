@@ -160,6 +160,5 @@ class QuestionGeneratorService:
         final = self._dedupe_and_enforce(norm, constraints.avoid_question_ids)
 
         _ = [QuestionResponse.model_validate(i) for i in final]
-        self.logger.log_main_questions(final)
 
         return final
