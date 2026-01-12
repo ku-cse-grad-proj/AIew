@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -8,6 +10,8 @@ from langchain.memory import ConversationBufferMemory
 
 from app.models.memory import RestoreRequest, ShownQuestion, UserAnswer
 from app.services.memory_logger import MemoryLogger, MemoryManager
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -54,24 +58,29 @@ def restore_memory(
     x_session_id: str = Header(...),
 ) -> dict:
     try:
+        logger.info(
+            f"[{x_session_id}] Restoring memory with {len(payload.steps)} steps"
+        )
+
         # 1. 기존 메모리 초기화
         memory.clear()
 
-        logger = MemoryLogger(memory=memory, session_id=x_session_id)
+        memory_logger = MemoryLogger(memory=memory, session_id=x_session_id)
 
         # 2. PDF 파싱 로깅
-        logger.log_pdf_parsing(
+        memory_logger.log_pdf_parsing(
             {"file_name": "resume", "extracted_text": payload.resume_text}
         )
-        logger.log_pdf_parsing(
+        memory_logger.log_pdf_parsing(
             {"file_name": "portfolio", "extracted_text": payload.portfolio_text}
         )
+        logger.info(f"[{x_session_id}] PDF parsing logs restored")
 
         # 3. 각 스텝 순회하며 로깅
         for step in payload.steps:
             # 꼬리질문인 경우 TAIL_QUESTION 먼저 로깅
             if step.is_followup:
-                logger.log_tail_question(
+                memory_logger.log_tail_question(
                     {
                         "followup_id": step.question_id,
                         "parent_question_id": step.parent_question_id,
@@ -84,7 +93,7 @@ def restore_memory(
                 )
 
             # QUESTION_SHOWN 로깅
-            logger.log_shown_question(
+            memory_logger.log_shown_question(
                 {
                     "main_question_id": step.question_id,
                     "category": step.category,
@@ -98,16 +107,20 @@ def restore_memory(
 
             # 답변이 있으면 USER_ANSWER 로깅
             if step.answer is not None:
-                logger.log_user_answer(
+                memory_logger.log_user_answer(
                     step.question_id, step.answer, step.answer_duration_sec or 0
                 )
 
             # 평가가 있으면 ANSWER_EVALUATION 로깅
             if step.evaluation is not None:
-                logger.log_evaluation(step.evaluation.model_dump())
+                memory_logger.log_evaluation(step.evaluation.model_dump())
 
+            logger.info(f"[{x_session_id}] Step {step.question_id} restored")
+
+        logger.info(f"[{x_session_id}] Memory restore completed successfully")
         return {"ok": True, "restored_steps": len(payload.steps)}
     except Exception as e:
+        logger.error(f"[{x_session_id}] Failed to restore memory: {str(e)}")
         raise HTTPException(
             status_code=500, detail=f"Failed to restore memory: {str(e)}"
         )
