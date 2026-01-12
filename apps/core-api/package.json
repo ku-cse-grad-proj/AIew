@@ -14,7 +14,7 @@
     "test:db:start": "docker run -d --name aiew-test-db -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=aiew_test -p 5433:5432 --tmpfs /var/lib/postgresql/data postgres:16-alpine && sleep 2",
     "test:db:stop": "docker rm -f aiew-test-db || true",
     "test:db:migrate": "DATABASE_URL=\"postgresql://test:test@localhost:5433/aiew_test\" prisma migrate deploy",
-    "test:with-db": "pnpm test:db:start && pnpm test:db:migrate && pnpm test; pnpm test:db:stop",
+    "test:local": "pnpm test:db:start && pnpm test:db:migrate && pnpm test; pnpm test:db:stop",
     "start": "node dist/server.js",
     "build": "rimraf dist && tsc && tsc-alias",
     "dev": "nodemon"
