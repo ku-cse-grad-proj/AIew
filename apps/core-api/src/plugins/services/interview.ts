@@ -236,6 +236,15 @@ export class InterviewService {
           answerEndedAt: endAt,
         },
       })
+
+      // 질문과 답변을 랭체인 메모리에 추가
+      const questionPayloadForAi = this.formatStepToAiQuestion(currentStep)
+
+      await this.aiClient.logShownQuestion(
+        { question: questionPayloadForAi },
+        sessionId,
+      )
+
       await this.aiClient.logUserAnswer(
         {
           question_id: currentStep.aiQuestionId,

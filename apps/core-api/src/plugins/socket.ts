@@ -242,15 +242,6 @@ export default fp(
           }
 
           if (currentQuestion) {
-            // 헬퍼 메소드는 interviewService에서 가져와 사용
-            const questionPayloadForAi =
-              fastify.interviewService.formatStepToAiQuestion(currentQuestion)
-
-            await fastify.aiClientService.logShownQuestion(
-              { question: questionPayloadForAi },
-              sessionId,
-            )
-
             const sttToken = await fastify.interviewService.generateSttToken(
               sessionId,
               socket.user.id,
