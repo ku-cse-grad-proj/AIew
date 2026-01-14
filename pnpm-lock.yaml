@@ -17,6 +17,7 @@ overrides:
   jws@=4.0.0: '>=4.0.1'
   qs@<6.14.1: '>=6.14.1'
   '@modelcontextprotocol/sdk@<1.25.2': '>=1.25.2'
+  hono@<4.11.4: '>=4.11.4'
 
 importers:
 
@@ -187,7 +188,7 @@ importers:
     dependencies:
       '@openai/agents':
         specifier: ^0.1.0
-        version: 0.1.11(hono@4.10.7)(ws@8.19.0)(zod@3.25.76)
+        version: 0.1.11(hono@4.11.4)(ws@8.19.0)(zod@3.25.76)
       chart.js:
         specifier: ^4.5.1
         version: 4.5.1
@@ -1553,13 +1554,13 @@ packages:
     resolution: {integrity: sha512-GHjpOeHYbr9d1vkID2sNUYkl5IxumyhDrUJB7wBp7jvqYwPFt+oNKsAPBRcdSbV7kIrXhouLE199ks1QcK4r7A==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: '>=4.10.3'
+      hono: '>=4.11.4'
 
   '@hono/node-server@1.19.7':
     resolution: {integrity: sha512-vUcD0uauS7EU2caukW8z5lJKtoGMokxNbJtBiwHgpqxEXokaHCBkQUmCHhjFB1VUTWdqj25QoMkMKzgjq+uhrw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: '>=4.10.3'
+      hono: '>=4.11.4'
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -4516,8 +4517,8 @@ packages:
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
-  hono@4.10.7:
-    resolution: {integrity: sha512-icXIITfw/07Q88nLSkB9aiUrd8rYzSweK681Kjo/TSggaGbOX4RRyxxm71v+3PC8C/j+4rlxGeoTRxQDkaJkUw==}
+  hono@4.11.4:
+    resolution: {integrity: sha512-U7tt8JsyrxSRKspfhtLET79pU8K+tInj5QZXs1jSugO1Vq5dFj3kmZsRldo29mTBfcjDRVRXrEZ6LS63Cog9ZA==}
     engines: {node: '>=16.9.0'}
 
   html-encoding-sniffer@4.0.0:
@@ -8709,13 +8710,13 @@ snapshots:
       '@hapi/bourne': 3.0.0
       '@hapi/hoek': 11.0.7
 
-  '@hono/node-server@1.14.2(hono@4.10.7)':
+  '@hono/node-server@1.14.2(hono@4.11.4)':
     dependencies:
-      hono: 4.10.7
+      hono: 4.11.4
 
-  '@hono/node-server@1.19.7(hono@4.10.7)':
+  '@hono/node-server@1.19.7(hono@4.11.4)':
     dependencies:
-      hono: 4.10.7
+      hono: 4.11.4
     optional: true
 
   '@humanfs/core@0.19.1': {}
@@ -8923,9 +8924,9 @@ snapshots:
       '@types/react': 19.2.4
       react: 19.2.0
 
-  '@modelcontextprotocol/sdk@1.25.2(hono@4.10.7)(zod@3.25.76)':
+  '@modelcontextprotocol/sdk@1.25.2(hono@4.11.4)(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 1.19.7(hono@4.10.7)
+      '@hono/node-server': 1.19.7(hono@4.11.4)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
@@ -9008,12 +9009,12 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@openai/agents-core@0.1.11(hono@4.10.7)(ws@8.19.0)(zod@3.25.76)':
+  '@openai/agents-core@0.1.11(hono@4.11.4)(ws@8.19.0)(zod@3.25.76)':
     dependencies:
       debug: 4.4.3(supports-color@5.5.0)
       openai: 5.23.2(ws@8.19.0)(zod@3.25.76)
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.2(hono@4.10.7)(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.25.2(hono@4.11.4)(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
       - '@cfworker/json-schema'
@@ -9021,9 +9022,9 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.1.11(hono@4.10.7)(ws@8.19.0)(zod@3.25.76)':
+  '@openai/agents-openai@0.1.11(hono@4.11.4)(ws@8.19.0)(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.1.11(hono@4.10.7)(ws@8.19.0)(zod@3.25.76)
+      '@openai/agents-core': 0.1.11(hono@4.11.4)(ws@8.19.0)(zod@3.25.76)
       debug: 4.4.3(supports-color@5.5.0)
       openai: 5.23.2(ws@8.19.0)(zod@3.25.76)
       zod: 3.25.76
@@ -9033,9 +9034,9 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-realtime@0.1.11(hono@4.10.7)(zod@3.25.76)':
+  '@openai/agents-realtime@0.1.11(hono@4.11.4)(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.1.11(hono@4.10.7)(ws@8.19.0)(zod@3.25.76)
+      '@openai/agents-core': 0.1.11(hono@4.11.4)(ws@8.19.0)(zod@3.25.76)
       '@types/ws': 8.18.1
       debug: 4.4.3(supports-color@5.5.0)
       ws: 8.19.0
@@ -9047,11 +9048,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@openai/agents@0.1.11(hono@4.10.7)(ws@8.19.0)(zod@3.25.76)':
+  '@openai/agents@0.1.11(hono@4.11.4)(ws@8.19.0)(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.1.11(hono@4.10.7)(ws@8.19.0)(zod@3.25.76)
-      '@openai/agents-openai': 0.1.11(hono@4.10.7)(ws@8.19.0)(zod@3.25.76)
-      '@openai/agents-realtime': 0.1.11(hono@4.10.7)(zod@3.25.76)
+      '@openai/agents-core': 0.1.11(hono@4.11.4)(ws@8.19.0)(zod@3.25.76)
+      '@openai/agents-openai': 0.1.11(hono@4.11.4)(ws@8.19.0)(zod@3.25.76)
+      '@openai/agents-realtime': 0.1.11(hono@4.11.4)(zod@3.25.76)
       debug: 4.4.3(supports-color@5.5.0)
       openai: 5.23.2(ws@8.19.0)(zod@3.25.76)
       zod: 3.25.76
@@ -9111,13 +9112,13 @@ snapshots:
       '@electric-sql/pglite': 0.3.2
       '@electric-sql/pglite-socket': 0.0.6(@electric-sql/pglite@0.3.2)
       '@electric-sql/pglite-tools': 0.2.7(@electric-sql/pglite@0.3.2)
-      '@hono/node-server': 1.14.2(hono@4.10.7)
+      '@hono/node-server': 1.14.2(hono@4.11.4)
       '@mrleebo/prisma-ast': 0.12.1
       '@prisma/get-platform': 6.8.2
       '@prisma/query-plan-executor': 6.18.0
       foreground-child: 3.3.1
       get-port-please: 3.1.2
-      hono: 4.10.7
+      hono: 4.11.4
       http-status-codes: 2.3.0
       pathe: 2.0.3
       proper-lockfile: 4.1.2
@@ -11424,7 +11425,7 @@ snapshots:
       '@next/eslint-plugin-next': 16.0.3
       eslint: 9.39.1(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.1(jiti@2.6.1))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1))
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.1(jiti@2.6.1))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.1(jiti@2.6.1))
       eslint-plugin-react: 7.37.5(eslint@9.39.1(jiti@2.6.1))
@@ -11451,7 +11452,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.1(jiti@2.6.1)):
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3(supports-color@5.5.0)
@@ -11466,14 +11467,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.1(jiti@2.6.1)):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3)
       eslint: 9.39.1(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.39.1(jiti@2.6.1))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
 
@@ -11488,7 +11489,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.39.1(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.1(jiti@2.6.1))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.8.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -12168,7 +12169,7 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
-  hono@4.10.7: {}
+  hono@4.11.4: {}
 
   html-encoding-sniffer@4.0.0:
     dependencies:
