@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.4.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.4...aiew-v1.4.0) (2026-01-14)
+
+
+### Features
+
+* DB 기반 랭체인 메모리 복구 ([#169](https://github.com/ku-cse-grad-proj/AIew/issues/169)) ([2bbc5b7](https://github.com/ku-cse-grad-proj/AIew/commit/2bbc5b7ee1df92415be97836846746e01f5a1898))
+
+
+### Refactoring
+
+* 사용되지 않는 프롬프트 입력 변수 제거 ([#167](https://github.com/ku-cse-grad-proj/AIew/issues/167)) ([6a48faa](https://github.com/ku-cse-grad-proj/AIew/commit/6a48faad59042091aaacfbf4a52b7e52f56fd20c))
+
+
+### Documentation
+
+* **web:** aiew 187 storybook 도입 ([#165](https://github.com/ku-cse-grad-proj/AIew/issues/165)) ([4954fd6](https://github.com/ku-cse-grad-proj/AIew/commit/4954fd641d9bb39873dd15ea2e41f8ba2a71c51d))
+
+
+### Chores
+
+* **CVE-2026-0621:** bump @modelcontextprotocol/sdk to 1.25.2 ([5b2d99a](https://github.com/ku-cse-grad-proj/AIew/commit/5b2d99ae94b22a23ba4fec7473347caa2d645aa6))
+* **deps:** bump aiohttp from 3.13.2 to 3.13.3 in /apps/ai-server ([#164](https://github.com/ku-cse-grad-proj/AIew/issues/164)) ([2dc248d](https://github.com/ku-cse-grad-proj/AIew/commit/2dc248da24b1ea6c2c32aefd407eecfa83440a3b))
+* **deps:** bump filelock to 3.20.3 & hono to 4.11.4 ([#170](https://github.com/ku-cse-grad-proj/AIew/issues/170)) ([c6b402e](https://github.com/ku-cse-grad-proj/AIew/commit/c6b402ebc2daca7f6d987598dbf8a8b8b2c242e2))
+* **deps:** bump qs to 6.14.1 #CVE-2025-15284 ([fab8aa9](https://github.com/ku-cse-grad-proj/AIew/commit/fab8aa9e623fbb0f5274b238fb66e815ba58025f))
+* **deps:** bump urllib3 from 2.6.0 to 2.6.3 in /apps/ai-server ([#166](https://github.com/ku-cse-grad-proj/AIew/issues/166)) ([4a6cc69](https://github.com/ku-cse-grad-proj/AIew/commit/4a6cc69386de4cc911daa67747a3163b8e407084))
+* **deps:** bump werkzeug from 3.1.4 to 3.1.5 in /apps/ai-server ([#168](https://github.com/ku-cse-grad-proj/AIew/issues/168)) ([ceef2e2](https://github.com/ku-cse-grad-proj/AIew/commit/ceef2e2a0caa610d440c5b46bf92bc09f3a1b65f))
+* release 2026-01-14_20:25 ([933b5f5](https://github.com/ku-cse-grad-proj/AIew/commit/933b5f526602a0a96487df68875aeaed124e0d4e))
+
 ## [1.3.4](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.3...aiew-v1.3.4) (2026-01-04)
 
 
