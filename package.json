@@ -12,7 +12,7 @@
     "lint:node": "eslint \"apps/**/*.{ts,tsx}\" --fix",
     "lint:ai": "poetry --directory apps/ai-server run ruff check . --fix",
     "build": "pnpm --filter \"./apps/**\" build",
-    "test": "pnpm -r --stream --if-present run test:with-db",
+    "test:local": "pnpm -r --stream --if-present run test:local",
     "test:ci": "pnpm -r --stream --if-present run test:ci",
     "prepare": "husky",
     "release": "bash scripts/release.sh"
