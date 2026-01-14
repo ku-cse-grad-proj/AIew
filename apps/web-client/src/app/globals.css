@@ -4,10 +4,11 @@
 @import '../styles/generated/semantic.light.css';
 @import '../styles/generated/semantic.dark.css';
 @import '../styles/generated/theme.inline.css';
+@import '../styles/generated/components.vars.css';
 
 :root {
-  --background: #f1f1f1;
-  --foreground: #333333;
+  --background: var(--color-surface-primary);
+  --foreground: var(--color-text-primary);
 }
 
 @theme {
@@ -63,13 +64,6 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-pretendard: var(--font-pretendard);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* --background: #0a0a0a; */
-    /* --foreground: #ededed; */
-  }
 }
 
 body {

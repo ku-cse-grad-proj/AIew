@@ -115,12 +115,19 @@ export class InterviewService {
 
       const fileUrls = await this.uploadFilesToR2(sessionId, files)
       log.info(`[${sessionId}] Files uploaded successfully.`)
-      await prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: fileUrls,
-      })
+
       const parsedTexts = await this.parsePdfFiles(sessionId, files)
       log.info(`[${sessionId}] PDFs parsed successfully.`)
+
+      // 파일 URL과 파싱된 텍스트를 함께 저장
+      await prisma.interviewSession.update({
+        where: { id: sessionId },
+        data: {
+          ...fileUrls,
+          coverLetterText: parsedTexts.resume_text,
+          portfolioText: parsedTexts.portfolio_text,
+        },
+      })
       const questionRequestData = this.prepareQuestionRequest(
         interviewData,
         parsedTexts,
@@ -229,6 +236,15 @@ export class InterviewService {
           answerEndedAt: endAt,
         },
       })
+
+      // 질문과 답변을 랭체인 메모리에 추가
+      const questionPayloadForAi = this.formatStepToAiQuestion(currentStep)
+
+      await this.aiClient.logShownQuestion(
+        { question: questionPayloadForAi },
+        sessionId,
+      )
+
       await this.aiClient.logUserAnswer(
         {
           question_id: currentStep.aiQuestionId,
@@ -238,19 +254,11 @@ export class InterviewService {
         sessionId,
       )
 
-      // 남은 메인 질문 수 계산
-      const totalMainQuestions = await prisma.interviewStep.count({
-        where: { interviewSessionId: sessionId, parentStepId: null },
-      })
-      const remainingMainQuestions =
-        totalMainQuestions - (session.currentQuestionIndex + 1)
-
       const evaluationResult = await this.requestAnswerEvaluation(
         currentStep,
         answer,
         duration,
         sessionId,
-        remainingMainQuestions,
       )
       await this.saveEvaluationResult(stepId, evaluationResult)
 
@@ -815,7 +823,6 @@ export class InterviewService {
     answer: string,
     duration: number,
     sessionId: string,
-    remainingMainQuestions: number,
   ) {
     const request: AnswerEvaluationRequest = {
       question_id: step.aiQuestionId,
@@ -825,7 +832,6 @@ export class InterviewService {
       question_text: step.question,
       user_answer: answer,
       answer_duration_sec: duration,
-      remaining_main_questions: remainingMainQuestions,
     }
     return this.aiClient.evaluateAnswer(request, sessionId)
   }

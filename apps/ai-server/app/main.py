@@ -1,19 +1,16 @@
 from fastapi import FastAPI
 
 from app.api.v1.endpoints import (
+    emotion,
     evaluation,
     followup,
     memory_debug,
     pdf,
     question,
     session_log,
-    emotion,
 )
 
-app = FastAPI(
-    title="AIew",
-    version="1.0.0"
-)
+app = FastAPI(title="AIew", version="1.0.0")
 
 app.include_router(session_log.router, prefix="/api/v1/session-log", tags=["Session"])
 app.include_router(memory_debug.router, prefix="/api/v1/memory-debug", tags=["Session"])

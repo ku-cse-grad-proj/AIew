@@ -9,6 +9,7 @@ import {
   FollowUp,
   FollowupRequest,
   QuestionGenerateResponse,
+  RestoreRequest,
   SessionEvaluationResult,
   ShownQuestion,
   UserAnswer,
@@ -177,6 +178,19 @@ export class AiClientService {
    */
   async resetMemory(sessionId: string): Promise<void> {
     await this.client.delete('/api/v1/memory-debug/reset', {
+      headers: {
+        'X-Session-Id': sessionId,
+      },
+    })
+  }
+
+  /**
+   * DB에서 가져온 데이터로 AI 서버 메모리를 복구합니다.
+   * @param data - 복구할 세션 데이터
+   * @param sessionId - 현재 면접 세션 ID
+   */
+  async restoreMemory(data: RestoreRequest, sessionId: string): Promise<void> {
+    await this.client.post('/api/v1/session-log/restore', data, {
       headers: {
         'X-Session-Id': sessionId,
       },

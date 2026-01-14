@@ -45,13 +45,15 @@ model User {
 
 model InterviewSession {
   id                   String   @id @default(cuid())
-  title                String   // 예: "토스뱅크 interview 1"
+  title                String   // 예: "토스뱅크 1"
   company              String
   jobTitle             String
   jobSpec              String
   idealTalent          String?
   coverLetter          String? // Path to the stored file
+  coverLetterText      String? @db.Text // Parsed PDF text content
   portfolio            String? // Path to the stored file
+  portfolioText        String? @db.Text // Parsed PDF text content
   currentQuestionIndex Int      @default(0)
   finalFeedback        String? // 모든 면접 완료 후 생성될 총평
   createdAt            DateTime @default(now())

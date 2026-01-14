@@ -1,17 +1,14 @@
-import re
 import io
+import re
 from io import BytesIO
 from typing import List
 
-import fitz # PyMuPDF
+import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
 
 
-def is_digital_pdf(
-    file_bytes: bytes
-) -> bool:
-    
+def is_digital_pdf(file_bytes: bytes) -> bool:
     doc = fitz.open("pdf", file_bytes)
     for page in doc:
         if page.get_text("text").strip():
@@ -19,11 +16,7 @@ def is_digital_pdf(
     return False
 
 
-
-def extract_text_from_digital_pdf(
-    file_bytes: bytes
-) -> str:
-    
+def extract_text_from_digital_pdf(file_bytes: bytes) -> str:
     with fitz.open(stream=BytesIO(file_bytes), filetype="pdf") as doc:
         text = ""
         for page in doc:
@@ -31,11 +24,7 @@ def extract_text_from_digital_pdf(
         return text
 
 
-
-def extract_text_from_image_pdf(
-    file_bytes: bytes
-) -> str:
-    
+def extract_text_from_image_pdf(file_bytes: bytes) -> str:
     doc = fitz.open("pdf", file_bytes)
     full_text = ""
 
@@ -51,9 +40,7 @@ def extract_text_from_image_pdf(
     return full_text
 
 
-def preprocess_text(
-    text: str
-) -> List[str]:
+def preprocess_text(text: str) -> List[str]:
     """
     문장 병합 및 정제
     - 문장 중간에서 끊긴 줄은 이어 붙이고, 의미 있는 개행은 유지

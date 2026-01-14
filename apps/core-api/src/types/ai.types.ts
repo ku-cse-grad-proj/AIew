@@ -110,9 +110,6 @@ export interface AnswerEvaluationRequest {
   question_text: string
   user_answer: string
   answer_duration_sec: number
-  remaining_time_sec?: number
-  remaining_main_questions?: number
-  use_tailored_category?: boolean
 }
 
 /**
@@ -138,12 +135,6 @@ export interface FollowupRequest {
   skills: string[]
   user_answer: string
   evaluation_summary?: string
-  remaining_time_sec?: number
-  remaining_main_questions?: number
-  depth?: number
-  use_tailored_category?: boolean
-  auto_sequence?: boolean
-  next_followup_index?: number
 }
 
 // --- AI 서버 메모리 로깅 관련 타입 ---
@@ -181,6 +172,62 @@ export interface MemoryDump {
   session_id: string
   history_str: string
   messages: MemoryMessage[]
+}
+
+// --- 메모리 복구 관련 타입 ---
+
+/**
+ * 평가 상세 기준 점수
+ */
+export interface CriterionScoreData {
+  name: string
+  score: number
+  reason: string
+}
+
+/**
+ * 답변 평가 데이터 (복구용)
+ */
+export interface EvaluationData {
+  question_id: string
+  category: string
+  answer_duration_sec: number
+  overall_score: number
+  strengths: string[]
+  improvements: string[]
+  red_flags: string[]
+  criterion_scores: CriterionScoreData[]
+  feedback: string
+  tail_rationale: string | null
+  tail_decision: string
+}
+
+/**
+ * 스텝 복구 데이터
+ */
+export interface StepRestoreData {
+  question_id: string
+  category: string
+  question_text: string
+  criteria: string[]
+  skills: string[]
+  rationale?: string | null
+  estimated_answer_time_sec?: number | null
+  is_followup: boolean
+  parent_question_id?: string | null
+  focus_criteria?: string[] | null
+  answer?: string | null
+  answer_duration_sec?: number | null
+  evaluation?: EvaluationData | null
+}
+
+/**
+ * AI 서버의 /restore 엔드포인트 요청 본문 타입
+ */
+export interface RestoreRequest {
+  resume_text: string
+  portfolio_text: string
+  steps: StepRestoreData[]
 }
 
 // --- 감정 분석 관련 타입 ---
