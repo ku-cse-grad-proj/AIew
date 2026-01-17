@@ -23,10 +23,12 @@ const S_InterviewPostBody = Type.Object({
     isFile: true,
     description: '자기소개서 파일 (PDF)',
   }),
-  portfolio: Type.Any({
-    isFile: true,
-    description: '포트폴리오 파일 (PDF)',
-  }),
+  portfolio: Type.Optional(
+    Type.Any({
+      isFile: true,
+      description: '포트폴리오 파일 (PDF)',
+    }),
+  ),
   company: Type.Any({ description: '회사 정보 (JSON 문자열)' }),
   jobTitle: Type.Any({ description: '직무명 (JSON 문자열)' }),
   jobSpec: Type.Any({ description: '세부 직무 (JSON 문자열)' }),
