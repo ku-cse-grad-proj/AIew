@@ -609,7 +609,7 @@ export class InterviewService {
     },
   ): Promise<{
     coverLetter: FilePayload
-    portfolio: FilePayload
+    portfolio?: FilePayload
   }> {
     const coverLetter =
       newFiles?.coverLetter ??
@@ -617,13 +617,13 @@ export class InterviewService {
     const portfolio =
       newFiles?.portfolio ?? (await this.getFileBufferFromR2(session.portfolio))
 
-    if (!coverLetter || !portfolio) {
+    if (!coverLetter) {
       throw this.fastify.httpErrors.badRequest(
-        'Cover letter and portfolio are required for AI re-processing.',
+        'Cover letter is required for AI re-processing.',
       )
     }
 
-    return { coverLetter, portfolio }
+    return { coverLetter, portfolio: portfolio ?? undefined }
   }
 
   private async getFileBufferFromR2(
