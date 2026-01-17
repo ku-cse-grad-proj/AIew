@@ -106,7 +106,7 @@ export class InterviewService {
       | Static<typeof S_InterviewSessionPatchBody>,
     files: {
       coverLetter: FilePayload
-      portfolio: FilePayload
+      portfolio?: FilePayload
     },
   ) {
     const { prisma, log } = this.fastify
@@ -697,7 +697,7 @@ export class InterviewService {
 
   private async uploadFilesToR2(
     sessionId: string,
-    files: { coverLetter: FilePayload; portfolio: FilePayload },
+    files: { coverLetter: FilePayload; portfolio?: FilePayload },
   ) {
     const { r2 } = this.fastify
     const { R2_BUCKET_NAME, R2_PUBLIC_URL } = process.env
@@ -731,23 +731,35 @@ export class InterviewService {
 
   private async parsePdfFiles(
     sessionId: string,
-    files: { coverLetter: FilePayload; portfolio: FilePayload },
+    files: { coverLetter: FilePayload; portfolio?: FilePayload },
   ) {
-    const [coverLetterParsed, portfolioParsed] = await Promise.all([
-      this.aiClient.parsePdf(
-        files.coverLetter.buffer,
-        files.coverLetter.filename,
-        sessionId,
-      ),
-      this.aiClient.parsePdf(
-        files.portfolio.buffer,
-        files.portfolio.filename,
-        sessionId,
-      ),
-    ])
+    if (files.portfolio) {
+      const [coverLetterParsed, portfolioParsed] = await Promise.all([
+        this.aiClient.parsePdf(
+          files.coverLetter.buffer,
+          files.coverLetter.filename,
+          sessionId,
+        ),
+        this.aiClient.parsePdf(
+          files.portfolio.buffer,
+          files.portfolio.filename,
+          sessionId,
+        ),
+      ])
+      return {
+        resume_text: coverLetterParsed.extracted_text,
+        portfolio_text: portfolioParsed.extracted_text,
+      }
+    }
+
+    const coverLetterParsed = await this.aiClient.parsePdf(
+      files.coverLetter.buffer,
+      files.coverLetter.filename,
+      sessionId,
+    )
     return {
       resume_text: coverLetterParsed.extracted_text,
-      portfolio_text: portfolioParsed.extracted_text,
+      portfolio_text: '',
     }
   }
 
