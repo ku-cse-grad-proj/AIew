@@ -24,6 +24,7 @@ const githubOAuth2Plugin: FastifyPluginAsync = async (fastify) => {
     },
     startRedirectPath: redirectPath,
     callbackUri: `${process.env.OAUTH_CALLBACK_BASE_URL}${callbackPath}`,
+    pkce: 'S256', // PKCE로 authorization code 가로채기 공격 방지
   })
 }
 
