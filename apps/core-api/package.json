@@ -8,6 +8,7 @@
   },
   "scripts": {
     "prepare": "prisma generate",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage && rimraf coverage",
     "test:ci": "vitest run --coverage",
     "test:watch": "vitest --coverage",
