@@ -20,24 +20,23 @@ export async function waitUntilFilesProcessed(
   while (Date.now() - start < timeoutMs) {
     const processedInterview = (await getInterview(id, false)) as Interview
 
-    const coverLetterFilename = (formData.get('coverLetter') as File).name
-    const portfolioFilename = (formData.get('portfolio') as File).name
+    const coverLetterFile = formData.get('coverLetter')
+    const portfolioFile = formData.get('portfolio')
 
-    if (coverLetterFilename && portfolioFilename) {
-      if (
-        processedInterview.coverLetterFilename === coverLetterFilename &&
-        processedInterview.portfolioFilename === portfolioFilename
-      ) {
-        return processedInterview
-      }
-    } else if (coverLetterFilename) {
-      if (processedInterview.coverLetterFilename === coverLetterFilename) {
-        return processedInterview
-      }
-    } else if (portfolioFilename) {
-      if (processedInterview.portfolioFilename === portfolioFilename) {
-        return processedInterview
-      }
+    const coverLetterFilename =
+      coverLetterFile instanceof File ? coverLetterFile.name : null
+    const portfolioFilename =
+      portfolioFile instanceof File ? portfolioFile.name : null
+
+    // coverLetter는 필수, portfolio는 선택
+    const coverLetterMatches =
+      processedInterview.coverLetterFilename === coverLetterFilename
+    const portfolioMatches = portfolioFilename
+      ? processedInterview.portfolioFilename === portfolioFilename
+      : !processedInterview.portfolioFilename // portfolio 없으면 서버에도 없어야 함
+
+    if (coverLetterMatches && portfolioMatches) {
+      return processedInterview
     }
     await sleep(intervalMs)
   }

@@ -9,7 +9,7 @@ export type InterviewInfo = {
   jobTitle: string
   jobSpec: string
   coverLetterFilename: string
-  portfolioFilename: string
+  portfolioFilename?: string
   idealTalent: string
 }
 
