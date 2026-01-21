@@ -26,7 +26,9 @@ export default function InterviewForm({
   //수정시 Dropzone에 기존 file의 이름을 보여줌
   if (isEdit) {
     resumeFileRef.current = new File([], interview.coverLetterFilename)
-    portfolioFileRef.current = new File([], interview.portfolioFilename)
+    if (interview.portfolioFilename) {
+      portfolioFileRef.current = new File([], interview.portfolioFilename)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

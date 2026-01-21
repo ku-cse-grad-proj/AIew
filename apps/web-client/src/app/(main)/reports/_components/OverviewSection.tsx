@@ -40,10 +40,12 @@ export default function OverviewSection({
             <dt className={dtStyle}>resume</dt>
             <dd>{interview.coverLetterFilename}</dd>
           </div>
-          <div>
-            <dt className={dtStyle}>portfolio</dt>
-            <dd>{interview.portfolioFilename}</dd>
-          </div>
+          {interview.portfolioFilename && (
+            <div>
+              <dt className={dtStyle}>portfolio</dt>
+              <dd>{interview.portfolioFilename}</dd>
+            </div>
+          )}
           <div className="flex-1 min-h-0">
             <dt className={dtStyle}>인재상</dt>
             <dd className="text-[14px]">{interview.idealTalent}</dd>

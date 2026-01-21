@@ -35,7 +35,9 @@ export default async function InterviewInfo({
           className="flex-2 min-h-100 max-h-120"
         />
         <InfoItem label="resume" value={interview.coverLetterFilename} />
-        <InfoItem label="portfolio" value={interview.portfolioFilename} />
+        {interview.portfolioFilename && (
+          <InfoItem label="portfolio" value={interview.portfolioFilename} />
+        )}
       </dl>
       <div className="flex justify-end">
         <EditDeleteButtons id={sessionId} />
