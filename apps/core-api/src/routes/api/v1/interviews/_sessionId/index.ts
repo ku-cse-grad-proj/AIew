@@ -12,12 +12,15 @@ import {
   S_InterviewSessionItem,
   S_InterviewSessionPatchBody,
 } from '@/schemas/rest/interview'
+import { FileAction } from '@/types/interview.types'
 import SchemaId from '@/utils/schema-id'
 
 // attachFieldsToBody: true 사용 시 PATCH body 타입
 interface InterviewPatchMultipartBody {
   coverLetter?: MultipartFile
   portfolio?: MultipartFile
+  coverLetterAction?: MultipartValue<FileAction>
+  portfolioAction?: MultipartValue<FileAction>
   title?: MultipartValue<string>
   company?: MultipartValue<string>
   jobTitle?: MultipartValue<string>
@@ -37,6 +40,18 @@ const S_InterviewPatchMultipartBody = Type.Object({
     Type.Any({
       isFile: true,
       description: '포트폴리오 파일 (PDF)',
+    }),
+  ),
+  coverLetterAction: Type.Optional(
+    Type.Any({
+      description:
+        '자기소개서 파일 액션 (keep: 유지, upload: 새 파일 업로드, delete: 삭제)',
+    }),
+  ),
+  portfolioAction: Type.Optional(
+    Type.Any({
+      description:
+        '포트폴리오 파일 액션 (keep: 유지, upload: 새 파일 업로드, delete: 삭제)',
     }),
   ),
   title: Type.Optional(Type.Any({ description: '면접 세션 제목' })),
@@ -144,6 +159,46 @@ const controller: FastifyPluginAsyncTypebox = async (
         }
       }
 
+      // 파일 액션 추출 (기본값: keep)
+      const fileActions = {
+        coverLetter: (multipartBody.coverLetterAction?.value ??
+          'keep') as FileAction,
+        portfolio: (multipartBody.portfolioAction?.value ??
+          'keep') as FileAction,
+      }
+
+      // 액션 유효성 검증
+      const validActions: FileAction[] = ['keep', 'upload', 'delete']
+      if (!validActions.includes(fileActions.coverLetter)) {
+        throw fastify.httpErrors.badRequest(
+          `Invalid coverLetterAction: '${fileActions.coverLetter}'. Must be one of: ${validActions.join(', ')}`,
+        )
+      }
+      if (!validActions.includes(fileActions.portfolio)) {
+        throw fastify.httpErrors.badRequest(
+          `Invalid portfolioAction: '${fileActions.portfolio}'. Must be one of: ${validActions.join(', ')}`,
+        )
+      }
+
+      // coverLetter는 현재 필수이므로 delete 불가
+      if (fileActions.coverLetter === 'delete') {
+        throw fastify.httpErrors.badRequest(
+          'Cannot delete cover letter. Cover letter is required.',
+        )
+      }
+
+      // upload 액션인데 파일이 없으면 에러
+      if (fileActions.coverLetter === 'upload' && !files.coverLetter) {
+        throw fastify.httpErrors.badRequest(
+          'coverLetterAction is "upload" but no coverLetter file provided.',
+        )
+      }
+      if (fileActions.portfolio === 'upload' && !files.portfolio) {
+        throw fastify.httpErrors.badRequest(
+          'portfolioAction is "upload" but no portfolio file provided.',
+        )
+      }
+
       // 텍스트 필드 추출 (MultipartValue에서 value 추출 후 JSON 파싱)
       const body: Static<typeof S_InterviewSessionPatchBody> = {}
       if (multipartBody.title?.value) {
@@ -168,6 +223,7 @@ const controller: FastifyPluginAsyncTypebox = async (
           userId,
           body,
           files,
+          // fileActions,
         )
 
       reply.send(updatedSession)
