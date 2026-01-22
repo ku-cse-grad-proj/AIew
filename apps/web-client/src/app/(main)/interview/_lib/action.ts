@@ -7,6 +7,7 @@ import {
   appendCreateData,
   appendFiles,
   appendUpdateData,
+  appendUpdateFiles,
 } from '../create/_lib/append'
 import { waitUntilFilesProcessed } from '../create/_lib/wait'
 
@@ -42,11 +43,18 @@ export async function updateInterview(
 
   //formData로 받는 형식과 back에서 필요로 하는 형식이 다르므로 변환 필요
   appendUpdateData(formData, newFormData, interview)
-  //size > 0 이면 새로운 파일임을 의미
-  appendFiles(formData, newFormData)
+  //변경된 데이터가 존재하는지 확인
+  const hasNewData = [...newFormData.keys()].length > 0
 
-  //변경된 값이 없을 경우 바로 waiting room으로 넘어감
-  if ([...newFormData.keys()].length === 0) {
+  appendUpdateFiles(formData, newFormData, interview)
+  //파일들이 변경되었는지 확인
+  //keep이 아닌 액션이 하나라도 있으면 변경된 것
+  const hasFilesChanged =
+    newFormData.get('coverLetterAction') !== 'keep' ||
+    newFormData.get('portfolioAction') !== 'keep'
+
+  //변경된 값이 없고 파일 변경도 아니면 바로 waiting room으로 넘어감
+  if (!hasNewData && !hasFilesChanged) {
     redirectToWaiting(interview.id)
   }
 

@@ -104,13 +104,122 @@ export function appendUpdateData(
  * @param newFormData
  */
 export function appendFiles(formData: FormData, newFormData: FormData) {
-  const coverLetter = formData.get('coverLetter')
-  if (coverLetter instanceof File && coverLetter.size > 0) {
-    newFormData.append('coverLetter', coverLetter)
+  appendFile('coverLetter', formData, newFormData)
+  appendFile('portfolio', formData, newFormData)
+}
+
+/**
+ * 단일 파일을 newFormData에 append함
+ * key에 해당하는 파일이 formData에 존재하고 size > 0인 경우에만 append
+ * @param key
+ * @param formatData
+ * @param newFormData
+ */
+function appendFile(key: string, formData: FormData, newFormData: FormData) {
+  const file = formData.get(key)
+  if (file instanceof File && file.size > 0) {
+    newFormData.append(key, file)
+  }
+}
+
+/**
+ * 인터뷰 Update(Patch)용 파일 처리
+ *  1. 새로운 파일이 있으면 append
+ *  2. 기존 파일이 있었는지 여부와 새로운 파일의 상태에 따라 Action 결정 후 append
+ *  만약 이력서(coverLetter) 파일이 없거나 삭제 액션이면 오류 발생
+ * @param formData
+ * @param newFormData
+ * @param interview
+ */
+export function appendUpdateFiles(
+  formData: FormData,
+  newFormData: FormData,
+  interview: Interview,
+) {
+  appendUpdateCoverLetter(formData, newFormData, interview)
+  appendUpdatePortfolio(formData, newFormData, interview)
+}
+
+/**
+ * coverLetter(이력서) 파일 처리
+ *
+ * @param formData
+ * @param newFormData
+ * @param interview
+ */
+function appendUpdateCoverLetter(
+  formData: FormData,
+  newFormData: FormData,
+  interview: Interview,
+) {
+  appendFile('coverLetter', formData, newFormData)
+
+  if (!interview.coverLetterFilename) {
+    throw new Error('서버에서 이력서 파일 정보를 찾을 수 없습니다.')
   }
 
-  const portfolio = formData.get('portfolio')
-  if (portfolio instanceof File && portfolio.size > 0) {
-    newFormData.append('portfolio', portfolio)
-  }
+  const coverLetterAction = resolveCoverLetterAction(
+    formData.get('coverLetter'),
+  )
+  newFormData.append('coverLetterAction', coverLetterAction)
+}
+
+/**
+ * portfolio(포트폴리오) 파일 처리
+ *
+ * @param formData
+ * @param newFormData
+ * @param interview
+ */
+function appendUpdatePortfolio(
+  formData: FormData,
+  newFormData: FormData,
+  interview: Interview,
+) {
+  appendFile('portfolio', formData, newFormData)
+
+  const portfolioAction = resolvePortfolioAction(
+    formData.get('portfolio'),
+    !!interview.portfolioFilename,
+  )
+  newFormData.append('portfolioAction', portfolioAction)
+}
+
+type FileAction = 'keep' | 'upload' | 'delete'
+
+/**
+ * coverLetter 파일 액션 결정
+ * 새 파일 업로드: 'upload', 기존 파일 유지: 'keep', 삭제 시 오류 발생
+ * @param file
+ * @returns FileAction
+ */
+function resolveCoverLetterAction(file: FormDataEntryValue | null): FileAction {
+  //새 파일 업로드
+  if (file instanceof File && file.size > 0) return 'upload'
+  // 기존 파일 유지 (placeholder)
+  if (file instanceof File && file.size === 0) return 'keep'
+
+  // 파일을 삭제했다면 오류 발생
+  throw new Error('이력서(coverLetter) 파일은 반드시 존재해야 합니다.')
+}
+
+/**
+ * portfolio 파일 액션 결정
+ * 새 파일 업로드: 'upload', 기존 파일 유지: 'keep', 삭제: 'delete'
+ * @param file
+ * @param hasExistingFile
+ * @returns FileAction
+ */
+function resolvePortfolioAction(
+  file: FormDataEntryValue | null,
+  hasExistingFile: boolean,
+): FileAction {
+  // 새 파일 업로드
+  if (file instanceof File && file.size > 0) return 'upload'
+  // 기존 파일 유지 (placeholder)
+  if (file instanceof File && file.size === 0) return 'keep'
+  // 파일이 없는데 기존에 있었으면 삭제
+  if (hasExistingFile) return 'delete'
+  // 기존에도 없었고 지금도 없음 - keep
+  return 'keep'
 }
