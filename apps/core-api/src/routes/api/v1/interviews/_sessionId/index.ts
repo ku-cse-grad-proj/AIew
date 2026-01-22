@@ -223,7 +223,7 @@ const controller: FastifyPluginAsyncTypebox = async (
           userId,
           body,
           files,
-          // fileActions,
+          fileActions,
         )
 
       reply.send(updatedSession)

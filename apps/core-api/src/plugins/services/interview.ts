@@ -23,7 +23,7 @@ import {
   QuestionGenerateResponse,
   TailDecision,
 } from '@/types/ai.types'
-import { InterviewRequestBody } from '@/types/interview.types'
+import { FileActions, InterviewRequestBody } from '@/types/interview.types'
 
 interface FilePayload {
   buffer: Buffer
@@ -423,6 +423,7 @@ export class InterviewService {
       coverLetter?: FilePayload
       portfolio?: FilePayload
     },
+    fileActions?: FileActions,
   ): Promise<InterviewSession> {
     const { prisma, log } = this.fastify
 
@@ -453,7 +454,13 @@ export class InterviewService {
       )
     }
 
-    const hasNewFiles = files && (files.coverLetter || files.portfolio)
+    // 파일 액션에 따라 재처리 필요 여부 판단
+    // coverLetter는 delete 불가 (라우트에서 검증)
+    const hasFileChange =
+      fileActions?.coverLetter === 'upload' ||
+      fileActions?.portfolio === 'upload' ||
+      fileActions?.portfolio === 'delete'
+
     const aiTriggerFields: (keyof Static<
       typeof S_InterviewSessionPatchBody
     >)[] = ['company', 'jobTitle', 'jobSpec', 'idealTalent']
@@ -461,7 +468,7 @@ export class InterviewService {
       (field) => field in data,
     )
 
-    const needsReprocessing = hasNewFiles || hasAiTriggerFieldUpdate
+    const needsReprocessing = hasFileChange || hasAiTriggerFieldUpdate
 
     if (needsReprocessing) {
       log.info(`[${sessionId}] Re-processing interview due to updated data.`)
@@ -487,29 +494,50 @@ export class InterviewService {
       await prisma.interviewStep.deleteMany({
         where: { interviewSessionId: sessionId },
       })
-      // 새 파일이 제공된 경우에만 기존 R2 파일 삭제 (고아 파일 방지)
+
+      // R2 파일 삭제 처리
       const { fileService } = this.fastify
       const deletePromises: Promise<void>[] = []
-      if (files?.coverLetter) {
+
+      // coverLetter: upload 시에만 기존 파일 삭제 (delete 불가)
+      if (fileActions?.coverLetter === 'upload') {
         deletePromises.push(
           fileService.deleteByPrefix(`coverLetter/${sessionId}/`),
         )
       }
-      if (files?.portfolio) {
+
+      // portfolio: upload 또는 delete 시 기존 파일 삭제
+      if (
+        fileActions?.portfolio === 'upload' ||
+        fileActions?.portfolio === 'delete'
+      ) {
         deletePromises.push(
           fileService.deleteByPrefix(`portfolio/${sessionId}/`),
         )
       }
+
       if (deletePromises.length > 0) {
         try {
           await Promise.all(deletePromises)
-          log.info(`[${sessionId}] Old R2 files deleted for updated files.`)
+          log.info(`[${sessionId}] Old R2 files deleted for file actions.`)
         } catch (error) {
           log.error(
             { error },
-            `[${sessionId}] Failed to delete old R2 files, proceeding with upload`,
+            `[${sessionId}] Failed to delete old R2 files, proceeding with processing`,
           )
         }
+      }
+
+      // portfolio delete 액션 시 DB에서 portfolio 관련 필드 초기화
+      if (fileActions?.portfolio === 'delete') {
+        await prisma.interviewSession.update({
+          where: { id: sessionId },
+          data: {
+            portfolio: null,
+            portfolioText: '',
+          },
+        })
+        log.info(`[${sessionId}] Portfolio fields cleared in DB.`)
       }
 
       // 백그라운드 재처리 시작
@@ -524,6 +552,7 @@ export class InterviewService {
       const filesForProcessing = await this.prepareFilesForReprocessing(
         session,
         files,
+        fileActions,
       )
 
       void this.processInterviewInBackground(
@@ -607,15 +636,20 @@ export class InterviewService {
       coverLetter?: FilePayload
       portfolio?: FilePayload
     },
+    fileActions?: FileActions,
   ): Promise<{
     coverLetter: FilePayload
     portfolio?: FilePayload
   }> {
-    const coverLetter =
-      newFiles?.coverLetter ??
-      (await this.getFileBufferFromR2(session.coverLetter))
-    const portfolio =
-      newFiles?.portfolio ?? (await this.getFileBufferFromR2(session.portfolio))
+    // coverLetter 처리 (delete 불가, 라우트에서 검증)
+    let coverLetter: FilePayload | null = null
+    const coverLetterAction = fileActions?.coverLetter ?? 'keep'
+
+    if (coverLetterAction === 'upload' && newFiles?.coverLetter) {
+      coverLetter = newFiles.coverLetter
+    } else if (coverLetterAction === 'keep') {
+      coverLetter = await this.getFileBufferFromR2(session.coverLetter)
+    }
 
     if (!coverLetter) {
       throw this.fastify.httpErrors.badRequest(
@@ -623,7 +657,21 @@ export class InterviewService {
       )
     }
 
-    return { coverLetter, portfolio: portfolio ?? undefined }
+    // portfolio 처리
+    let portfolio: FilePayload | undefined = undefined
+    const portfolioAction = fileActions?.portfolio ?? 'keep'
+
+    if (portfolioAction === 'upload' && newFiles?.portfolio) {
+      portfolio = newFiles.portfolio
+    } else if (portfolioAction === 'keep') {
+      const existingPortfolio = await this.getFileBufferFromR2(
+        session.portfolio,
+      )
+      portfolio = existingPortfolio ?? undefined
+    }
+    // portfolioAction === 'delete'인 경우 portfolio는 undefined 유지
+
+    return { coverLetter, portfolio }
   }
 
   private async getFileBufferFromR2(
