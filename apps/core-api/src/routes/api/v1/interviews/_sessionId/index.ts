@@ -141,8 +141,14 @@ const controller: FastifyPluginAsyncTypebox = async (
             `Unsupported Media Type: '${multipartBody.coverLetter.filename}'. Only PDF files are allowed.`,
           )
         }
+        const coverLetterBuffer = await multipartBody.coverLetter.toBuffer()
+        if (coverLetterBuffer.length === 0) {
+          throw fastify.httpErrors.badRequest(
+            `Empty file: '${multipartBody.coverLetter.filename}'. Please upload a valid PDF file.`,
+          )
+        }
         files.coverLetter = {
-          buffer: await multipartBody.coverLetter.toBuffer(),
+          buffer: coverLetterBuffer,
           filename: multipartBody.coverLetter.filename,
         }
       }
@@ -153,8 +159,14 @@ const controller: FastifyPluginAsyncTypebox = async (
             `Unsupported Media Type: '${multipartBody.portfolio.filename}'. Only PDF files are allowed.`,
           )
         }
+        const portfolioBuffer = await multipartBody.portfolio.toBuffer()
+        if (portfolioBuffer.length === 0) {
+          throw fastify.httpErrors.badRequest(
+            `Empty file: '${multipartBody.portfolio.filename}'. Please upload a valid PDF file.`,
+          )
+        }
         files.portfolio = {
-          buffer: await multipartBody.portfolio.toBuffer(),
+          buffer: portfolioBuffer,
           filename: multipartBody.portfolio.filename,
         }
       }
