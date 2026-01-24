@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Modal from './Modal'
 
 import useInterviewFinish from '@/app/hooks/useInterviewFinish'
+import { ButtonLink } from '@/components/ButtonLink/ButtonLink'
 
 export default function InterviewFinishModal({
   sessionId,
@@ -55,12 +56,7 @@ function ErrorPage({ reason }: { reason: string }) {
   return (
     <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-24">
       {reason}
-      <Link
-        href={'/interview'}
-        className="px-16 py-10 bg-primary text-neutral-background rounded-[10px]"
-      >
-        back to Interview
-      </Link>
+      <ButtonLink href={'/interview'}>back to Interview</ButtonLink>
     </div>
   )
 }

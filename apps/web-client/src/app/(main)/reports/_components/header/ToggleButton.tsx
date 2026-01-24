@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 import Graph from '@/../public/icons/graph.svg'
 import List from '@/../public/icons/list.svg'
+import { ButtonLink } from '@/components/ButtonLink/ButtonLink'
 
 export default function ToggleButton() {
   const pathname = usePathname()
@@ -18,21 +18,18 @@ export default function ToggleButton() {
     : `/reports/graph${paramsString ? `?${paramsString}` : ''}`
 
   return (
-    <Link
-      href={nextHref}
-      className="bg-primary inline-flex justify-center items-center px-16 rounded-[10px] min-w-150 h-40 gap-8 text-neutral-background"
-    >
+    <ButtonLink href={nextHref} className="min-w-152">
       {hasGraph ? (
-        <>
+        <span className="inline-flex justify-center items-center gap-8">
           <List width={20} height={20} />
-          <span className="text-neutral-background">show list</span>
-        </>
+          <span>show list</span>
+        </span>
       ) : (
-        <>
+        <span className="inline-flex justify-center items-center gap-8">
           <Graph width={20} height={20} />
-          <span className="text-neutral-background">show graph</span>
-        </>
+          <span>show graph</span>
+        </span>
       )}
-    </Link>
+    </ButtonLink>
   )
 }

@@ -7,6 +7,7 @@ import EditDeleteButtons from './EditDeleteButtons'
 import InterviewStatusChip from './InterviewStatusChip'
 
 import { useInterviewPolling } from '@/app/hooks/useInterviewPolling'
+import { ButtonLink } from '@/components/ButtonLink/ButtonLink'
 
 export default function InterviewCard({ data }: { data: Interview }) {
   const [interview, setInterview] = useState(data)
@@ -54,12 +55,7 @@ export default function InterviewCard({ data }: { data: Interview }) {
         <div className="flex gap-8 h-32">
           <EditDeleteButtons id={id} />
         </div>
-        <Link
-          className="bg-primary rounded-[10px] text-neutral-inverse px-20 h-40 flex items-center justify-center z-10"
-          href={`/interview/${id}`}
-        >
-          start interview
-        </Link>
+        <ButtonLink href={`/interview/${id}`}>start interview</ButtonLink>
       </footer>
     </article>
   )

@@ -1,6 +1,5 @@
-import Link from 'next/link'
-
 import InterviewStatusChip from '@/app/(main)/interview/_components/InterviewStatusChip'
+import { ButtonLink } from '@/components/ButtonLink/ButtonLink'
 
 export default function InterviewCard({ interview }: { interview: Interview }) {
   const { id, status, title, company, jobTitle, jobSpec } = interview
@@ -25,12 +24,7 @@ export default function InterviewCard({ interview }: { interview: Interview }) {
         </div>
       </dl>
       <div className="flex justify-end">
-        <Link
-          className="bg-primary rounded-[10px] text-neutral-inverse px-20 h-40 inline-flex items-center justify-center z-10"
-          href={`/interview/${id}`}
-        >
-          start interview
-        </Link>
+        <ButtonLink href={`/interview/${id}`}>start interview</ButtonLink>
       </div>
     </div>
   )
