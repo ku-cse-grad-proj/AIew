@@ -1,15 +1,10 @@
-import Link from 'next/link'
+import { ButtonLink } from '@/components/ButtonLink/ButtonLink'
 
 export default function NotFound() {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-24">
+    <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-24">
       sessionId에 해당하는 interview를 찾을 수 없습니다.
-      <Link
-        href={'/interview'}
-        className="px-16 py-10 bg-primary text-neutral-background rounded-[10px]"
-      >
-        back to Interview
-      </Link>
+      <ButtonLink href={'/interview'}>back to Interview</ButtonLink>
     </div>
   )
 }
