@@ -19,17 +19,19 @@ export default function ToggleButton() {
 
   return (
     <ButtonLink href={nextHref} className="min-w-152">
-      {hasGraph ? (
-        <span className="inline-flex justify-center items-center gap-8">
-          <List width={20} height={20} />
-          <span>show list</span>
-        </span>
-      ) : (
-        <span className="inline-flex justify-center items-center gap-8">
-          <Graph width={20} height={20} />
-          <span>show graph</span>
-        </span>
-      )}
+      <span className="inline-flex justify-center items-center gap-8">
+        {hasGraph ? (
+          <>
+            <List width={20} height={20} />
+            <span>show list</span>
+          </>
+        ) : (
+          <>
+            <Graph width={20} height={20} />
+            <span>show graph</span>
+          </>
+        )}
+      </span>
     </ButtonLink>
   )
 }
