@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 4000",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4000",
     "test": "vitest",
     "test-unit": "vitest --project=unit",
     "test-storybook": "vitest --project=storybook",
