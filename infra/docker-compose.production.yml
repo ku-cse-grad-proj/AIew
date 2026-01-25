@@ -50,6 +50,9 @@ x-core-api: &core-api # 빌드 설정: 프로젝트 루트에서 Dockerfile 경�
     frontend:
       aliases:
         - core-api
+  depends_on:
+    redis:
+      condition: service_healthy
   restart: unless-stopped
   # 헬스체크: 컨테이너가 정상 동작하는지 확인
   # Docker가 주기적으로 이 명령 실행, 실패 시 unhealthy 상태
@@ -78,6 +81,9 @@ x-ai-server: &ai-server
     backend:
       aliases:
         - ai-server
+  depends_on:
+    redis:
+      condition: service_healthy
   restart: unless-stopped
   healthcheck:
     test:
