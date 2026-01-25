@@ -16,6 +16,21 @@
 
 services:
   # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: aiew-redis
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
   # Core API (Fastify)
   # ---------------------------------------------------------------------------
   core-api:

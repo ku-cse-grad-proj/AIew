@@ -122,6 +122,20 @@ x-web-client: &web-client
 
 services:
   # ---------------------------------------------------------------------------
+  # Redis (항상 실행, Blue-Green 영향 없음)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: aiew-redis
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  # ---------------------------------------------------------------------------
   # Blue 환경
   # ---------------------------------------------------------------------------
   # profiles: ["blue"] → --profile blue 옵션으로만 시작됨
