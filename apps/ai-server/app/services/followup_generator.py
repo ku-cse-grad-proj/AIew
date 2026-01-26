@@ -1,8 +1,8 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.models.followup import FollowupRequest, FollowupResponse
 from app.services.memory_logger import MemoryLogger
@@ -19,23 +19,19 @@ PROMPT_PATH = (PROMPT_BASE_DIR / "followup_prompt.txt").resolve()
 class FollowupGeneratorService:
     def __init__(
         self,
-        memory: Optional[ConversationBufferMemory] = None,
+        memory: BaseChatMessageHistory,
         session_id: str = "",
     ):
         self.memory = memory
         self.session_id = session_id
         self.logger = MemoryLogger(memory=memory, session_id=session_id)
 
-    def _count_existing_followups(
-        self, memory: Optional[ConversationBufferMemory] = None, parent_qid: str = ""
-    ) -> int:
-        if memory is None:
-            return 0
-        msgs = getattr(memory, "chat_memory", None)
-        if not msgs or not getattr(msgs, "messages", None):
+    def _count_existing_followups(self, parent_qid: str = "") -> int:
+        messages = self.memory.messages
+        if not messages:
             return 0
         cnt = 0
-        for m in msgs.messages:
+        for m in messages:
             content = str(getattr(m, "content", ""))
             if (
                 '"parent_question_id"' in content
@@ -101,10 +97,9 @@ class FollowupGeneratorService:
         self,
         parsed_item: Dict[str, Any],
         req: FollowupRequest,
-        memory: Optional[ConversationBufferMemory] = None,
     ) -> Dict[str, Any]:
         if req.auto_sequence:
-            existing = self._count_existing_followups(memory, req.question_id)
+            existing = self._count_existing_followups(req.question_id)
             idx = existing + 1
         else:
             idx = req.next_followup_index or 1
@@ -125,9 +120,8 @@ class FollowupGeneratorService:
 
     def generate_followups(
         self,
-        req: FollowupRequest = ...,
-        memory: Optional[ConversationBufferMemory] = ...,
-    ) -> List[FollowupResponse]:
+        req: FollowupRequest,
+    ) -> FollowupResponse:
         raw_prompt = load_prompt_template(PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
@@ -156,7 +150,7 @@ class FollowupGeneratorService:
             )
 
         parsed = self._preprocess_parsed(parsed)
-        norm = self._normalize_items(parsed, req, memory)
+        norm = self._normalize_items(parsed, req)
         followup = FollowupResponse.model_validate(norm)
         self.logger.log_tail_question(followup.model_dump())
 

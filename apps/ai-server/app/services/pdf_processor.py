@@ -3,7 +3,7 @@ from typing import (
     Dict,
 )
 
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.services.memory_logger import MemoryLogger
 from app.utils.pdf_utils import (
@@ -15,7 +15,7 @@ from app.utils.pdf_utils import (
 
 
 class PDFAnalysisService:
-    def __init__(self, memory: ConversationBufferMemory = None, session_id: str = ""):
+    def __init__(self, memory: BaseChatMessageHistory, session_id: str = ""):
         self.memory = memory
         self.session_id = session_id
         self.logger = MemoryLogger(memory=memory, session_id=session_id)
@@ -28,7 +28,8 @@ class PDFAnalysisService:
             else extract_text_from_image_pdf(file_bytes)
         )
 
-        preprocessed_text = preprocess_text(extracted_text)
+        preprocessed_lines = preprocess_text(extracted_text)
+        preprocessed_text = "\n".join(preprocessed_lines)
 
         parsed_data: Dict[str, Any] = {
             "filename": file_name,
