@@ -2,11 +2,11 @@ import json
 from statistics import mean
 from typing import Dict, List
 
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 
-def extract_evaluation(memory: ConversationBufferMemory) -> tuple[float, str]:
-    msgs = memory.chat_memory.messages
+def extract_evaluation(memory: BaseChatMessageHistory) -> tuple[float, str]:
+    msgs = memory.messages
     qa_pairs: List[Dict] = []
     scores: List[float] = []
     conversation_blocks: List[str] = []
@@ -14,6 +14,9 @@ def extract_evaluation(memory: ConversationBufferMemory) -> tuple[float, str]:
     last_human = None
 
     for m in msgs:
+        if not isinstance(m.content, str):
+            continue
+
         if m.type == "human":
             last_human = m.content.strip()
 
