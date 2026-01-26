@@ -1,6 +1,5 @@
-
 from fastapi import APIRouter, Body, Depends, Header
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.models.followup import FollowupRequest, FollowupResponse
 from app.services.followup_generator import FollowupGeneratorService
@@ -18,8 +17,8 @@ router = APIRouter()
 def generate_followup(
     x_session_id: str = Header(...),
     req: FollowupRequest = Body(...),
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> FollowupResponse:
     service = FollowupGeneratorService(memory=memory, session_id=x_session_id)
 
-    return service.generate_followups(req, memory)
+    return service.generate_followups(req)

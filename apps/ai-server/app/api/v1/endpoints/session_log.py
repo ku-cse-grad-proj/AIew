@@ -6,7 +6,7 @@ from fastapi import (
     Header,
     HTTPException,
 )
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.models.memory import RestoreRequest, ShownQuestion, UserAnswer
 from app.services.memory_logger import MemoryLogger, MemoryManager
@@ -18,7 +18,7 @@ router = APIRouter()
 
 def get_memory_logger_dep(
     x_session_id: str = Header(..., description="세션 고유 ID"),
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> MemoryLogger:
     return MemoryLogger(memory=memory, session_id=x_session_id)
 
@@ -54,7 +54,7 @@ def post_user_answer(
 @router.post("/restore", tags=["Session"], summary="Restore Session Memory from DB")
 def restore_memory(
     payload: RestoreRequest,
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
     x_session_id: str = Header(...),
 ) -> dict:
     try:

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, Depends, Header
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.models.evaluation import (
     AnswerEvaluationRequest,
@@ -21,11 +21,11 @@ router = APIRouter()
 def evaluate_answer(
     x_session_id: str = Header(...),
     req: AnswerEvaluationRequest = Body(...),
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> AnswerEvaluationResult:
     service = EvaluationService(memory=memory, session_id=x_session_id)
 
-    return service.evaluate_answer(req, memory)
+    return service.evaluate_answer(req)
 
 
 @router.post(
@@ -36,8 +36,8 @@ def evaluate_answer(
 )
 def evaluate_session(
     x_session_id: str = Header(...),
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> SessionEvaluationResult:
     service = EvaluationService(memory=memory, session_id=x_session_id)
 
-    return service.evaluate_session(memory)
+    return service.evaluate_session()

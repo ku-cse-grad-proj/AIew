@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Body, Depends, Header
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.models.question import QuestionRequest, QuestionResponse
 from app.services.memory_logger import MemoryManager
@@ -19,8 +19,8 @@ router = APIRouter()
 def generate_question(
     x_session_id: str = Header(...),
     req: QuestionRequest = Body(...),
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> List[QuestionResponse]:
     service = QuestionGeneratorService(memory=memory, session_id=x_session_id)
 
-    return service.generate_questions(req.user_info, req.constraints, memory=memory)
+    return service.generate_questions(req.user_info, req.constraints)

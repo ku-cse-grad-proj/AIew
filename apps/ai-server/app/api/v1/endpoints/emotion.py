@@ -2,7 +2,7 @@ import os
 import tempfile
 
 from fastapi import APIRouter, Depends, File, Header, UploadFile
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.api.v1.endpoints.memory_debug import MemoryManager
 from app.models.emotion import EmotionGroupResult, EmotionGroupScore
@@ -20,7 +20,7 @@ router = APIRouter()
 async def upload_video(
     x_session_id: str = Header(...),
     file: UploadFile = File(..., description="Video file to be analyzed"),
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> EmotionGroupResult:
     # 임시 파일 생성: 확장자를 유지하며 임시 파일을 생성합니다.
     suffix = os.path.splitext(file.filename or "")[-1] or ".mp4"
@@ -31,6 +31,9 @@ async def upload_video(
             f.write(await file.read())
 
         service = EmotionAnalysisService(memory=memory, session_id=x_session_id)
+
+        if not file.filename:
+            file.filename = ""
 
         results = service.process_and_persist(tmp_path, file.filename)
 

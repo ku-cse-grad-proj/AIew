@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, Header, UploadFile
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.models.pdf import PDFUploadResponse
 from app.services.memory_logger import MemoryManager
@@ -17,11 +17,14 @@ router = APIRouter()
 async def parse_pdf(
     x_session_id: str = Header(...),
     file: UploadFile = File(..., description="PDF file to be parsed"),
-    memory: ConversationBufferMemory = Depends(MemoryManager.MemoryDep),
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> PDFUploadResponse:
     file_bytes = await file.read()
 
     service = PDFAnalysisService(memory=memory, session_id=x_session_id)
+
+    if not file.filename:
+        file.filename = ""
 
     results = service.process_and_persist(
         file_bytes=file_bytes, file_name=file.filename
