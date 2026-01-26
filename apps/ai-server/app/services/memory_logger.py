@@ -2,20 +2,26 @@ import json
 from typing import Any, Dict
 
 from fastapi import Header, HTTPException
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import (
+    BaseChatMessageHistory,
+    InMemoryChatMessageHistory,
+)
 
 
 class MemoryLogger:
-    def __init__(self, memory: ConversationBufferMemory = None, session_id: str = ""):
+    def __init__(
+        self,
+        memory: BaseChatMessageHistory,
+        session_id: str = "",
+    ):
         self.memory = memory
         self.session_id = session_id
 
     def _log(self, title: str = "", payload: Dict[str, Any] = {}) -> None:
         pretty = json.dumps(payload, ensure_ascii=False, indent=4)
-        self.memory.save_context(
-            {"input": f"[{title}]"},
-            {"output": pretty[:4000]},  # prevent exceeding memory limit
-        )
+        # HumanMessage로 입력, AIMessage로 출력 로깅
+        self.memory.add_user_message(f"[{title}]")
+        self.memory.add_ai_message(pretty[:4000])  # prevent exceeding memory limit
 
     def log_shown_question(self, questions: Dict[str, Any] = {}) -> None:
         self._log("QUESTION_SHOWN", questions)
@@ -43,21 +49,16 @@ class MemoryLogger:
 
 
 class MemoryManager:
-    _memory_store: Dict[str, ConversationBufferMemory] = {}
+    _memory_store: Dict[str, InMemoryChatMessageHistory] = {}
 
     @classmethod
-    def get_memory(cls, session_id: str = "") -> ConversationBufferMemory:
+    def get_memory(cls, session_id: str = "") -> BaseChatMessageHistory:
         if session_id not in cls._memory_store:
-            cls._memory_store[session_id] = ConversationBufferMemory(
-                memory_key="history",
-                input_key="input",
-                output_key="output",
-                return_messages=False,
-            )
+            cls._memory_store[session_id] = InMemoryChatMessageHistory()
         return cls._memory_store[session_id]
 
     @classmethod
-    def MemoryDep(cls, x_session_id: str = Header(...)) -> ConversationBufferMemory:
+    def MemoryDep(cls, x_session_id: str = Header(...)) -> BaseChatMessageHistory:
         if not x_session_id:
             raise HTTPException(status_code=400, detail="X-Session-Id header required")
 
