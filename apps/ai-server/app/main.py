@@ -1,3 +1,8 @@
+import logging
+import os
+from contextlib import asynccontextmanager
+
+import redis.asyncio as redis
 from fastapi import FastAPI
 
 from app.api.v1.endpoints import (
@@ -10,7 +15,29 @@ from app.api.v1.endpoints import (
     session_log,
 )
 
-app = FastAPI(title="AIew", version="1.0.0")
+logger = logging.getLogger("uvicorn.error")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    redis_url = os.getenv("REDIS_URL")
+    if redis_url:
+        try:
+            client = redis.from_url(redis_url)
+            pong = await client.ping()
+            logger.info(f"Redis connected: {pong}")
+            await client.aclose()
+        except Exception as e:
+            logger.error(f"Redis connection failed: {e}")
+    else:
+        logger.warning("REDIS_URL not configured, skipping Redis connection")
+
+    yield
+    # Shutdown
+
+
+app = FastAPI(title="AIew", version="1.0.0", lifespan=lifespan)
 
 app.include_router(session_log.router, prefix="/api/v1/session-log", tags=["Session"])
 app.include_router(memory_debug.router, prefix="/api/v1/memory-debug", tags=["Session"])

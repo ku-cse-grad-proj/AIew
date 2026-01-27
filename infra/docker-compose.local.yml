@@ -16,6 +16,21 @@
 
 services:
   # ---------------------------------------------------------------------------
+  # Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: aiew-redis
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
   # Core API (Fastify)
   # ---------------------------------------------------------------------------
   core-api:
@@ -35,6 +50,9 @@ services:
     networks:
       - backend
       - frontend
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test:
@@ -67,6 +85,9 @@ services:
       - 8000
     networks:
       - backend
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test:
@@ -123,8 +144,10 @@ services:
     volumes:
       - ./nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - web-client
-      - core-api
+      web-client:
+        condition: service_healthy
+      core-api:
+        condition: service_healthy
     networks:
       - frontend
     restart: unless-stopped
