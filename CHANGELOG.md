@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.5.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.4.0...aiew-v1.5.0) (2026-01-27)
+
+
+### Features
+
+* 면접 세션 업데이트시 optional portfolio 처리 ([#175](https://github.com/ku-cse-grad-proj/AIew/issues/175)) ([fbe7e68](https://github.com/ku-cse-grad-proj/AIew/commit/fbe7e689ec3f62b66f2697fac863350316d8b1fd))
+
+
+### Refactoring
+
+* ButtonLink 컴포넌트 적용 ([#177](https://github.com/ku-cse-grad-proj/AIew/issues/177)) ([96e2bbf](https://github.com/ku-cse-grad-proj/AIew/commit/96e2bbfa48f5cf87240a2d16f9ccf4696dac97ce))
+* **core:** oauth & jwt 보안 설정 강화 ([#174](https://github.com/ku-cse-grad-proj/AIew/issues/174)) ([0961aa9](https://github.com/ku-cse-grad-proj/AIew/commit/0961aa9040344747b5f45b7bb8e45b0d8270c8e4))
+* 포트폴리오 없이도 면접 세션 생성 가능하도록 변경 ([#173](https://github.com/ku-cse-grad-proj/AIew/issues/173)) ([7846df1](https://github.com/ku-cse-grad-proj/AIew/commit/7846df19a18955e9e429284a5e3f86b8a43c7026))
+
+
+### Documentation
+
+* PR 템플릿 수정 ([42d9139](https://github.com/ku-cse-grad-proj/AIew/commit/42d9139852a1149fd44326f13e1a5c88f2aad90c))
+* PR 템플릿에 불필요한 구분선 제거 ([fd4d9ab](https://github.com/ku-cse-grad-proj/AIew/commit/fd4d9abf7572e2507f34146ae5266456247b1d21))
+
+
+### Chores
+
+* **deps:** bump keras to 3.13.1 & diff to 8.0.3 ([#172](https://github.com/ku-cse-grad-proj/AIew/issues/172)) ([adc64a8](https://github.com/ku-cse-grad-proj/AIew/commit/adc64a8e86aa6ec414858f4aa1cd70021d4284f8))
+* **deps:** bump python-multipart from 0.0.20 to 0.0.22 in /apps/ai-server ([#180](https://github.com/ku-cse-grad-proj/AIew/issues/180)) ([c2a9f9b](https://github.com/ku-cse-grad-proj/AIew/commit/c2a9f9bead1e45b9228e8257c6fb9c1b23838dd2))
+* **deps:** bump wheel from 0.45.1 to 0.46.2 in /apps/ai-server ([#176](https://github.com/ku-cse-grad-proj/AIew/issues/176)) ([a630224](https://github.com/ku-cse-grad-proj/AIew/commit/a63022487f3bb9537d9baf8aea28fdda7a40d69f))
+* release 2026-01-27_13:43 ([8f43194](https://github.com/ku-cse-grad-proj/AIew/commit/8f431942e7a25663de6cf7d7009a44f29c9c9288))
+
 ## [1.4.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.3.4...aiew-v1.4.0) (2026-01-14)
 
 
