@@ -14,6 +14,7 @@
     "build": "pnpm --filter \"./apps/**\" build",
     "test:local": "pnpm -r --stream --if-present run test:local",
     "test:ci": "pnpm -r --stream --if-present run test:ci",
+    "typecheck": "pnpm -r --if-present run typecheck",
     "prepare": "husky",
     "release": "bash scripts/release.sh"
   },
@@ -63,7 +64,8 @@
       "jws@=4.0.0": ">=4.0.1",
       "qs@<6.14.1": ">=6.14.1",
       "@modelcontextprotocol/sdk@<1.25.2": ">=1.25.2",
-      "hono@<4.11.4": ">=4.11.4"
+      "hono@<4.11.4": ">=4.11.4",
+      "diff@<8.0.3": ">=8.0.3"
     },
     "onlyBuiltDependencies": [
       "@prisma/engines",

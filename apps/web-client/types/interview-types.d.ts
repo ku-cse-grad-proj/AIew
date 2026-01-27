@@ -30,7 +30,7 @@ declare global {
     currentQuestionIndex: number
     idealTalent: string
     coverLetterFilename: string
-    portfolioFilename: string
+    portfolioFilename?: string
     createdAt: string
     updatedAt: string
   }

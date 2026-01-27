@@ -23,10 +23,12 @@ const S_InterviewPostBody = Type.Object({
     isFile: true,
     description: '자기소개서 파일 (PDF)',
   }),
-  portfolio: Type.Any({
-    isFile: true,
-    description: '포트폴리오 파일 (PDF)',
-  }),
+  portfolio: Type.Optional(
+    Type.Any({
+      isFile: true,
+      description: '포트폴리오 파일 (PDF)',
+    }),
+  ),
   company: Type.Any({ description: '회사 정보 (JSON 문자열)' }),
   jobTitle: Type.Any({ description: '직무명 (JSON 문자열)' }),
   jobSpec: Type.Any({ description: '세부 직무 (JSON 문자열)' }),
@@ -104,10 +106,8 @@ const controller: FastifyPluginAsync = async (fastify) => {
       const coverLetterFile = multipartBody.coverLetter
       const portfolioFile = multipartBody.portfolio
 
-      if (!coverLetterFile || !portfolioFile) {
-        throw fastify.httpErrors.badRequest(
-          'Both coverLetter and portfolio files are required.',
-        )
+      if (!coverLetterFile) {
+        throw fastify.httpErrors.badRequest('coverLetter file is required.')
       }
 
       // PDF 타입 검증
@@ -116,7 +116,7 @@ const controller: FastifyPluginAsync = async (fastify) => {
           `Unsupported Media Type: '${coverLetterFile.filename}'. Only PDF files are allowed.`,
         )
       }
-      if (portfolioFile.mimetype !== 'application/pdf') {
+      if (portfolioFile && portfolioFile.mimetype !== 'application/pdf') {
         throw fastify.httpErrors.unsupportedMediaType(
           `Unsupported Media Type: '${portfolioFile.filename}'. Only PDF files are allowed.`,
         )
@@ -128,10 +128,12 @@ const controller: FastifyPluginAsync = async (fastify) => {
           buffer: await coverLetterFile.toBuffer(),
           filename: coverLetterFile.filename,
         },
-        portfolio: {
-          buffer: await portfolioFile.toBuffer(),
-          filename: portfolioFile.filename,
-        },
+        portfolio: portfolioFile
+          ? {
+              buffer: await portfolioFile.toBuffer(),
+              filename: portfolioFile.filename,
+            }
+          : undefined,
       }
 
       // 텍스트 필드 추출 (MultipartValue에서 value 추출 후 JSON 파싱)

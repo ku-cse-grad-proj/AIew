@@ -2,6 +2,8 @@ import Link from 'next/link'
 
 import Logo from './Logo'
 
+import { ButtonLink } from '@/components/ButtonLink/ButtonLink'
+
 export function Header() {
   return (
     <header className="bg-white border-b border-[var(--color-neutral-border)] sticky top-0 z-50 shadow-sm">
@@ -32,12 +34,9 @@ export function Header() {
           >
             Sign In
           </Link>
-          <Link
-            href="/login"
-            className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white px-[24px] py-[8px] rounded-lg transition-colors font-medium"
-          >
+          <ButtonLink href="/login" className="font-medium">
             Sign Up
-          </Link>
+          </ButtonLink>
         </div>
       </div>
     </header>

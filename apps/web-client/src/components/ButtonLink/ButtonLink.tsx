@@ -25,14 +25,18 @@ export function ButtonLink({
   if (disabled) {
     return (
       <span className={styles} aria-disabled="true">
-        {children}
+        <span className="inline-flex items-center justify-center">
+          {children}
+        </span>
       </span>
     )
   }
 
   return (
     <Link href={href} className={styles}>
-      <span className="z-10">{children}</span>
+      <span className="z-10 inline-flex items-center justify-center">
+        {children}
+      </span>
     </Link>
   )
 }

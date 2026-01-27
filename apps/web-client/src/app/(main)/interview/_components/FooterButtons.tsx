@@ -1,6 +1,7 @@
 'use client'
-import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+
+import { ButtonLink } from '@/components/ButtonLink/ButtonLink'
 
 type mode = 'create' | 'edit' | 'waiting'
 
@@ -31,12 +32,13 @@ export default function FooterButtons({
         back
       </button>
       {mode === 'waiting' ? (
-        <Link
+        <ButtonLink
           href={`/interview/${params?.sessionId}`}
-          className={`${rightButtonStyle} inline-flex items-center justify-center ${!isQuestionsReady && 'pointer-events-none opacity-50'}`}
+          disabled={!isQuestionsReady}
+          className="flex-7 h-48"
         >
           start interview
-        </Link>
+        </ButtonLink>
       ) : (
         <button type="submit" className={rightButtonStyle}>
           {mode == 'create' ? 'create interview' : 'edit interview'}
