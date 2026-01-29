@@ -1,8 +1,8 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from langchain.memory import ConversationBufferMemory
 from langchain.prompts import PromptTemplate
+from langchain_core.chat_history import BaseChatMessageHistory
 
 from app.models.evaluation import (
     AnswerEvaluationRequest,
@@ -23,7 +23,7 @@ SESSION_PROMPT_PATH = (PROMPT_BASE_DIR / "session_evaluation_prompt.txt").resolv
 
 
 class EvaluationService:
-    def __init__(self, memory: ConversationBufferMemory = None, session_id: str = ""):
+    def __init__(self, memory: BaseChatMessageHistory, session_id: str = ""):
         self.memory = memory
         self.session_id = session_id
         self.logger = MemoryLogger(memory=memory, session_id=session_id)
@@ -37,7 +37,7 @@ class EvaluationService:
         - '없습니다', '모르겠습니다', '잘 모르겠습니다', '기억이 나지 않습니다' 등
           실질적인 내용을 전혀 담지 않는 표현 포함 시 True
         """
-        if answer.strip() == "" or len(answer.strip()) < 15:
+        if answer is None or answer.strip() == "" or len(answer.strip()) < 15:
             return True
 
         # 공백 정리
@@ -220,8 +220,7 @@ class EvaluationService:
 
     def evaluate_answer(
         self,
-        req: AnswerEvaluationRequest = ...,
-        memory: Optional[ConversationBufferMemory] = ...,
+        req: AnswerEvaluationRequest,
     ) -> AnswerEvaluationResult:
         # 0. '답변 누락 / 실질적 내용 없음' 예외 처리 → LLM 호출 생략
         if self._is_truly_empty_answer(req.user_answer):
@@ -262,10 +261,8 @@ class EvaluationService:
 
         return eval_result
 
-    def evaluate_session(
-        self, memory: ConversationBufferMemory
-    ) -> SessionEvaluationResult:
-        avg_score, conversation_text = extract_evaluation(memory)
+    def evaluate_session(self) -> SessionEvaluationResult:
+        avg_score, conversation_text = extract_evaluation(self.memory)
 
         raw_prompt = load_prompt_template(SESSION_PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw_prompt)
