@@ -95,6 +95,28 @@ log_info "현재 활성 환경: $CURRENT_ENV"
 log_info "배포 대상 환경: $NEXT_ENV"
 
 # -----------------------------------------------------------------------------
+# 실패 시 정리 함수
+# -----------------------------------------------------------------------------
+cleanup_on_failure() {
+    log_error "배포 실패! [$NEXT_ENV] 환경 정리 중..."
+
+    # 실패 로그 저장
+    for SERVICE in core-api ai-server web-client; do
+        docker logs "${SERVICE}-${NEXT_ENV}" > "/tmp/${SERVICE}-${NEXT_ENV}-failed.log" 2>&1 || true
+    done
+    log_info "실패 로그 저장됨: /tmp/*-${NEXT_ENV}-failed.log"
+
+    docker compose -f "$COMPOSE_FILE" rm -sf \
+        core-api-"$NEXT_ENV" \
+        ai-server-"$NEXT_ENV" \
+        web-client-"$NEXT_ENV" 2>/dev/null || true
+    log_info "정리 완료. 기존 환경 [$CURRENT_ENV] 유지됨."
+    exit 1
+}
+
+trap cleanup_on_failure ERR
+
+# -----------------------------------------------------------------------------
 # 2. 새 버전 빌드
 # -----------------------------------------------------------------------------
 log_info "[$NEXT_ENV] 환경 빌드 중..."
