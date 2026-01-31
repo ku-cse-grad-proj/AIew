@@ -1,3 +1,5 @@
+import { Suspense } from 'react'
+
 import Modal from '../../_components/Modal'
 
 import EditProfileSection from '@/app/profile/edit/_components/EditProfileSection'
@@ -5,7 +7,9 @@ import EditProfileSection from '@/app/profile/edit/_components/EditProfileSectio
 export default function ProfileEditPage() {
   return (
     <Modal>
-      <EditProfileSection isModal />
+      <Suspense>
+        <EditProfileSection isModal />
+      </Suspense>
     </Modal>
   )
 }
