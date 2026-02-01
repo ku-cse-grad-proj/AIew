@@ -1,8 +1,8 @@
 import json
 from typing import Any, Dict, List
 
-from langchain.prompts import PromptTemplate
 from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.prompts import PromptTemplate
 
 from app.models.followup import FollowupRequest, FollowupResponse
 from app.services.memory_logger import MemoryLogger
