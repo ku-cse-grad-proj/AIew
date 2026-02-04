@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, Dict
 
 from fastapi import Header, HTTPException
@@ -6,6 +7,7 @@ from langchain_core.chat_history import (
     BaseChatMessageHistory,
     InMemoryChatMessageHistory,
 )
+from langchain_redis import RedisChatMessageHistory
 
 
 class MemoryLogger:
@@ -49,10 +51,19 @@ class MemoryLogger:
 
 
 class MemoryManager:
+    _ttl: int = 14400  # 4시간
     _memory_store: Dict[str, InMemoryChatMessageHistory] = {}
 
     @classmethod
     def get_memory(cls, session_id: str = "") -> BaseChatMessageHistory:
+        redis_url = os.getenv("REDIS_URL", "")
+        if redis_url:
+            return RedisChatMessageHistory(
+                session_id=session_id,
+                redis_url=redis_url,
+                ttl=cls._ttl,
+            )
+        # Redis URL이 없으면 InMemory fallback
         if session_id not in cls._memory_store:
             cls._memory_store[session_id] = InMemoryChatMessageHistory()
         return cls._memory_store[session_id]
