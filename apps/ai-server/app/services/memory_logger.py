@@ -41,37 +41,6 @@ class MemoryLogger:
         """답변이 평가됨"""
         self._log(EventType.ANSWER_EVALUATED, evaluation_data)
 
-    # === Deprecated (Phase 3에서 제거 예정) ===
-
-    def log_shown_question(self, questions: Dict[str, Any] = {}) -> None:
-        """Deprecated: log_question_asked() 사용 권장"""
-        self._log(EventType.QUESTION_SHOWN, questions)
-
-    def log_user_answer(
-        self, question_id: str = "", answer: str = "", duration_sec: int = 0
-    ) -> None:
-        """Deprecated: log_answer_received() 사용 권장"""
-        self._log(
-            EventType.USER_ANSWER,
-            {
-                "question_id": question_id,
-                "answer": answer,
-                "answer_duration_sec": duration_sec,
-            },
-        )
-
-    def log_evaluation(self, evaluation: Dict[str, Any] = {}) -> None:
-        """Deprecated: log_answer_evaluated() 사용 권장"""
-        self._log(EventType.ANSWER_EVALUATION, evaluation)
-
-    def log_tail_question(self, followup: Dict[str, Any] = {}) -> None:
-        """Deprecated: log_question_asked() 사용 권장 (parent_question_id 포함)"""
-        self._log(EventType.TAIL_QUESTION, followup)
-
-    def log_pdf_parsing(self, parsed_data: Dict[str, Any] = {}) -> None:
-        """Deprecated: Phase 3에서 제거 예정 (메모리에 로깅하지 않음)"""
-        self._log(EventType.PDF_PARSE, parsed_data)
-
 
 class MemoryManager:
     _ttl: int = 14400  # 4시간
