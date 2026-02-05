@@ -245,7 +245,7 @@ export class InterviewService {
 
       await this.aiClient.logAnswerReceived(
         {
-          questionId: currentStep.aiQuestionId,
+          aiQuestionId: currentStep.aiQuestionId,
           answer: answer,
           answerDurationSec: duration,
         },
@@ -871,9 +871,9 @@ export class InterviewService {
     parentQuestionId?: string,
   ) {
     return {
-      questionId: step.aiQuestionId,
+      aiQuestionId: step.aiQuestionId,
       question: step.question,
-      category: step.type,
+      type: step.type,
       criteria: step.criteria,
       skills: step.skills,
       rationale: step.rationale,
@@ -889,8 +889,8 @@ export class InterviewService {
     sessionId: string,
   ) {
     const request: AnswerEvaluationRequest = {
-      questionId: step.aiQuestionId,
-      category: step.type,
+      aiQuestionId: step.aiQuestionId,
+      type: step.type,
       criteria: step.criteria,
       skills: step.skills,
       questionText: step.question,
@@ -949,8 +949,8 @@ export class InterviewService {
 
     log.info(`[${sessionId}] Generating follow-up question...`)
     const followupRequest: FollowupRequest = {
-      questionId: rootQuestionStep.aiQuestionId, // 항상 메인 질문의 ID를 사용
-      category: parentStep.type,
+      aiQuestionId: rootQuestionStep.aiQuestionId, // 항상 메인 질문의 ID를 사용
+      type: parentStep.type,
       questionText: parentStep.question,
       criteria: parentStep.criteria,
       skills: parentStep.skills,

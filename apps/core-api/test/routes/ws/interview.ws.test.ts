@@ -196,10 +196,10 @@ describe('WebSocket interview flow', () => {
     )
     vi.spyOn(app.aiClientService, 'evaluateAnswer').mockImplementation(
       async (req): Promise<AnswerEvaluationResult> => {
-        // console.log(`[MOCK] evaluateAnswer called for ${req.questionId}`)
+        // console.log(`[MOCK] evaluateAnswer called for ${req.aiQuestionId}`)
         return {
-          questionId: req.questionId,
-          category: req.category,
+          aiQuestionId: req.aiQuestionId,
+          type: req.type,
           feedback: 'Good answer, but could be more detailed.',
           tailDecision: TailDecision.CREATE, // Always create a follow-up
           tailRationale: 'Drill down',
@@ -219,11 +219,11 @@ describe('WebSocket interview flow', () => {
     ).mockImplementation(async (req): Promise<FollowUp> => {
       followupCounter++
 
-      const mainQuestionId = req.questionId.split('-')[0]
+      const mainQuestionId = req.aiQuestionId.split('-')[0]
 
       return {
         followupId: `${mainQuestionId}-fu${followupCounter}`,
-        parentQuestionId: req.questionId,
+        parentQuestionId: req.aiQuestionId,
         question: `This is follow-up #${followupCounter}`,
         focusCriteria: [],
         rationale: '',

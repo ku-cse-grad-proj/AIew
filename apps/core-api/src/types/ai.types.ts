@@ -78,8 +78,8 @@ export interface CriterionScore {
  * AI 서버의 /answer-evaluating 엔드포인트 응답 객체 타입
  */
 export interface AnswerEvaluationResult {
-  questionId: string
-  category: string
+  aiQuestionId: string
+  type: string
   answerDurationSec: number
   overallScore: number
   strengths: string[]
@@ -103,8 +103,8 @@ export interface SessionEvaluationResult {
  * AI 서버의 /answer-evaluating 엔드포인트 요청 본문 타입
  */
 export interface AnswerEvaluationRequest {
-  questionId: string
-  category: string
+  aiQuestionId: string
+  type: string
   criteria: string[]
   skills: string[]
   questionText: string
@@ -128,8 +128,8 @@ export interface FollowUp {
  * AI 서버의 /followup-generating 엔드포인트 요청 본문 타입
  */
 export interface FollowupRequest {
-  questionId: string
-  category: string
+  aiQuestionId: string
+  type: string
   questionText: string
   criteria: string[]
   skills: string[]
@@ -143,9 +143,9 @@ export interface FollowupRequest {
  * AI 서버의 /log/question-asked 엔드포인트 요청 본문 타입
  */
 export interface QuestionAskedRequest {
-  questionId: string
+  aiQuestionId: string
   question: string
-  category: string
+  type: string
   criteria: string[]
   skills: string[]
   rationale?: string | null
@@ -157,7 +157,7 @@ export interface QuestionAskedRequest {
  * AI 서버의 /log/answer-received 엔드포인트 요청 본문 타입
  */
 export interface AnswerReceivedRequest {
-  questionId: string
+  aiQuestionId: string
   answer: string
   answerDurationSec: number
 }
@@ -194,8 +194,8 @@ export interface CriterionScoreData {
  * 답변 평가 데이터 (복구용)
  */
 export interface EvaluationData {
-  questionId: string
-  category: string
+  aiQuestionId: string
+  type: string
   answerDurationSec: number
   overallScore: number
   strengths: string[]
@@ -211,15 +211,14 @@ export interface EvaluationData {
  * 스텝 복구 데이터
  */
 export interface StepRestoreData {
-  questionId: string
-  category: string
+  aiQuestionId: string
+  type: string
   question: string
   criteria: string[]
   skills: string[]
   rationale?: string | null
   estimatedAnswerTimeSec?: number | null
-  isFollowup: boolean
-  parentQuestionId?: string | null
+  parentQuestionId?: string | null // 꼬리질문인 경우 (존재 여부로 구분)
   answer?: string | null
   answerDurationSec?: number | null
   evaluation?: EvaluationData | null
@@ -229,8 +228,6 @@ export interface StepRestoreData {
  * AI 서버의 /restore 엔드포인트 요청 본문 타입
  */
 export interface RestoreRequest {
-  resumeText: string
-  portfolioText: string
   steps: StepRestoreData[]
 }
 

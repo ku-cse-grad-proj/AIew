@@ -164,24 +164,21 @@ export default fp(
           // READY 또는 IN_PROGRESS일 때 백그라운드로 메모리 복구
           if (session.status === 'READY' || session.status === 'IN_PROGRESS') {
             const restoreData = {
-              resumeText: session.coverLetterText || '',
-              portfolioText: session.portfolioText || '',
               steps: session.steps.map((step) => ({
-                questionId: step.aiQuestionId,
-                category: step.type.toLowerCase(),
+                aiQuestionId: step.aiQuestionId,
+                type: step.type,
                 question: step.question,
                 criteria: step.criteria,
                 skills: step.skills,
                 rationale: step.rationale,
                 estimatedAnswerTimeSec: step.estimatedAnswerTimeSec,
-                isFollowup: !!step.parentStepId,
-                parentQuestionId: step.parentStep?.aiQuestionId ?? null,
+                parentQuestionId: step.parentStep?.aiQuestionId ?? null, // 존재 여부로 꼬리질문 판단
                 answer: step.answer,
                 answerDurationSec: step.answerDurationSec,
                 evaluation: step.score
                   ? {
-                      questionId: step.aiQuestionId,
-                      category: step.type.toLowerCase(),
+                      aiQuestionId: step.aiQuestionId,
+                      type: step.type,
                       answerDurationSec: step.answerDurationSec ?? 0,
                       overallScore: step.score,
                       strengths: step.strengths,
