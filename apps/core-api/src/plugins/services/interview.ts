@@ -238,8 +238,12 @@ export class InterviewService {
       })
 
       // 질문과 답변을 랭체인 메모리에 추가
+      // 꼬리질문인 경우 aiQuestionId에서 부모 ID 추출 (q1-fu1 → q1)
+      const parentAiQuestionId = currentStep.parentStepId
+        ? currentStep.aiQuestionId.split('-')[0]
+        : undefined
       await this.aiClient.logQuestionAsked(
-        this.formatStepToQuestionAsked(currentStep),
+        this.formatStepToQuestionAsked(currentStep, parentAiQuestionId),
         sessionId,
       )
 
@@ -878,7 +882,6 @@ export class InterviewService {
       skills,
       rationale,
       estimatedAnswerTimeSec,
-      parentStepId,
     } = step
     return {
       aiQuestionId,
@@ -888,7 +891,7 @@ export class InterviewService {
       skills,
       rationale,
       estimatedAnswerTimeSec,
-      parentQuestionId: parentQuestionId ?? parentStepId ?? null,
+      parentQuestionId: parentQuestionId ?? null,
     }
   }
 
