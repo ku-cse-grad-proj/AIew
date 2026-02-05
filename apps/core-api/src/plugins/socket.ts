@@ -164,38 +164,37 @@ export default fp(
           // READY 또는 IN_PROGRESS일 때 백그라운드로 메모리 복구
           if (session.status === 'READY' || session.status === 'IN_PROGRESS') {
             const restoreData = {
-              resume_text: session.coverLetterText || '',
-              portfolio_text: session.portfolioText || '',
+              resumeText: session.coverLetterText || '',
+              portfolioText: session.portfolioText || '',
               steps: session.steps.map((step) => ({
-                question_id: step.aiQuestionId,
+                questionId: step.aiQuestionId,
                 category: step.type.toLowerCase(),
-                question_text: step.question,
+                question: step.question,
                 criteria: step.criteria,
                 skills: step.skills,
                 rationale: step.rationale,
-                estimated_answer_time_sec: step.estimatedAnswerTimeSec,
-                is_followup: !!step.parentStepId,
-                parent_question_id: step.parentStep?.aiQuestionId ?? null,
-                focus_criteria: null, // DB에 저장되지 않음
+                estimatedAnswerTimeSec: step.estimatedAnswerTimeSec,
+                isFollowup: !!step.parentStepId,
+                parentQuestionId: step.parentStep?.aiQuestionId ?? null,
                 answer: step.answer,
-                answer_duration_sec: step.answerDurationSec,
+                answerDurationSec: step.answerDurationSec,
                 evaluation: step.score
                   ? {
-                      question_id: step.aiQuestionId,
+                      questionId: step.aiQuestionId,
                       category: step.type.toLowerCase(),
-                      answer_duration_sec: step.answerDurationSec ?? 0,
-                      overall_score: step.score,
+                      answerDurationSec: step.answerDurationSec ?? 0,
+                      overallScore: step.score,
                       strengths: step.strengths,
                       improvements: step.improvements,
-                      red_flags: step.redFlags,
-                      criterion_scores: step.criterionEvaluations.map((ce) => ({
+                      redFlags: step.redFlags,
+                      criterionScores: step.criterionEvaluations.map((ce) => ({
                         name: ce.name,
                         score: ce.score,
                         reason: ce.reason,
                       })),
                       feedback: step.feedback ?? '',
-                      tail_rationale: null, // DB에 저장되지 않음
-                      tail_decision: 'skip', // 복구 시점에는 이미 결정 완료
+                      tailRationale: null, // DB에 저장되지 않음
+                      tailDecision: 'skip', // 복구 시점에는 이미 결정 완료
                     }
                   : null,
               })),

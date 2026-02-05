@@ -116,7 +116,7 @@ export class InterviewService {
       const fileUrls = await this.uploadFilesToR2(sessionId, files)
       log.info(`[${sessionId}] Files uploaded successfully.`)
 
-      const parsedTexts = await this.parsePdfFiles(sessionId, files)
+      const parsedTexts = await this.parsePdfFiles(files)
       log.info(`[${sessionId}] PDFs parsed successfully.`)
 
       // 파일 URL과 파싱된 텍스트를 함께 저장
@@ -238,18 +238,16 @@ export class InterviewService {
       })
 
       // 질문과 답변을 랭체인 메모리에 추가
-      const questionPayloadForAi = this.formatStepToAiQuestion(currentStep)
-
-      await this.aiClient.logShownQuestion(
-        { question: questionPayloadForAi },
+      await this.aiClient.logQuestionAsked(
+        this.formatStepToQuestionAsked(currentStep),
         sessionId,
       )
 
-      await this.aiClient.logUserAnswer(
+      await this.aiClient.logAnswerReceived(
         {
-          question_id: currentStep.aiQuestionId,
+          questionId: currentStep.aiQuestionId,
           answer: answer,
-          answer_duration_sec: duration,
+          answerDurationSec: duration,
         },
         sessionId,
       )
@@ -262,7 +260,7 @@ export class InterviewService {
       )
       await this.saveEvaluationResult(stepId, evaluationResult)
 
-      if (evaluationResult.tail_decision === TailDecision.CREATE) {
+      if (evaluationResult.tailDecision === TailDecision.CREATE) {
         // 꼬리질문의 '뿌리'가 되는 메인 질문의 ID를 찾음
         const rootQuestionId = currentStep.parentStepId ?? currentStep.id
         const followUpCount = await prisma.interviewStep.count({
@@ -777,21 +775,19 @@ export class InterviewService {
     )
   }
 
-  private async parsePdfFiles(
-    sessionId: string,
-    files: { coverLetter: FilePayload; portfolio?: FilePayload },
-  ) {
+  private async parsePdfFiles(files: {
+    coverLetter: FilePayload
+    portfolio?: FilePayload
+  }) {
     if (files.portfolio) {
       const [coverLetterParsed, portfolioParsed] = await Promise.all([
         this.aiClient.parsePdf(
           files.coverLetter.buffer,
           files.coverLetter.filename,
-          sessionId,
         ),
         this.aiClient.parsePdf(
           files.portfolio.buffer,
           files.portfolio.filename,
-          sessionId,
         ),
       ])
       return {
@@ -803,7 +799,6 @@ export class InterviewService {
     const coverLetterParsed = await this.aiClient.parsePdf(
       files.coverLetter.buffer,
       files.coverLetter.filename,
-      sessionId,
     )
     return {
       resume_text: coverLetterParsed.extracted_text,
@@ -866,15 +861,24 @@ export class InterviewService {
     }
   }
 
-  public formatStepToAiQuestion(step: InterviewStep) {
+  /**
+   * InterviewStep을 QuestionAskedRequest 형식으로 변환합니다.
+   * @param step - 변환할 InterviewStep
+   * @param parentQuestionId - 꼬리질문인 경우 부모 질문 ID
+   */
+  public formatStepToQuestionAsked(
+    step: InterviewStep,
+    parentQuestionId?: string,
+  ) {
     return {
-      main_question_id: step.aiQuestionId,
+      questionId: step.aiQuestionId,
+      question: step.question,
       category: step.type,
-      question_text: step.question,
       criteria: step.criteria,
       skills: step.skills,
       rationale: step.rationale,
-      estimated_answer_time_sec: step.estimatedAnswerTimeSec,
+      estimatedAnswerTimeSec: step.estimatedAnswerTimeSec,
+      parentQuestionId: parentQuestionId ?? step.parentStepId ?? null,
     }
   }
 
@@ -885,13 +889,13 @@ export class InterviewService {
     sessionId: string,
   ) {
     const request: AnswerEvaluationRequest = {
-      question_id: step.aiQuestionId,
+      questionId: step.aiQuestionId,
       category: step.type,
       criteria: step.criteria,
       skills: step.skills,
-      question_text: step.question,
-      user_answer: answer,
-      answer_duration_sec: duration,
+      questionText: step.question,
+      userAnswer: answer,
+      answerDurationSec: duration,
     }
     return this.aiClient.evaluateAnswer(request, sessionId)
   }
@@ -904,14 +908,14 @@ export class InterviewService {
     return prisma.interviewStep.update({
       where: { id: stepId },
       data: {
-        score: result.overall_score,
+        score: result.overallScore,
         strengths: result.strengths,
         improvements: result.improvements,
-        redFlags: result.red_flags,
+        redFlags: result.redFlags,
         feedback: result.feedback,
         criterionEvaluations: {
           createMany: {
-            data: result.criterion_scores.map((c) => ({
+            data: result.criterionScores.map((c) => ({
               name: c.name,
               score: c.score,
               reason: c.reason,
@@ -945,13 +949,13 @@ export class InterviewService {
 
     log.info(`[${sessionId}] Generating follow-up question...`)
     const followupRequest: FollowupRequest = {
-      question_id: rootQuestionStep.aiQuestionId, // 항상 메인 질문의 ID를 사용
+      questionId: rootQuestionStep.aiQuestionId, // 항상 메인 질문의 ID를 사용
       category: parentStep.type,
-      question_text: parentStep.question,
+      questionText: parentStep.question,
       criteria: parentStep.criteria,
       skills: parentStep.skills,
-      user_answer: answer,
-      evaluation_summary: `Strengths: ${evaluation.strengths.join(
+      userAnswer: answer,
+      evaluationSummary: `Strengths: ${evaluation.strengths.join(
         ', ',
       )}, Improvements: ${evaluation.improvements.join(', ')}`,
     }
@@ -962,18 +966,21 @@ export class InterviewService {
       data: {
         interviewSessionId: sessionId,
         parentStepId: rootQuestionStep.id, // parentStepId는 항상 메인 질문의 CUID를 가리킴
-        aiQuestionId: followupResult.followup_id,
+        aiQuestionId: followupResult.followupId,
         type: parentStep.type,
         question: followupResult.question,
-        criteria: followupResult.focus_criteria,
+        criteria: followupResult.focusCriteria,
         skills: parentStep.skills,
         rationale: followupResult.rationale,
-        estimatedAnswerTimeSec: followupResult.expected_answer_time_sec,
+        estimatedAnswerTimeSec: followupResult.expectedAnswerTimeSec,
       },
     })
 
-    await this.aiClient.logShownQuestion(
-      { question: this.formatStepToAiQuestion(newFollowupStep) },
+    await this.aiClient.logQuestionAsked(
+      this.formatStepToQuestionAsked(
+        newFollowupStep,
+        rootQuestionStep.aiQuestionId,
+      ),
       sessionId,
     )
     log.info(`[${sessionId}] Next question logged to AI memory.`)
@@ -1044,7 +1051,7 @@ export class InterviewService {
           where: { id: sessionId },
           data: {
             status: 'COMPLETED',
-            finalFeedback: sessionEvaluation.session_feedback,
+            finalFeedback: sessionEvaluation.sessionFeedback,
             averageScore,
           },
         })
@@ -1079,8 +1086,8 @@ export class InterviewService {
         data: { currentQuestionIndex: nextIndex },
       })
       const nextStep = mainQuestions[nextIndex]
-      await this.aiClient.logShownQuestion(
-        { question: this.formatStepToAiQuestion(nextStep) },
+      await this.aiClient.logQuestionAsked(
+        this.formatStepToQuestionAsked(nextStep),
         sessionId,
       )
       log.info(`[${sessionId}] Next question logged to AI memory.`)
