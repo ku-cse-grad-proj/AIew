@@ -21,7 +21,14 @@ class MemoryDump(BaseModel):
 class QuestionAskedRequest(BaseModel):
     """QUESTION_ASKED 로깅 요청 (메인/꼬리 통합)"""
 
-    data: dict = Field(..., description="Question data (camelCase fields)")
+    aiQuestionId: str = Field(..., pattern=r"^q\d+(-fu\d+)?$")
+    question: str
+    type: str
+    criteria: List[str]
+    skills: List[str]
+    rationale: str | None = None
+    estimatedAnswerTimeSec: int | None = None
+    parentQuestionId: str | None = None
 
 
 class AnswerReceivedRequest(BaseModel):

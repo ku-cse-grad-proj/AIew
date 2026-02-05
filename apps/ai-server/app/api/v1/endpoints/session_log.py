@@ -33,7 +33,7 @@ def post_question_asked(
     memory_logger: MemoryLogger = Depends(get_memory_logger_dep),
 ) -> dict:
     try:
-        memory_logger.log_question_asked(payload.data)
+        memory_logger.log_question_asked(payload.model_dump())
         return {"ok": True}
     except Exception as e:
         raise HTTPException(

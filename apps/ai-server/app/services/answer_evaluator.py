@@ -223,7 +223,7 @@ class EvaluationService:
         req: AnswerEvaluationRequest,
     ) -> AnswerEvaluationResult:
         # 0. '답변 누락 / 실질적 내용 없음' 예외 처리 → LLM 호출 생략
-        if self._is_truly_empty_answer(req.userAnswer):
+        if self._is_truly_empty_answer(req.answer):
             forced = self._build_forced_empty_result(req)
             forced = self._preprocess_parsed_answer(forced)
             eval_result = AnswerEvaluationResult.model_validate(forced)
