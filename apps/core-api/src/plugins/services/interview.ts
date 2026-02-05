@@ -870,33 +870,44 @@ export class InterviewService {
     step: InterviewStep,
     parentQuestionId?: string,
   ) {
+    const {
+      aiQuestionId,
+      question,
+      type,
+      criteria,
+      skills,
+      rationale,
+      estimatedAnswerTimeSec,
+      parentStepId,
+    } = step
     return {
-      aiQuestionId: step.aiQuestionId,
-      question: step.question,
-      type: step.type,
-      criteria: step.criteria,
-      skills: step.skills,
-      rationale: step.rationale,
-      estimatedAnswerTimeSec: step.estimatedAnswerTimeSec,
-      parentQuestionId: parentQuestionId ?? step.parentStepId ?? null,
+      aiQuestionId,
+      question,
+      type,
+      criteria,
+      skills,
+      rationale,
+      estimatedAnswerTimeSec,
+      parentQuestionId: parentQuestionId ?? parentStepId ?? null,
     }
   }
 
   private async requestAnswerEvaluation(
     step: InterviewStep,
     answer: string,
-    duration: number,
+    answerDurationSec: number,
     sessionId: string,
   ) {
-    const request: AnswerEvaluationRequest = {
-      aiQuestionId: step.aiQuestionId,
-      type: step.type,
-      criteria: step.criteria,
-      skills: step.skills,
-      questionText: step.question,
-      userAnswer: answer,
-      answerDurationSec: duration,
-    }
+    const { aiQuestionId, type, criteria, skills, question } = step
+    const request = {
+      aiQuestionId,
+      type,
+      criteria,
+      skills,
+      question,
+      answer,
+      answerDurationSec,
+    } satisfies AnswerEvaluationRequest
     return this.aiClient.evaluateAnswer(request, sessionId)
   }
 
@@ -914,13 +925,7 @@ export class InterviewService {
         redFlags: result.redFlags,
         feedback: result.feedback,
         criterionEvaluations: {
-          createMany: {
-            data: result.criterionScores.map((c) => ({
-              name: c.name,
-              score: c.score,
-              reason: c.reason,
-            })),
-          },
+          createMany: { data: result.criterionScores },
         },
       },
     })
@@ -948,19 +953,18 @@ export class InterviewService {
     }
 
     log.info(`[${sessionId}] Generating follow-up question...`)
-    const followupRequest: FollowupRequest = {
+    const { type, question, criteria, skills } = parentStep
+    const request = {
       aiQuestionId: rootQuestionStep.aiQuestionId, // 항상 메인 질문의 ID를 사용
-      type: parentStep.type,
-      questionText: parentStep.question,
-      criteria: parentStep.criteria,
-      skills: parentStep.skills,
-      userAnswer: answer,
-      evaluationSummary: `Strengths: ${evaluation.strengths.join(
-        ', ',
-      )}, Improvements: ${evaluation.improvements.join(', ')}`,
-    }
+      type,
+      question,
+      criteria,
+      skills,
+      answer,
+      evaluationSummary: `Strengths: ${evaluation.strengths.join(', ')}, Improvements: ${evaluation.improvements.join(', ')}`,
+    } satisfies FollowupRequest
     const followupResult: FollowUp =
-      await this.aiClient.generateFollowUpQuestion(followupRequest, sessionId)
+      await this.aiClient.generateFollowUpQuestion(request, sessionId)
 
     const newFollowupStep = await prisma.interviewStep.create({
       data: {

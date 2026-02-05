@@ -107,8 +107,8 @@ export interface AnswerEvaluationRequest {
   type: string
   criteria: string[]
   skills: string[]
-  questionText: string
-  userAnswer: string
+  question: string
+  answer: string
   answerDurationSec: number
 }
 
@@ -130,10 +130,10 @@ export interface FollowUp {
 export interface FollowupRequest {
   aiQuestionId: string
   type: string
-  questionText: string
+  question: string
   criteria: string[]
   skills: string[]
-  userAnswer: string
+  answer: string
   evaluationSummary?: string
 }
 
