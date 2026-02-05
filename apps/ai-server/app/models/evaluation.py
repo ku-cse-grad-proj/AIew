@@ -16,8 +16,8 @@ class CriterionScore(BaseModel):
 
 
 class AnswerEvaluationResult(BaseModel):
-    questionId: str = Field(..., description="평가 대상 질문 ID (q1~q5)")
-    category: str = Field(..., description="behavioral|technical|tailored")
+    aiQuestionId: str = Field(..., description="평가 대상 질문 ID (q1~q5)")
+    type: str = Field(..., description="behavioral|technical|tailored")
     answerDurationSec: int = Field(..., ge=0, description="사용자 답변 소요 시간(초)")
     overallScore: int = Field(..., ge=1, le=5, description="총평 1~5")
     strengths: List[str] = Field(default_factory=list, max_items=5)
@@ -35,8 +35,8 @@ class AnswerEvaluationResult(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "questionId": "q2",
-                "category": "technical",
+                "aiQuestionId": "q2",
+                "type": "technical",
                 "answerDurationSec": 70,
                 "overallScore": 4,
                 "strengths": ["명확한 설명", "구체적인 예시 제공"],
@@ -60,8 +60,8 @@ class AnswerEvaluationResult(BaseModel):
 
 
 class AnswerEvaluationRequest(BaseModel):
-    questionId: str = Field(..., description="평가 대상 질문 ID (q1~q5)")
-    category: str = Field(..., description="behavioral|technical")
+    aiQuestionId: str = Field(..., description="평가 대상 질문 ID (q1~q5)")
+    type: str = Field(..., description="behavioral|technical")
     criteria: List[str] = Field(default_factory=list, description="평가 기준 목록")
     skills: List[str] = Field(default_factory=list, description="관련 기술 스택 목록")
     questionText: str = Field(..., description="질문 텍스트")
@@ -71,8 +71,8 @@ class AnswerEvaluationRequest(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "questionId": "q2",
-                "category": "technical",
+                "aiQuestionId": "q2",
+                "type": "technical",
                 "criteria": ["명확성", "깊이", "근거"],
                 "skills": ["React", "TypeScript"],
                 "questionText": "React와 TypeScript를 사용하여 UI 컴포넌트 설계 시 고려 사항은 무엇일까요?",

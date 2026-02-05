@@ -4,8 +4,8 @@
 [입력 정보]
 
 [부모 질문]
-- 질문 ID: {question_id}
-- 카테고리: {category}
+- 질문 ID: {ai_question_id}
+- 타입: {type}
 - 본문: {question_text}
 
 [사용자 답변]

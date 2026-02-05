@@ -4,8 +4,8 @@ from pydantic import BaseModel, Field
 
 
 class FollowupRequest(BaseModel):
-    questionId: str = Field(..., description="부모 메인 질문 ID (예: q1)")
-    category: str = Field(..., description="behavioral|technical|tailored")
+    aiQuestionId: str = Field(..., description="부모 메인 질문 ID (예: q1)")
+    type: str = Field(..., description="behavioral|technical|tailored")
     questionText: str = Field(..., description="부모 질문 본문")
     criteria: List[str] = Field(
         default_factory=list, description="평가 기준(부족한 부분을 파고듦)"
@@ -27,8 +27,8 @@ class FollowupRequest(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "questionId": "q3",
-                "category": "technical",
+                "aiQuestionId": "q3",
+                "type": "technical",
                 "questionText": "Node.js와 Express로 API 성능을 어떻게 최적화했나요?",
                 "criteria": ["문제 해결", "성능 이해도", "재현 가능성"],
                 "skills": ["Node.js", "Express", "Redis"],

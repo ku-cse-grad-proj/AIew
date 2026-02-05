@@ -101,8 +101,8 @@ class EvaluationService:
         tail_rationale_text = "답변이 완전히 누락되어 지원자의 관련 역량 및 경험을 검증할 수 있는 근거가 전혀 없습니다."
 
         forced: Dict[str, Any] = {
-            "questionId": req.questionId,
-            "category": req.category,
+            "aiQuestionId": req.aiQuestionId,
+            "type": req.type,
             "answerDurationSec": req.answerDurationSec,
             "strengths": ["답변을 통해 확인된 강점 없음"],
             "improvements": [
@@ -189,11 +189,11 @@ class EvaluationService:
             elif not value:
                 item[key] = ["N/A"]
 
-        for key in ["questionId", "category", "feedback"]:
+        for key in ["aiQuestionId", "type", "feedback"]:
             value = item.get(key)
             if not isinstance(value, str) or value.lower() in ("", "none", "null"):
                 item[key] = ""
-            elif key == "category":
+            elif key == "type":
                 item[key] = item[key].lower()
 
         key = "tailRationale"
@@ -235,8 +235,8 @@ class EvaluationService:
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
         vars: Dict[str, Any] = {
-            "question_id": req.questionId,
-            "category": req.category,
+            "ai_question_id": req.aiQuestionId,
+            "type": req.type,
             "criteria_csv": (", ".join(req.criteria) if req.criteria else ""),
             "skills_csv": (", ".join(req.skills) if req.skills else ""),
             "question_text": req.questionText,

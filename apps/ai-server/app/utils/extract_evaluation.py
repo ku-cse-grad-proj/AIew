@@ -39,7 +39,7 @@ def extract_evaluation(memory: BaseChatMessageHistory) -> tuple[float, str]:
 
             # ANSWER_EVALUATED: 평가 데이터 추출
             elif event_type == EventType.ANSWER_EVALUATED:
-                qid = data.get("questionId")
+                qid = data.get("aiQuestionId")
                 score = data.get("overallScore")
                 feedback = data.get("feedback")
 
@@ -47,7 +47,7 @@ def extract_evaluation(memory: BaseChatMessageHistory) -> tuple[float, str]:
                     continue
 
                 qa = {
-                    "questionId": qid,
+                    "aiQuestionId": qid,
                     "overallScore": score,
                     "answerText": last_answer_text or "",
                     "feedback": feedback or "",

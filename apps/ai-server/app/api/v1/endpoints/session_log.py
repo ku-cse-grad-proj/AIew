@@ -49,7 +49,7 @@ def post_answer_received(
     try:
         memory_logger.log_answer_received(
             {
-                "questionId": payload.questionId,
+                "aiQuestionId": payload.aiQuestionId,
                 "answer": payload.answer,
                 "answerDurationSec": payload.answerDurationSec,
             }
@@ -81,9 +81,9 @@ def restore_memory(
         for step in payload.steps:
             # QUESTION_ASKED 로깅 (메인/꼬리 통합, parentQuestionId로 구분)
             question_data = {
-                "questionId": step.questionId,
+                "aiQuestionId": step.aiQuestionId,
                 "question": step.question,
-                "category": step.category,
+                "type": step.type,
                 "criteria": step.criteria,
                 "skills": step.skills,
                 "rationale": step.rationale,
@@ -97,7 +97,7 @@ def restore_memory(
             if step.answer is not None:
                 memory_logger.log_answer_received(
                     {
-                        "questionId": step.questionId,
+                        "aiQuestionId": step.aiQuestionId,
                         "answer": step.answer,
                         "answerDurationSec": step.answerDurationSec or 0,
                     }
@@ -107,7 +107,7 @@ def restore_memory(
             if step.evaluation is not None:
                 memory_logger.log_answer_evaluated(step.evaluation.model_dump())
 
-            logger.info(f"[{x_session_id}] Step {step.questionId} restored")
+            logger.info(f"[{x_session_id}] Step {step.aiQuestionId} restored")
 
         logger.info(f"[{x_session_id}] Memory restore completed successfully")
         return {"ok": True, "restored_steps": len(payload.steps)}

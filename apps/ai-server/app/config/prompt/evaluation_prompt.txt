@@ -4,8 +4,8 @@
 [입력 정보]
 
 [질문 메타]
-- 질문 ID: {question_id}
-- 카테고리: {category}
+- 질문 ID: {ai_question_id}
+- 타입: {type}
 - 평가 기준: {criteria_csv}
 - 측정 역량 태그: {skills_csv}
 
@@ -50,8 +50,8 @@
 
 [출력 예시]
 {{
-  "questionId": "q2",
-  "category": "technical",
+  "aiQuestionId": "q2",
+  "type": "technical",
   "answerDurationSec": 70,
   "strengths": ["명확한 설명", "구체적인 예시 제공"],
   "improvements": ["더 많은 근거 제시", "답변의 깊이 향상"],

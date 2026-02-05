@@ -105,13 +105,13 @@ class FollowupGeneratorService:
         req: FollowupRequest,
     ) -> Dict[str, Any]:
         if req.autoSequence:
-            existing = self._count_existing_followups(req.questionId)
+            existing = self._count_existing_followups(req.aiQuestionId)
             idx = existing + 1
         else:
             idx = req.nextFollowupIndex or 1
 
         out = {
-            "followupId": f"{req.questionId}-fu{idx}",
+            "followupId": f"{req.aiQuestionId}-fu{idx}",
             "parentQuestionId": parsed_item.get("parentQuestionId", ""),
             "focusCriteria": parsed_item.get("focusCriteria", []),
             "rationale": parsed_item.get("rationale", ""),
@@ -130,8 +130,8 @@ class FollowupGeneratorService:
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
         vars = {
-            "question_id": req.questionId,
-            "category": req.category,
+            "ai_question_id": req.aiQuestionId,
+            "type": req.type,
             "question_text": req.questionText,
             "criteria_csv": ", ".join(req.criteria) if req.criteria else "",
             "skills_csv": ", ".join(req.skills) if req.skills else "",

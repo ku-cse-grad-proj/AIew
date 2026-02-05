@@ -27,7 +27,7 @@ class QuestionAskedRequest(BaseModel):
 class AnswerReceivedRequest(BaseModel):
     """ANSWER_RECEIVED 로깅 요청"""
 
-    questionId: str = Field(..., pattern=r"^q\d+(-fu\d+)?$")
+    aiQuestionId: str = Field(..., pattern=r"^q\d+(-fu\d+)?$")
     answer: str = Field(..., description="User's answer text")
     answerDurationSec: int = Field(..., description="Time taken to answer in seconds")
 
@@ -42,8 +42,8 @@ class CriterionScoreData(BaseModel):
 
 
 class EvaluationData(BaseModel):
-    questionId: str
-    category: str
+    aiQuestionId: str
+    type: str
     answerDurationSec: int
     overallScore: int
     strengths: List[str]
@@ -57,8 +57,8 @@ class EvaluationData(BaseModel):
 
 class StepRestoreData(BaseModel):
     # 질문 정보 (QUESTION_ASKED용)
-    questionId: str = Field(..., description="질문 ID (q1 or q1-fu1)")
-    category: str
+    aiQuestionId: str = Field(..., description="질문 ID (q1 or q1-fu1)")
+    type: str
     question: str
     criteria: List[str]
     skills: List[str]
