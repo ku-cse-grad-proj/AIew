@@ -79,22 +79,15 @@ class FollowupGeneratorService:
             if not isinstance(value, str) or value.lower() in ("", "null", "none"):
                 item[key] = ""
 
-        question_keys = ["questionText", "question"]
-        found_question = False
-
-        for q_key in question_keys:
-            value = item.get(q_key)
-            if (
-                isinstance(value, str)
-                and value.strip()
-                and value.lower() not in ("null", "none")
-            ):
-                item["questionText"] = value.strip()
-                item["question"] = value.strip()
-                found_question = True
-                break
-        if not found_question:
-            item["questionText"] = ""
+        # question 필드 처리
+        value = item.get("question")
+        if (
+            isinstance(value, str)
+            and value.strip()
+            and value.lower() not in ("null", "none")
+        ):
+            item["question"] = value.strip()
+        else:
             item["question"] = ""
 
         return item
@@ -115,8 +108,7 @@ class FollowupGeneratorService:
             "parentQuestionId": parsed_item.get("parentQuestionId", ""),
             "focusCriteria": parsed_item.get("focusCriteria", []),
             "rationale": parsed_item.get("rationale", ""),
-            "question": parsed_item.get("questionText", "")
-            or parsed_item.get("question"),
+            "question": parsed_item.get("question", ""),
             "expectedAnswerTimeSec": parsed_item.get("expectedAnswerTimeSec", 180),
         }
 
@@ -132,10 +124,10 @@ class FollowupGeneratorService:
         vars = {
             "ai_question_id": req.aiQuestionId,
             "type": req.type,
-            "question_text": req.questionText,
+            "question_text": req.question,
             "criteria_csv": ", ".join(req.criteria) if req.criteria else "",
             "skills_csv": ", ".join(req.skills) if req.skills else "",
-            "user_answer": req.userAnswer,
+            "user_answer": req.answer,
             "evaluation_summary": req.evaluationSummary or "",
         }
 

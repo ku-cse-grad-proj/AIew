@@ -64,8 +64,8 @@ class AnswerEvaluationRequest(BaseModel):
     type: str = Field(..., description="behavioral|technical")
     criteria: List[str] = Field(default_factory=list, description="평가 기준 목록")
     skills: List[str] = Field(default_factory=list, description="관련 기술 스택 목록")
-    questionText: str = Field(..., description="질문 텍스트")
-    userAnswer: str = Field(..., description="사용자 답변 텍스트")
+    question: str = Field(..., description="질문 텍스트")
+    answer: str = Field(..., description="사용자 답변 텍스트")
     answerDurationSec: int = Field(..., ge=0, description="사용자 답변 소요 시간(초)")
 
     model_config = {
@@ -75,8 +75,8 @@ class AnswerEvaluationRequest(BaseModel):
                 "type": "technical",
                 "criteria": ["명확성", "깊이", "근거"],
                 "skills": ["React", "TypeScript"],
-                "questionText": "React와 TypeScript를 사용하여 UI 컴포넌트 설계 시 고려 사항은 무엇일까요?",
-                "userAnswer": "재사용성, 타입 안전성, 접근성, 성능을 우선합니다.",
+                "question": "React와 TypeScript를 사용하여 UI 컴포넌트 설계 시 고려 사항은 무엇일까요?",
+                "answer": "재사용성, 타입 안전성, 접근성, 성능을 우선합니다.",
                 "answerDurationSec": 70,
             }
         }

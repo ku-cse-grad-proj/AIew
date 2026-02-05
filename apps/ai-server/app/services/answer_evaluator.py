@@ -239,8 +239,8 @@ class EvaluationService:
             "type": req.type,
             "criteria_csv": (", ".join(req.criteria) if req.criteria else ""),
             "skills_csv": (", ".join(req.skills) if req.skills else ""),
-            "question_text": req.questionText,
-            "user_answer": req.userAnswer,
+            "question_text": req.question,
+            "user_answer": req.answer,
             "answer_duration_sec": req.answerDurationSec,
         }
 
