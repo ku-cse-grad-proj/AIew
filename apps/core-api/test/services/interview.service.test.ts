@@ -86,7 +86,7 @@ describe('InterviewService Unit Tests', () => {
     vi.spyOn(app.aiClientService, 'generateQuestions').mockResolvedValue(
       mockGeneratedQuestions,
     )
-    vi.spyOn(app.aiClientService, 'logShownQuestion').mockResolvedValue(
+    vi.spyOn(app.aiClientService, 'logQuestionAsked').mockResolvedValue(
       undefined,
     )
     vi.spyOn(app.io, 'to').mockReturnValue({

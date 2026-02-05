@@ -188,25 +188,27 @@ describe('WebSocket interview flow', () => {
     })
 
     // Mock all necessary AI client methods
-    vi.spyOn(app.aiClientService, 'logShownQuestion').mockResolvedValue(
+    vi.spyOn(app.aiClientService, 'logQuestionAsked').mockResolvedValue(
       undefined,
     )
-    vi.spyOn(app.aiClientService, 'logUserAnswer').mockResolvedValue(undefined)
+    vi.spyOn(app.aiClientService, 'logAnswerReceived').mockResolvedValue(
+      undefined,
+    )
     vi.spyOn(app.aiClientService, 'evaluateAnswer').mockImplementation(
       async (req): Promise<AnswerEvaluationResult> => {
-        // console.log(`[MOCK] evaluateAnswer called for ${req.question_id}`)
+        // console.log(`[MOCK] evaluateAnswer called for ${req.questionId}`)
         return {
-          question_id: req.question_id,
+          questionId: req.questionId,
           category: req.category,
           feedback: 'Good answer, but could be more detailed.',
-          tail_decision: TailDecision.CREATE, // Always create a follow-up
-          tail_rationale: 'Drill down',
-          overall_score: 50,
+          tailDecision: TailDecision.CREATE, // Always create a follow-up
+          tailRationale: 'Drill down',
+          overallScore: 50,
           strengths: [],
           improvements: ['Needs more depth'],
-          red_flags: [],
-          criterion_scores: [],
-          answer_duration_sec: 30,
+          redFlags: [],
+          criterionScores: [],
+          answerDurationSec: 30,
         }
       },
     )
@@ -217,15 +219,15 @@ describe('WebSocket interview flow', () => {
     ).mockImplementation(async (req): Promise<FollowUp> => {
       followupCounter++
 
-      const mainQuestionId = req.question_id.split('-')[0]
+      const mainQuestionId = req.questionId.split('-')[0]
 
       return {
-        followup_id: `${mainQuestionId}-fu${followupCounter}`,
-        parent_question_id: req.question_id,
+        followupId: `${mainQuestionId}-fu${followupCounter}`,
+        parentQuestionId: req.questionId,
         question: `This is follow-up #${followupCounter}`,
-        focus_criteria: [],
+        focusCriteria: [],
         rationale: '',
-        expected_answer_time_sec: 30,
+        expectedAnswerTimeSec: 30,
       }
     })
 
