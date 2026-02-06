@@ -563,18 +563,30 @@ export class InterviewService {
         idealTalent: { value: updatedSession.idealTalent || '' },
       }
 
-      // AI 재처리에 필요한 파일들을 준비 (새 파일 또는 R2에서 다운로드)
-      const filesForProcessing = await this.prepareFilesForReprocessing(
-        session,
-        files,
-        fileActions,
-      )
-
-      void this.processInterviewInBackground(
-        sessionId,
-        fullInterviewData,
-        filesForProcessing,
-      )
+      if (hasFileChange) {
+        // 파일 변경 있음 → R2 다운로드/업로드 + PDF 파싱
+        const filesForProcessing = await this.prepareFilesForReprocessing(
+          session,
+          files,
+          fileActions,
+        )
+        void this.processInterviewInBackground(
+          sessionId,
+          fullInterviewData,
+          filesForProcessing,
+        )
+      } else {
+        // 파일 변경 없음 → DB에 저장된 텍스트 재사용
+        void this.processInterviewInBackground(
+          sessionId,
+          fullInterviewData,
+          null,
+          {
+            resume_text: session.coverLetterText ?? '',
+            portfolio_text: session.portfolioText ?? '',
+          },
+        )
+      }
 
       return updatedSession
     } else {
