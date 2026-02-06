@@ -24,7 +24,7 @@ docker run -d --name "$DB_CONTAINER" \
 echo "Starting Redis..."
 docker run -d --name "$REDIS_CONTAINER" \
   -p 6379:6379 \
-  redis:7-alpine
+  redis:8-alpine
 
 echo "Waiting for PostgreSQL to be ready..."
 until docker exec "$DB_CONTAINER" pg_isready -U test 2>/dev/null; do

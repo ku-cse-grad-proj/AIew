@@ -19,7 +19,7 @@ services:
   # Redis
   # ---------------------------------------------------------------------------
   redis:
-    image: redis:alpine
+    image: redis:8-alpine
     container_name: aiew-redis
     networks:
       - backend

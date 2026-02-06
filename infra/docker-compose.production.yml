@@ -131,7 +131,7 @@ services:
   # Redis (항상 실행, Blue-Green 영향 없음)
   # ---------------------------------------------------------------------------
   redis:
-    image: redis:alpine
+    image: redis:8-alpine
     container_name: aiew-redis
     networks:
       - backend
