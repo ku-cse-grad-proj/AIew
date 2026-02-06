@@ -98,6 +98,7 @@ export class InterviewService {
 
   /**
    * 백그라운드에서 파일 처리, AI 연동, 질문 저장을 수행합니다.
+   * existingTexts가 전달되면 R2 업로드/PDF 파싱을 스킵하고 기존 텍스트를 재사용합니다.
    */
   public async processInterviewInBackground(
     sessionId: string,
@@ -107,27 +108,39 @@ export class InterviewService {
     files: {
       coverLetter: FilePayload
       portfolio?: FilePayload
-    },
+    } | null,
+    existingTexts?: { resume_text: string; portfolio_text: string },
   ) {
     const { prisma, log } = this.fastify
     try {
       log.info(`[${sessionId}] Starting background processing...`)
 
-      const fileUrls = await this.uploadFilesToR2(sessionId, files)
-      log.info(`[${sessionId}] Files uploaded successfully.`)
+      let parsedTexts: { resume_text: string; portfolio_text: string }
 
-      const parsedTexts = await this.parsePdfFiles(files)
-      log.info(`[${sessionId}] PDFs parsed successfully.`)
+      if (existingTexts) {
+        log.info(
+          `[${sessionId}] Reusing existing texts from DB, skipping R2 upload & PDF parsing.`,
+        )
+        parsedTexts = existingTexts
+      } else if (files) {
+        const fileUrls = await this.uploadFilesToR2(sessionId, files)
+        log.info(`[${sessionId}] Files uploaded successfully.`)
 
-      // 파일 URL과 파싱된 텍스트를 함께 저장
-      await prisma.interviewSession.update({
-        where: { id: sessionId },
-        data: {
-          ...fileUrls,
-          coverLetterText: parsedTexts.resume_text,
-          portfolioText: parsedTexts.portfolio_text,
-        },
-      })
+        const parsedTexts = await this.parsePdfFiles(files)
+        log.info(`[${sessionId}] PDFs parsed successfully.`)
+
+        await prisma.interviewSession.update({
+          where: { id: sessionId },
+          data: {
+            ...fileUrls,
+            coverLetterText: parsedTexts.resume_text,
+            portfolioText: parsedTexts.portfolio_text,
+          },
+        })
+      } else {
+        throw new Error('Either files or existingTexts must be provided.')
+      }
+
       const questionRequestData = this.prepareQuestionRequest(
         interviewData,
         parsedTexts,
