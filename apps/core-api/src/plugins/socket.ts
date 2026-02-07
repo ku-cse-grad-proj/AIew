@@ -1,3 +1,4 @@
+import { createAdapter } from '@socket.io/redis-adapter'
 import fp from 'fastify-plugin'
 import { Server, Socket } from 'socket.io'
 
@@ -40,6 +41,17 @@ export default fp(
     })
 
     fastify.decorate('io', io)
+
+    // Redis Adapter 설정 (Blue-Green 배포 시 인스턴스 간 Room/이벤트 공유)
+    let pubClient: ReturnType<typeof fastify.redis.duplicate> | undefined
+    let subClient: ReturnType<typeof fastify.redis.duplicate> | undefined
+
+    if (fastify.redis) {
+      pubClient = fastify.redis.duplicate()
+      subClient = fastify.redis.duplicate()
+      io.adapter(createAdapter(pubClient, subClient))
+      fastify.log.info('Socket.IO Redis adapter enabled')
+    }
 
     // 인증 미들웨어
     io.use(async (socket, next) => {
@@ -465,15 +477,16 @@ export default fp(
 
     fastify.io.on('connection', onConnection)
 
-    fastify.addHook('onClose', (instance, done) => {
+    fastify.addHook('onClose', async (instance) => {
       instance.io.close()
-      done()
+      if (pubClient) await pubClient.quit()
+      if (subClient) await subClient.quit()
     })
 
     fastify.log.info('Socket.io plugin loaded')
   },
   {
     name: 'socket',
-    dependencies: ['prisma', 'jwt'],
+    dependencies: ['prisma', 'jwt', 'redis'],
   },
 )
