@@ -14,6 +14,7 @@ export default defineConfig({
     },
     env: {
       DATABASE_URL: 'postgresql://test:test@localhost:5433/aiew_test',
+      REDIS_URL: 'redis://localhost:6379',
       AI_SERVER_URL: 'http://mock-ai-server.com',
       JWT_SECRET: 'test-jwt-secret',
     },
