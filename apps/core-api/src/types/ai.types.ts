@@ -78,83 +78,88 @@ export interface CriterionScore {
  * AI 서버의 /answer-evaluating 엔드포인트 응답 객체 타입
  */
 export interface AnswerEvaluationResult {
-  question_id: string
-  category: string
-  answer_duration_sec: number
-  overall_score: number
+  aiQuestionId: string
+  type: string
+  answerDurationSec: number
+  overallScore: number
   strengths: string[]
   improvements: string[]
-  red_flags: string[]
-  criterion_scores: CriterionScore[]
+  redFlags: string[]
+  criterionScores: CriterionScore[]
   feedback: string
-  tail_decision: TailDecision
-  tail_rationale: string | null
+  tailDecision: TailDecision
+  tailRationale: string | null
 }
 
 /**
  * AI 서버의 /session-evaluating 엔드포인트 응답 객체 타입
  */
 export interface SessionEvaluationResult {
-  average_score: number
-  session_feedback: string
+  averageScore: number
+  sessionFeedback: string
 }
 
 /**
  * AI 서버의 /answer-evaluating 엔드포인트 요청 본문 타입
  */
 export interface AnswerEvaluationRequest {
-  question_id: string
-  category: string
+  aiQuestionId: string
+  type: string
   criteria: string[]
   skills: string[]
-  question_text: string
-  user_answer: string
-  answer_duration_sec: number
+  question: string
+  answer: string
+  answerDurationSec: number
 }
 
 /**
  * AI 서버가 생성하는 꼬리 질문 객체 타입
  */
 export interface FollowUp {
-  followup_id: string
-  parent_question_id: string
-  focus_criteria: string[]
+  followupId: string
+  parentQuestionId: string
+  focusCriteria: string[]
   rationale: string
   question: string
-  expected_answer_time_sec: number
+  expectedAnswerTimeSec: number
 }
 
 /**
  * AI 서버의 /followup-generating 엔드포인트 요청 본문 타입
  */
 export interface FollowupRequest {
-  question_id: string
-  category: string
-  question_text: string
+  aiQuestionId: string
+  type: string
+  question: string
   criteria: string[]
   skills: string[]
-  user_answer: string
-  evaluation_summary?: string
+  answer: string
+  evaluationSummary?: string
 }
 
 // --- AI 서버 메모리 로깅 관련 타입 ---
 
 /**
- * AI 서버의 /log/question-shown 엔드포인트 요청 본문 타입
+ * AI 서버의 /log/question-asked 엔드포인트 요청 본문 타입
  */
-export interface ShownQuestion {
-  question: {
-    [key: string]: unknown
-  }
+export interface QuestionAskedRequest {
+  aiQuestionId: string
+  question: string
+  type: string
+  criteria: string[]
+  skills: string[]
+  rationale?: string | null
+  estimatedAnswerTimeSec?: number | null
+  parentQuestionId?: string | null // 꼬리질문인 경우
 }
 
 /**
- * AI 서버의 /log/user-answer 엔드포인트 요청 본문 타입
+ * AI 서버의 /log/answer-received 엔드포인트 요청 본문 타입
  */
-export interface UserAnswer {
-  question_id: string
+export interface AnswerReceivedRequest {
+  aiQuestionId: string
   answer: string
-  answer_duration_sec: number
+  answerDurationSec: number
 }
 
 /**
@@ -189,35 +194,33 @@ export interface CriterionScoreData {
  * 답변 평가 데이터 (복구용)
  */
 export interface EvaluationData {
-  question_id: string
-  category: string
-  answer_duration_sec: number
-  overall_score: number
+  aiQuestionId: string
+  type: string
+  answerDurationSec: number
+  overallScore: number
   strengths: string[]
   improvements: string[]
-  red_flags: string[]
-  criterion_scores: CriterionScoreData[]
+  redFlags: string[]
+  criterionScores: CriterionScoreData[]
   feedback: string
-  tail_rationale: string | null
-  tail_decision: string
+  tailRationale: string | null
+  tailDecision: string
 }
 
 /**
  * 스텝 복구 데이터
  */
 export interface StepRestoreData {
-  question_id: string
-  category: string
-  question_text: string
+  aiQuestionId: string
+  type: string
+  question: string
   criteria: string[]
   skills: string[]
   rationale?: string | null
-  estimated_answer_time_sec?: number | null
-  is_followup: boolean
-  parent_question_id?: string | null
-  focus_criteria?: string[] | null
+  estimatedAnswerTimeSec?: number | null
+  parentQuestionId?: string | null // 꼬리질문인 경우 (존재 여부로 구분)
   answer?: string | null
-  answer_duration_sec?: number | null
+  answerDurationSec?: number | null
   evaluation?: EvaluationData | null
 }
 
@@ -225,8 +228,6 @@ export interface StepRestoreData {
  * AI 서버의 /restore 엔드포인트 요청 본문 타입
  */
 export interface RestoreRequest {
-  resume_text: string
-  portfolio_text: string
   steps: StepRestoreData[]
 }
 

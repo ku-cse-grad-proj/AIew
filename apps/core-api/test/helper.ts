@@ -55,6 +55,7 @@ export type FastifyInstance = OriginalFastifyInstance<
 async function build(): Promise<FastifyInstance> {
   const app = Fastify({
     ajv: {
+      // @ts-expect-error - ajvFilePlugin type mismatch with fastify 5.7.4
       plugins: [ajvFilePlugin],
       customOptions: {
         keywords: ['example'],

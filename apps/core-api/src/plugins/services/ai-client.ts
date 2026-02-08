@@ -5,14 +5,14 @@ import {
   AiQuestionRequest,
   AnswerEvaluationRequest,
   AnswerEvaluationResult,
+  AnswerReceivedRequest,
   EmotionAnalysisResult,
   FollowUp,
   FollowupRequest,
+  QuestionAskedRequest,
   QuestionGenerateResponse,
   RestoreRequest,
   SessionEvaluationResult,
-  ShownQuestion,
-  UserAnswer,
 } from '@/types/ai.types'
 
 // ai-server 응답 타입 정의
@@ -40,12 +40,10 @@ export class AiClientService {
    * PDF 파일을 AI 서버로 보내 텍스트를 파싱합니다.
    * @param fileBuffer - PDF 파일의 Buffer
    * @param filename - 원본 파일명
-   * @param sessionId - 현재 면접 세션 ID
    */
   async parsePdf(
     fileBuffer: Buffer,
     filename: string,
-    sessionId: string,
   ): Promise<PdfParseResponse> {
     const formData = new FormData()
     formData.append('file', new Blob([fileBuffer]), filename)
@@ -56,7 +54,6 @@ export class AiClientService {
       {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'X-Session-Id': sessionId,
         },
       },
     )
@@ -148,11 +145,11 @@ export class AiClientService {
    * @param data - 출제된 질문 정보
    * @param sessionId - 현재 면접 세션 ID
    */
-  async logShownQuestion(
-    data: ShownQuestion,
+  async logQuestionAsked(
+    data: QuestionAskedRequest,
     sessionId: string,
   ): Promise<void> {
-    await this.client.post('/api/v1/session-log/log/question-shown', data, {
+    await this.client.post('/api/v1/session-log/log/question-asked', data, {
       headers: {
         'X-Session-Id': sessionId,
       },
@@ -164,8 +161,11 @@ export class AiClientService {
    * @param data - 사용자의 답변 정보
    * @param sessionId - 현재 면접 세션 ID
    */
-  async logUserAnswer(data: UserAnswer, sessionId: string): Promise<void> {
-    await this.client.post('/api/v1/session-log/log/user-answer', data, {
+  async logAnswerReceived(
+    data: AnswerReceivedRequest,
+    sessionId: string,
+  ): Promise<void> {
+    await this.client.post('/api/v1/session-log/log/answer-received', data, {
       headers: {
         'X-Session-Id': sessionId,
       },
