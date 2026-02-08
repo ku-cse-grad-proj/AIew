@@ -126,7 +126,7 @@ export class InterviewService {
         const fileUrls = await this.uploadFilesToR2(sessionId, files)
         log.info(`[${sessionId}] Files uploaded successfully.`)
 
-        const parsedTexts = await this.parsePdfFiles(files)
+        parsedTexts = await this.parsePdfFiles(files)
         log.info(`[${sessionId}] PDFs parsed successfully.`)
 
         await prisma.interviewSession.update({
