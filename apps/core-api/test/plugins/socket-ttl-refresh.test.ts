@@ -59,18 +59,15 @@ describe('Socket TTL refresh on pong', () => {
       serverSocket.conn.emit('packet', { type: 'pong' })
       expect(refreshSpy).not.toHaveBeenCalled()
 
-      // 2. Join room to set sessionId
+      // 2. Join room → 즉시 TTL 갱신 (재접속 시 만료 방지)
       client.emit('client:join-room', { sessionId: session.id })
       await new Promise<void>((resolve) =>
         client.once('server:room-joined', resolve),
       )
-
-      // 3. First pong → should trigger refreshTtl (leading edge)
-      serverSocket.conn.emit('packet', { type: 'pong' })
       expect(refreshSpy).toHaveBeenCalledTimes(1)
       expect(refreshSpy).toHaveBeenCalledWith(session.id)
 
-      // 4. Immediate second pong → should be throttled
+      // 3. Pong after join → throttle에 의해 억제 (join에서 이미 타이머 시작)
       serverSocket.conn.emit('packet', { type: 'pong' })
       expect(refreshSpy).toHaveBeenCalledTimes(1)
     } finally {
