@@ -31,6 +31,7 @@ def get_memory_logger_dep(
 @router.post("/refresh-ttl", tags=["Session"], summary="Refresh Redis TTL")
 def refresh_ttl(
     memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
+    x_session_id: str = Header(...),
 ):
     if not isinstance(memory, RedisChatMessageHistory):
         # in-memory fallback 지원
@@ -53,6 +54,7 @@ def refresh_ttl(
         if cursor == 0:
             break
 
+    logger.info(f"[{x_session_id}] TTL refreshed for {refreshed} keys")
     return {"ok": True, "refreshed": refreshed}
 
 
