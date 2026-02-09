@@ -78,8 +78,31 @@ export default fp(
     })
 
     // 연결 핸들러
+    const TTL_REFRESH_INTERVAL_MS = 5 * 60 * 1000 // 5분
+
     const onConnection = (socket: Socket) => {
       fastify.log.info(`Socket connected: ${socket.id}`)
+
+      // Redis TTL 갱신: Engine.IO pong 패킷 감지 + leading-edge throttle
+      let ttlRefreshTimer: ReturnType<typeof setTimeout> | null = null
+
+      socket.conn.on('packet', ({ type }: { type: string }) => {
+        if (type === 'pong' && socket.sessionId) {
+          if (!ttlRefreshTimer) {
+            fastify.aiClientService
+              .refreshTtl(socket.sessionId)
+              .catch((err) => {
+                fastify.log.error(
+                  err,
+                  `[${socket.sessionId}] TTL refresh failed`,
+                )
+              })
+            ttlRefreshTimer = setTimeout(() => {
+              ttlRefreshTimer = null
+            }, TTL_REFRESH_INTERVAL_MS)
+          }
+        }
+      })
 
       socket.on('client:join-room', async ({ sessionId }) => {
         try {
@@ -458,6 +481,12 @@ export default fp(
 
       socket.on('disconnect', async () => {
         fastify.log.info(`Socket disconnected: ${socket.id}`)
+
+        // TTL 갱신 타이머 정리
+        if (ttlRefreshTimer) {
+          clearTimeout(ttlRefreshTimer)
+          ttlRefreshTimer = null
+        }
 
         // 업로드 중이던 청크 정리
         if (socket.uploadChunks && socket.uploadChunks.length > 0) {
