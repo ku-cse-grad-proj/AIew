@@ -48,11 +48,6 @@ app.include_router(followup.router, prefix="/api/v1/followup", tags=["Question"]
 app.include_router(emotion.router, prefix="/api/v1/emotion", tags=["Emotion"])
 
 
-@app.get("/")
-def read_root():
-    return {"message": "AIew API is running"}
-
-
 @app.get("/healthz")
 def healthz():
     return {"status": "ok"}
