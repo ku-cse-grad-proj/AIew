@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function proxy(req: NextRequest) {
-  //prefligth 경우에는 auth 검사 제외
+  // preflight은 auth 검사 제외
   if (req.method === 'OPTIONS') {
     return NextResponse.next()
   }
 
   const { pathname } = new URL(req.url)
 
-  //auth 검사 필요 없는 page 및 api
+  if (pathname === '/healthz') {
+    return NextResponse.next()
+  }
+
+  const start = Date.now()
+  const response = await handleAuth(req, pathname)
+  logRequest(req.method, pathname, start)
+  return response
+}
+
+function logRequest(method: string, pathname: string, start: number) {
+  const duration = Date.now() - start
+  const time = new Date().toISOString().replace('T', ' ').slice(0, 23)
+  console.log(`${time} [proxy] ${method} ${pathname} ${duration}ms`)
+}
+
+async function handleAuth(
+  req: NextRequest,
+  pathname: string,
+): Promise<NextResponse> {
+  // auth 검사 필요 없는 page 및 api
   if (
     pathname == '/' ||
     pathname.startsWith('/login') ||
@@ -17,6 +37,7 @@ export async function proxy(req: NextRequest) {
   ) {
     return NextResponse.next()
   }
+
   const accessToken = req.cookies.get('accessToken')?.value
   const refreshToken = req.cookies.get('refreshToken')?.value
 
@@ -51,10 +72,6 @@ async function tryRefresh(req: NextRequest) {
 
   // 리프레시 성공 (204 No Content)
   if (refreshRes.ok) {
-    // 백엔드가 쿠키를 설정했으므로, 프론트엔드는 단순히 요청을 다시 시도하면 됩니다.
-    // 하지만 미들웨어에서는 원래 요청을 다시 보내는 대신,
-    // 리디렉션을 통해 브라우저가 새로운 쿠키와 함께 페이지를 다시 로드하도록 유도하는 것이
-    // 가장 간단하고 안정적인 방법입니다.
     const response = NextResponse.redirect(req.url)
 
     // 백엔드가 Set-Cookie 헤더를 보냈을 것이므로,
@@ -71,7 +88,7 @@ async function tryRefresh(req: NextRequest) {
   return NextResponse.redirect(new URL('/login', req.url))
 }
 
-//JWT의 exp의 값이 만료됐는지 확인하는 함수
+// JWT의 exp의 값이 만료됐는지 확인하는 함수
 function isJwtExpired(token: string, skewMs = 5000): boolean {
   try {
     const parts = token.split('.')
@@ -79,7 +96,7 @@ function isJwtExpired(token: string, skewMs = 5000): boolean {
     const payloadJson = Buffer.from(parts[1], 'base64url').toString('utf8')
     const payload = JSON.parse(payloadJson) as { exp?: number }
     if (!payload.exp || typeof payload.exp !== 'number') return true
-    //exp는 초 단위, Date.now()는 ms단위기에 1000을 곱해줌
+    // exp는 초 단위, Date.now()는 ms단위기에 1000을 곱해줌
     const nowMs = Date.now()
     const expMs = payload.exp * 1000
     return expMs <= nowMs + skewMs
