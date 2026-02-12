@@ -120,7 +120,7 @@ async function createTestUserAndToken(
     },
   })
 
-  const accessToken = await app.jwt.sign({ userId: user.id })
+  const accessToken = app.jwt.access.sign({ userId: user.id })
   return { user, accessToken }
 }
 
