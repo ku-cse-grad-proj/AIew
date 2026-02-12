@@ -59,9 +59,9 @@ async function tryRefresh(req: NextRequest) {
 
     // 백엔드가 Set-Cookie 헤더를 보냈을 것이므로,
     // 해당 헤더를 브라우저로 전달해줘야 쿠키가 설정됩니다.
-    const newAccessTokenCookie = refreshRes.headers.get('set-cookie')
-    if (newAccessTokenCookie) {
-      response.headers.set('set-cookie', newAccessTokenCookie)
+    // RTR로 accessToken + refreshToken 두 개의 set-cookie가 올 수 있음
+    for (const cookie of refreshRes.headers.getSetCookie()) {
+      response.headers.append('set-cookie', cookie)
     }
 
     return response
