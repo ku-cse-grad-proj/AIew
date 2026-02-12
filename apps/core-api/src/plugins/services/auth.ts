@@ -1,11 +1,14 @@
+import crypto from 'node:crypto'
+
 import { Static } from '@sinclair/typebox'
 import { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
 import { S_AuthLogoutResponse } from '@/schemas/rest'
-import { JWTPayload } from '@/types/jwt'
 
 type AuthLogoutResponse = Static<typeof S_AuthLogoutResponse>
+
+const REFRESH_TTL = 7 * 24 * 60 * 60 // 7일 (초)
 
 export class AuthService {
   private fastify: FastifyInstance
@@ -15,82 +18,62 @@ export class AuthService {
   }
 
   /**
-   * 사용자 로그아웃 처리
+   * 사용자 로그아웃 처리 — Redis에서 refresh token 삭제
    */
   public async logout(userId: string): Promise<AuthLogoutResponse> {
-    // 로그 기록
-    this.fastify.log.info(
-      `User ${userId} logged out at ${new Date().toISOString()}`,
-    )
-
-    // TODO: Redis blacklist 추가 (Phase 2)
-    // await this.addToBlacklist(accessToken, refreshToken)
-
+    await this.fastify.redis.del(`refresh:${userId}`)
+    this.fastify.log.info(`User ${userId} logged out`)
     return { message: 'Logged out successfully' }
   }
 
   /**
-   * Refresh Token을 사용하여 새로운 Access Token 발급
+   * Refresh Token Rotation (RTR)
+   * 저장된 jti와 비교 → 일치하면 새 토큰 쌍 발급, 불일치하면 전체 무효화
    */
   public async refreshToken(
     refreshToken: string,
-  ): Promise<{ accessToken: string; userId: string }> {
-    try {
-      // JWT 검증
-      const decoded = this.fastify.jwt.verify<JWTPayload>(refreshToken)
+  ): Promise<{ accessToken: string; refreshToken: string; userId: string }> {
+    const decoded = this.fastify.jwt.refresh.verify(refreshToken)
 
-      // DB에서 사용자 확인
-      const user = await this.fastify.prisma.user.findUnique({
-        where: { id: decoded.userId },
-      })
+    // 저장된 jti와 비교
+    const storedJti = await this.fastify.redis.get(`refresh:${decoded.userId}`)
 
-      if (!user) {
-        throw this.fastify.httpErrors.unauthorized('User not found')
-      }
+    if (!storedJti || storedJti !== decoded.jti) {
+      // 재사용 감지 -> 전체 무효화
+      await this.fastify.redis.del(`refresh:${decoded.userId}`)
+      throw this.fastify.httpErrors.unauthorized('Token reuse detected')
+    }
 
-      // 새 accessToken 발급
-      const accessToken = await this.fastify.jwt.sign(
-        { userId: user.id },
-        { expiresIn: '15m' },
-      )
+    // DB에서 사용자 확인
+    const user = await this.fastify.prisma.user.findUnique({
+      where: { id: decoded.userId },
+    })
 
-      // 로그 기록
-      this.fastify.log.info(
-        `Access token refreshed for user ${user.id} at ${new Date().toISOString()}`,
-      )
+    if (!user) {
+      throw this.fastify.httpErrors.unauthorized('User not found')
+    }
 
-      // TODO: refreshToken rotation
-      // TODO: Redis blacklist 확인
-
-      return { accessToken, userId: user.id }
-    } catch (error) {
-      // JWT 검증 실패, 만료 등
-      this.fastify.log.error(error, 'Refresh token validation failed')
-      throw this.fastify.httpErrors.unauthorized(
-        'Invalid or expired refresh token',
-      )
+    // 새 토큰 쌍 발급 (rotation) — 내부에서 Redis jti도 교체됨
+    return {
+      ...(await this.generateTokenPair(user.id)),
+      userId: user.id,
     }
   }
 
   /**
    * userId를 받아 accessToken과 refreshToken 쌍을 생성
+   * jti를 생성하여 Redis에 저장 (RTR)
    */
   public async generateTokenPair(
     userId: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const accessToken = await this.fastify.jwt.sign(
-      { userId },
-      { expiresIn: '15m' },
-    )
+    const jti = crypto.randomUUID()
 
-    const refreshToken = await this.fastify.jwt.sign(
-      { userId },
-      { expiresIn: '7d' },
-    )
+    const accessToken = this.fastify.jwt.access.sign({ userId })
+    const refreshToken = this.fastify.jwt.refresh.sign({ userId, jti })
 
-    this.fastify.log.info(
-      `Token pair generated for user ${userId} at ${new Date().toISOString()}`,
-    )
+    // 현재 유효한 refresh token의 jti를 Redis에 저장
+    await this.fastify.redis.set(`refresh:${userId}`, jti, 'EX', REFRESH_TTL)
 
     return { accessToken, refreshToken }
   }
@@ -121,29 +104,6 @@ export class AuthService {
     )
 
     return { accessToken, refreshToken, userId: user.id }
-  }
-
-  /**
-   * 특정 토큰을 무효화 (blacklist 추가)
-   * TODO: 구현 필요 (Redis 필요)
-   */
-  // eslint-disable-next-line
-  public async revokeToken(token: string): Promise<void> {
-    // TODO: Redis blacklist에 토큰 추가
-    // TODO: 만료 시간까지만 저장 (TTL)
-    throw new Error('Not implemented')
-  }
-
-  /**
-   * 토큰 유효성 검증 (blacklist 확인 포함)
-   * TODO: 구현 필요 (Redis 필요)
-   */
-  // eslint-disable-next-line
-  public async validateToken(token: string): Promise<boolean> {
-    // TODO: JWT 서명 검증 (fastify.jwt.verify)
-    // TODO: Redis blacklist 확인
-    // TODO: 만료 시간 확인
-    throw new Error('Not implemented')
   }
 }
 
