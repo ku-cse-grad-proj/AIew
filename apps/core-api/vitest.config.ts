@@ -17,6 +17,7 @@ export default defineConfig({
       REDIS_URL: 'redis://localhost:6379',
       AI_SERVER_URL: 'http://mock-ai-server.com',
       JWT_SECRET: 'test-jwt-secret',
+      JWT_REFRESH_SECRET: 'test-jwt-refresh-secret',
     },
   },
 })
