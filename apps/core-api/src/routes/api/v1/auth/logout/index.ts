@@ -24,7 +24,6 @@ const controller: FastifyPluginAsync = async (fastify) => {
   const postHandler: RouteHandler = async (request, reply) => {
     const { userId } = request.user
 
-    // TODO: Redis 도입 시 refresh token 블랙리스트 처리 추가
     const result = await fastify.authService.logout(userId)
 
     // 쿠키 삭제는 Next.js Server Action에서 처리
