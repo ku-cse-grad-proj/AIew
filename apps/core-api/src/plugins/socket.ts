@@ -62,7 +62,7 @@ export default fp(
         return next(new Error('Authentication error: Token not provided.'))
       }
       try {
-        const decoded = fastify.jwt.verify<{ userId: string }>(token)
+        const decoded = fastify.jwt.access.verify(token)
         const user = await fastify.prisma.user.findUnique({
           where: { id: decoded.userId },
         })
