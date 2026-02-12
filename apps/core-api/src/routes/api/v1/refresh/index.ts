@@ -12,7 +12,7 @@ const controller: FastifyPluginAsync = async (fastify) => {
   // POST /api/v1/refresh
   const postSchema: FastifySchema = {
     tags: [Tag.Auth],
-    summary: '쿠키 속 refreshToken으로 accessToken 재발급',
+    summary: '쿠키 속 refreshToken으로 토큰 쌍 재발급 (RTR)',
     description:
       'HttpOnly, Secure 쿠키로 전달된 Refresh Token을 검증하여 새로운 Access Token을 발급합니다.<br/><br/>' +
       '**❗중요**: 이 API는 `HttpOnly` 쿠키를 사용하므로 Swagger UI의 "Try it out" 기능으로 직접 테스트할 수 없습니다.<br/>' +
@@ -37,17 +37,24 @@ const controller: FastifyPluginAsync = async (fastify) => {
         return reply.status(401).send({ message: 'No refresh token provided' })
       }
 
-      // 2. AuthService를 통한 토큰 갱신 (비즈니스 로직)
-      const { accessToken } =
+      // 2. AuthService를 통한 토큰 갱신 (RTR: access + refresh 모두 재발급)
+      const { accessToken, refreshToken: newRefreshToken } =
         await fastify.authService.refreshToken(refreshToken)
 
-      // 3. 새로운 Access Token을 HttpOnly 쿠키에 설정 (HTTP 레이어)
+      // 3. 새로운 토큰 쌍을 HttpOnly 쿠키에 설정
       reply.setCookie('accessToken', accessToken, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 15 * 60, // 15분
+      })
+      reply.setCookie('refreshToken', newRefreshToken, {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60, // 7일
       })
 
       // 4. 204 No Content 응답 전송
