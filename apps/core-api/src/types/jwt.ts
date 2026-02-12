@@ -1,7 +1,14 @@
 /**
- * JWT Payload 타입 정의
- * JWT 토큰에 담기는 사용자 정보
+ * Access Token 페이로드
  */
-export interface JWTPayload {
+export interface AccessTokenPayload {
   userId: string
+}
+
+/**
+ * Refresh Token 페이로드 (RTR용 jti 포함)
+ */
+export interface RefreshTokenPayload {
+  userId: string
+  jti: string
 }
