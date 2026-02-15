@@ -1,3 +1,5 @@
+import crypto from 'node:crypto'
+
 import {
   FastifyPluginAsyncTypebox,
   TypeBoxTypeProvider,
@@ -60,12 +62,17 @@ const controller: FastifyPluginAsyncTypebox = async (fastify) => {
       )
 
       // AuthService를 통해 OAuth 로그인 처리 (사용자 생성 또는 조회 + JWT 발급)
+      const deviceId = crypto.randomUUID()
       const { accessToken, refreshToken } =
-        await server.authService.handleOAuthLogin(userInfo.email, {
-          name: userInfo.name,
-          pic_url: userInfo.picture,
-          provider: 'GOOGLE',
-        })
+        await server.authService.handleOAuthLogin(
+          userInfo.email,
+          {
+            name: userInfo.name,
+            pic_url: userInfo.picture,
+            provider: 'GOOGLE',
+          },
+          deviceId,
+        )
 
       // JWT를 HttpOnly 쿠키에 담아 프론트엔드로 리디렉션
       reply
