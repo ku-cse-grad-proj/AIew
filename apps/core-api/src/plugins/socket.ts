@@ -15,6 +15,7 @@ declare module 'socket.io' {
     user: User
     sessionId?: string // 소켓 객체에 세션 ID 저장
     uploadChunks?: Buffer[] // 업로드 중인 청크 데이터
+    ttlRefreshTimer?: ReturnType<typeof setTimeout> | null // TTL 갱신 throttle 타이머
   }
 }
 
@@ -78,8 +79,29 @@ export default fp(
     })
 
     // 연결 핸들러
+    const TTL_REFRESH_INTERVAL_MS = 5 * 60 * 1000 // 5분
+
+    /** TTL 갱신 + throttle 타이머 세팅 (leading-edge) */
+    function scheduleRefreshTtl(socket: Socket) {
+      if (socket.ttlRefreshTimer || !socket.sessionId) return
+
+      fastify.aiClientService.refreshTtl(socket.sessionId).catch((err) => {
+        fastify.log.error(err, `[${socket.sessionId}] TTL refresh failed`)
+      })
+      socket.ttlRefreshTimer = setTimeout(() => {
+        socket.ttlRefreshTimer = null
+      }, TTL_REFRESH_INTERVAL_MS)
+    }
+
     const onConnection = (socket: Socket) => {
       fastify.log.info(`Socket connected: ${socket.id}`)
+
+      // Engine.IO pong 패킷 감지 → 주기적 TTL 갱신
+      socket.conn.on('packet', ({ type }: { type: string }) => {
+        if (type === 'pong') {
+          scheduleRefreshTtl(socket)
+        }
+      })
 
       socket.on('client:join-room', async ({ sessionId }) => {
         try {
@@ -91,6 +113,7 @@ export default fp(
           if (session) {
             socket.sessionId = sessionId // 소켓에 세션 ID 저장
             await socket.join(sessionId)
+            scheduleRefreshTtl(socket) // 즉시 TTL 갱신 (재접속 시 만료 방지)
             fastify.log.info(
               `Socket ${socket.id} joined room: ${sessionId} for user ${socket.user.id}`,
             )
@@ -458,6 +481,12 @@ export default fp(
 
       socket.on('disconnect', async () => {
         fastify.log.info(`Socket disconnected: ${socket.id}`)
+
+        // TTL 갱신 타이머 정리
+        if (socket.ttlRefreshTimer) {
+          clearTimeout(socket.ttlRefreshTimer)
+          socket.ttlRefreshTimer = null
+        }
 
         // 업로드 중이던 청크 정리
         if (socket.uploadChunks && socket.uploadChunks.length > 0) {

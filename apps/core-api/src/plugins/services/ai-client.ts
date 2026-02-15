@@ -198,6 +198,16 @@ export class AiClientService {
   }
 
   /**
+   * 활성 세션의 Redis 메모리 TTL을 갱신합니다.
+   * @param sessionId - 현재 면접 세션 ID
+   */
+  async refreshTtl(sessionId: string): Promise<void> {
+    await this.client.post('/api/v1/session-log/refresh-ttl', null, {
+      headers: { 'X-Session-Id': sessionId },
+    })
+  }
+
+  /**
    * 답변 영상 파일을 AI 서버로 보내 감정 분석을 요청합니다.
    * @param file - 영상 파일 (File 객체)
    * @param sessionId - 현재 면접 세션 ID

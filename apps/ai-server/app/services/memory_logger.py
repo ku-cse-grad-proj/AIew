@@ -43,7 +43,7 @@ class MemoryLogger:
 
 
 class MemoryManager:
-    _ttl: int = 14400  # 4시간
+    _ttl: int = 900  # 15분 (ping TTL 갱신과 함께 사용)
     _memory_store: Dict[str, InMemoryChatMessageHistory] = {}
 
     @classmethod

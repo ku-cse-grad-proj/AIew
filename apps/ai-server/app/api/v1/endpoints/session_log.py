@@ -7,6 +7,7 @@ from fastapi import (
     HTTPException,
 )
 from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_redis import RedisChatMessageHistory
 
 from app.models.memory import (
     AnswerReceivedRequest,
@@ -25,6 +26,36 @@ def get_memory_logger_dep(
     memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> MemoryLogger:
     return MemoryLogger(memory=memory, session_id=x_session_id)
+
+
+@router.post("/refresh-ttl", tags=["Session"], summary="Refresh Redis TTL")
+def refresh_ttl(
+    memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
+    x_session_id: str = Header(...),
+):
+    if not isinstance(memory, RedisChatMessageHistory):
+        # in-memory fallback 지원
+        return {"ok": True, "refreshed": 0}
+
+    ttl: int = memory.ttl or MemoryManager._ttl
+    pattern = f"{memory.key_prefix}{memory.session_id}:*"
+    refreshed = 0
+    cursor: int = 0
+    while True:
+        cursor, keys = memory.redis_client.scan(  # type: ignore[misc]
+            cursor=cursor, match=pattern, count=100
+        )
+        if keys:
+            pipe = memory.redis_client.pipeline()
+            for key in keys:
+                pipe.expire(key, ttl)
+            pipe.execute()
+            refreshed += len(keys)
+        if cursor == 0:
+            break
+
+    logger.info(f"[{x_session_id}] TTL refreshed for {refreshed} keys")
+    return {"ok": True, "refreshed": refreshed}
 
 
 @router.post("/log/question-asked", tags=["Session"], summary="Log Question Asked")
