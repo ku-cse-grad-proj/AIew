@@ -95,6 +95,28 @@ log_info "현재 활성 환경: $CURRENT_ENV"
 log_info "배포 대상 환경: $NEXT_ENV"
 
 # -----------------------------------------------------------------------------
+# 실패 시 정리 함수
+# -----------------------------------------------------------------------------
+cleanup_on_failure() {
+    log_error "배포 실패! [$NEXT_ENV] 환경 정리 중..."
+
+    # 실패 로그 저장
+    for SERVICE in core-api ai-server web-client; do
+        docker logs "${SERVICE}-${NEXT_ENV}" > "/tmp/${SERVICE}-${NEXT_ENV}-failed.log" 2>&1 || true
+    done
+    log_info "실패 로그 저장됨: /tmp/*-${NEXT_ENV}-failed.log"
+
+    docker compose -f "$COMPOSE_FILE" rm -sf \
+        core-api-"$NEXT_ENV" \
+        ai-server-"$NEXT_ENV" \
+        web-client-"$NEXT_ENV" 2>/dev/null || true
+    log_info "정리 완료. 기존 환경 [$CURRENT_ENV] 유지됨."
+    exit 1
+}
+
+trap cleanup_on_failure ERR
+
+# -----------------------------------------------------------------------------
 # 2. 새 버전 빌드
 # -----------------------------------------------------------------------------
 log_info "[$NEXT_ENV] 환경 빌드 중..."
@@ -133,25 +155,25 @@ NGINX_DIR="$INFRA_DIR/nginx"
 
 # nginx가 실행 중인지 확인
 if docker ps --format '{{.Names}}' | grep -q "^aiew-nginx$"; then
-    # upstream 설정 파일 복사 (bind mount이므로 컨테이너에서 즉시 반영됨)
-    cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/upstream.conf"
-    log_info "upstream.conf ← upstream-${NEXT_ENV}.conf"
+    # upstream 설정 파일 복사 (디렉토리 마운트이므로 즉시 반영됨)
+    cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/conf.d/upstream.conf"
+    log_info "conf.d/upstream.conf ← upstream-${NEXT_ENV}.conf"
 
     # 설정 테스트 (실패 시 롤백)
     log_info "Nginx 설정 테스트 중..."
     if ! docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t; then
         log_error "Nginx 설정 오류! 롤백합니다."
-        cp "$NGINX_DIR/upstream-${CURRENT_ENV}.conf" "$NGINX_DIR/upstream.conf"
+        cp "$NGINX_DIR/upstream-${CURRENT_ENV}.conf" "$NGINX_DIR/conf.d/upstream.conf"
         exit 1
     fi
 
-    # Nginx restart (bind mount 파일 inode 변경 반영을 위해 restart 필요)
-    log_info "Nginx restart 중..."
-    docker compose -f "$COMPOSE_FILE" restart nginx
+    # Nginx reload (디렉토리 마운트로 기존 WebSocket 연결 유지하며 설정 반영)
+    log_info "Nginx reload 중..."
+    docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -s reload
 else
     # nginx가 없으면 새로 시작
-    cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/upstream.conf"
-    log_info "upstream.conf ← upstream-${NEXT_ENV}.conf"
+    cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/conf.d/upstream.conf"
+    log_info "conf.d/upstream.conf ← upstream-${NEXT_ENV}.conf"
     log_info "Nginx 시작 중..."
     docker compose -f "$COMPOSE_FILE" up -d nginx
 fi

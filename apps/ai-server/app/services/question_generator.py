@@ -1,8 +1,8 @@
 import json
 from typing import Any, Dict, List
 
-from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.prompts import PromptTemplate
 
 from app.models.question import QuestionConstraints, QuestionResponse, UserInfo
 from app.services.memory_logger import MemoryLogger
@@ -19,7 +19,7 @@ PROMPT_PATH = (PROMPT_BASE_DIR / "question_prompt.txt").resolve()
 class QuestionGeneratorService:
     def __init__(
         self,
-        memory: ConversationBufferMemory = None,
+        memory: BaseChatMessageHistory,
         session_id: str = "",
     ):
         self.memory = memory
@@ -102,7 +102,7 @@ class QuestionGeneratorService:
         return out
 
     def _dedupe_and_enforce(
-        self, items: List[Dict[str, Any]] = [], avoid_ids: List[Dict[str, Any]] = []
+        self, items: List[Dict[str, Any]] = [], avoid_ids: List[str] = []
     ) -> List[Dict[str, Any]]:
         out = []
         for q in items:
@@ -113,10 +113,9 @@ class QuestionGeneratorService:
 
     def generate_questions(
         self,
-        user_info: UserInfo = ...,
-        constraints: QuestionConstraints = ...,
-        memory: ConversationBufferMemory = ...,
-    ) -> List[Dict[str, Any]]:
+        user_info: UserInfo,
+        constraints: QuestionConstraints,
+    ) -> List[QuestionResponse]:
         raw = load_prompt_template(PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw)
 
@@ -159,6 +158,4 @@ class QuestionGeneratorService:
         norm = self._normalize_items(items)
         final = self._dedupe_and_enforce(norm, constraints.avoid_question_ids)
 
-        _ = [QuestionResponse.model_validate(i) for i in final]
-
-        return final
+        return [QuestionResponse.model_validate(i) for i in final]

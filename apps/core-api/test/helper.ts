@@ -1,4 +1,5 @@
 // This file contains code that we reuse between our tests.
+import crypto from 'node:crypto'
 import 'dotenv/config'
 import { join } from 'node:path'
 
@@ -55,6 +56,7 @@ export type FastifyInstance = OriginalFastifyInstance<
 async function build(): Promise<FastifyInstance> {
   const app = Fastify({
     ajv: {
+      // @ts-expect-error - ajvFilePlugin type mismatch with fastify 5.7.4
       plugins: [ajvFilePlugin],
       customOptions: {
         keywords: ['example'],
@@ -119,7 +121,8 @@ async function createTestUserAndToken(
     },
   })
 
-  const accessToken = await app.jwt.sign({ userId: user.id })
+  const deviceId = crypto.randomUUID()
+  const accessToken = app.jwt.access.sign({ userId: user.id, deviceId })
   return { user, accessToken }
 }
 

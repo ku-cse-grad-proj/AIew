@@ -4,8 +4,7 @@ import { join } from 'node:path'
 import AutoLoad from '@fastify/autoload'
 import Cookie from '@fastify/cookie'
 import Cors from '@fastify/cors'
-import Multipart from '@fastify/multipart'
-import { ajvFilePlugin } from '@fastify/multipart'
+import Multipart, { ajvFilePlugin } from '@fastify/multipart'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
@@ -18,6 +17,7 @@ import SwaggerUiOption from './configs/swagger-ui-option'
 const start = async () => {
   const app = Fastify({
     ajv: {
+      // @ts-expect-error - ajvFilePlugin type mismatch with fastify 5.7.4
       plugins: [ajvFilePlugin],
       customOptions: {
         keywords: ['example'],

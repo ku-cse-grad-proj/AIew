@@ -2,57 +2,74 @@ import json
 from statistics import mean
 from typing import Dict, List
 
-from langchain.memory import ConversationBufferMemory
+from langchain_core.chat_history import BaseChatMessageHistory
+
+from app.models.event_types import EventType
 
 
-def extract_evaluation(memory: ConversationBufferMemory) -> tuple[float, str]:
-    msgs = memory.chat_memory.messages
+def extract_evaluation(memory: BaseChatMessageHistory) -> tuple[float, str]:
+    """타입 필드 기반 평가 데이터 추출"""
+    msgs = memory.messages
     qa_pairs: List[Dict] = []
     scores: List[float] = []
     conversation_blocks: List[str] = []
 
-    last_human = None
+    # 마지막 답변 텍스트 추적 (ANSWER_RECEIVED에서)
+    last_answer_text: str | None = None
 
     for m in msgs:
-        if m.type == "human":
-            last_human = m.content.strip()
+        if not isinstance(m.content, str):
+            continue
 
-        elif m.type == "ai":
-            content = m.content.strip()
-            if content.startswith("{") and '"overall_score"' in content:
-                try:
-                    parsed = json.loads(content)
-                    qid = parsed.get("question_id")
-                    score = parsed.get("overall_score")
-                    feedback = parsed.get("feedback")
+        if m.type != "ai":
+            continue
 
-                    if qid is None:
-                        continue
+        content = m.content.strip()
+        if not content.startswith("{"):
+            continue
 
-                    qa = {
-                        "question_id": qid,
-                        "overall_score": score,
-                        "answer_text": last_human or "",
-                        "feedback": feedback or "",
-                    }
-                    qa_pairs.append(qa)
+        try:
+            event = json.loads(content)
+            event_type = event.get("type")
+            data = event.get("data", {})
 
-                    if score is not None:
-                        scores.append(score)
+            # ANSWER_RECEIVED: 답변 텍스트 저장
+            if event_type == EventType.ANSWER_RECEIVED:
+                last_answer_text = data.get("answer")
 
-                    block = (
-                        f"QID: {qid}\n"
-                        f"Answer: {last_human or ''}\n"
-                        f"Feedback: {feedback or ''}"
-                    )
-                    conversation_blocks.append(block)
+            # ANSWER_EVALUATED: 평가 데이터 추출
+            elif event_type == EventType.ANSWER_EVALUATED:
+                qid = data.get("aiQuestionId")
+                score = data.get("overallScore")
+                feedback = data.get("feedback")
 
-                    last_human = None  # Reset after processing
-
-                except json.JSONDecodeError:
+                if qid is None:
                     continue
 
-    avg_score = round(mean(scores), 2)
+                qa = {
+                    "aiQuestionId": qid,
+                    "overallScore": score,
+                    "answerText": last_answer_text or "",
+                    "feedback": feedback or "",
+                }
+                qa_pairs.append(qa)
+
+                if score is not None:
+                    scores.append(score)
+
+                block = (
+                    f"QID: {qid}\n"
+                    f"Answer: {last_answer_text or ''}\n"
+                    f"Feedback: {feedback or ''}"
+                )
+                conversation_blocks.append(block)
+
+                last_answer_text = None  # Reset after processing
+
+        except json.JSONDecodeError:
+            continue
+
+    avg_score = round(mean(scores), 2) if scores else 0.0
     conversation_text = "\n\n".join(conversation_blocks)
 
     return float(avg_score), conversation_text

@@ -1,9 +1,10 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from langchain.memory import ConversationBufferMemory
-from langchain.prompts import PromptTemplate
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.prompts import PromptTemplate
 
+from app.models.event_types import EventType
 from app.models.followup import FollowupRequest, FollowupResponse
 from app.services.memory_logger import MemoryLogger
 from app.utils.llm_utils import (
@@ -19,34 +20,35 @@ PROMPT_PATH = (PROMPT_BASE_DIR / "followup_prompt.txt").resolve()
 class FollowupGeneratorService:
     def __init__(
         self,
-        memory: Optional[ConversationBufferMemory] = None,
+        memory: BaseChatMessageHistory,
         session_id: str = "",
     ):
         self.memory = memory
         self.session_id = session_id
         self.logger = MemoryLogger(memory=memory, session_id=session_id)
 
-    def _count_existing_followups(
-        self, memory: Optional[ConversationBufferMemory] = None, parent_qid: str = ""
-    ) -> int:
-        if memory is None:
-            return 0
-        msgs = getattr(memory, "chat_memory", None)
-        if not msgs or not getattr(msgs, "messages", None):
+    def _count_existing_followups(self, parent_qid: str = "") -> int:
+        """타입 필드 기반 꼬리질문 카운팅"""
+        messages = self.memory.messages
+        if not messages:
             return 0
         cnt = 0
-        for m in msgs.messages:
+        for m in messages:
             content = str(getattr(m, "content", ""))
-            if (
-                '"parent_question_id"' in content
-                and f'"{parent_qid}"' in content
-                and '"followup_id"' in content
-            ):
-                cnt += 1
+            try:
+                event = json.loads(content)
+                # 타입과 필드로 명확하게 판단
+                if (
+                    event.get("type") == EventType.QUESTION_ASKED
+                    and event.get("data", {}).get("parentQuestionId") == parent_qid
+                ):
+                    cnt += 1
+            except (json.JSONDecodeError, AttributeError):
+                continue
         return cnt
 
     def _preprocess_parsed(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        key_time = "expected_answer_time_sec"
+        key_time = "expectedAnswerTimeSec"
         value = item.get(key_time)
         if (
             value is None
@@ -58,7 +60,7 @@ class FollowupGeneratorService:
             time = int(round(value))
             item[key_time] = max(15, min(180, time))
 
-        key_criteria = "focus_criteria"
+        key_criteria = "focusCriteria"
         value = item.get(key_criteria)
         if not isinstance(value, List):
             item[key_criteria] = ["N/A"]  # default value
@@ -72,27 +74,20 @@ class FollowupGeneratorService:
         elif not value:
             item[key_criteria] = ["N/A"]
 
-        for key in ["followup_id", "parent_question_id", "rationale"]:
+        for key in ["followupId", "parentQuestionId", "rationale"]:
             value = item.get(key)
             if not isinstance(value, str) or value.lower() in ("", "null", "none"):
                 item[key] = ""
 
-        question_keys = ["question_text", "question"]
-        found_question = False
-
-        for q_key in question_keys:
-            value = item.get(q_key)
-            if (
-                isinstance(value, str)
-                and value.strip()
-                and value.lower() not in ("null", "none")
-            ):
-                item["question_text"] = value.strip()
-                item["question"] = value.strip()
-                found_question = True
-                break
-        if not found_question:
-            item["question_text"] = ""
+        # question 필드 처리
+        value = item.get("question")
+        if (
+            isinstance(value, str)
+            and value.strip()
+            and value.lower() not in ("null", "none")
+        ):
+            item["question"] = value.strip()
+        else:
             item["question"] = ""
 
         return item
@@ -101,44 +96,39 @@ class FollowupGeneratorService:
         self,
         parsed_item: Dict[str, Any],
         req: FollowupRequest,
-        memory: Optional[ConversationBufferMemory] = None,
     ) -> Dict[str, Any]:
-        if req.auto_sequence:
-            existing = self._count_existing_followups(memory, req.question_id)
+        if req.autoSequence:
+            existing = self._count_existing_followups(req.aiQuestionId)
             idx = existing + 1
         else:
-            idx = req.next_followup_index or 1
+            idx = req.nextFollowupIndex or 1
 
         out = {
-            "followup_id": f"{req.question_id}-fu{idx}",
-            "parent_question_id": parsed_item.get("parent_question_id", ""),
-            "focus_criteria": parsed_item.get("focus_criteria", []),
+            "followupId": f"{req.aiQuestionId}-fu{idx}",
+            "parentQuestionId": parsed_item.get("parentQuestionId", ""),
+            "focusCriteria": parsed_item.get("focusCriteria", []),
             "rationale": parsed_item.get("rationale", ""),
-            "question": parsed_item.get("question_text", "")
-            or parsed_item.get("question"),
-            "expected_answer_time_sec": parsed_item.get(
-                "expected_answer_time_sec", 180
-            ),
+            "question": parsed_item.get("question", ""),
+            "expectedAnswerTimeSec": parsed_item.get("expectedAnswerTimeSec", 180),
         }
 
         return out
 
     def generate_followups(
         self,
-        req: FollowupRequest = ...,
-        memory: Optional[ConversationBufferMemory] = ...,
-    ) -> List[FollowupResponse]:
+        req: FollowupRequest,
+    ) -> FollowupResponse:
         raw_prompt = load_prompt_template(PROMPT_PATH)
         prompt_template = PromptTemplate.from_template(raw_prompt)
 
         vars = {
-            "question_id": req.question_id,
-            "category": req.category,
-            "question_text": req.question_text,
+            "ai_question_id": req.aiQuestionId,
+            "type": req.type,
+            "question_text": req.question,
             "criteria_csv": ", ".join(req.criteria) if req.criteria else "",
             "skills_csv": ", ".join(req.skills) if req.skills else "",
-            "user_answer": req.user_answer,
-            "evaluation_summary": req.evaluation_summary or "",
+            "user_answer": req.answer,
+            "evaluation_summary": req.evaluationSummary or "",
         }
 
         prompt_text = prompt_template.format(**vars)
@@ -156,8 +146,8 @@ class FollowupGeneratorService:
             )
 
         parsed = self._preprocess_parsed(parsed)
-        norm = self._normalize_items(parsed, req, memory)
+        norm = self._normalize_items(parsed, req)
         followup = FollowupResponse.model_validate(norm)
-        self.logger.log_tail_question(followup.model_dump())
 
+        # 로깅은 core-api에서 /log/question-asked 호출로 처리
         return followup

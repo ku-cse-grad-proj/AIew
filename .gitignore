@@ -8,7 +8,8 @@ __pycache__/
 
 # vscode
 .vscode/
-GEMINI.md
+.claude/
+CLAUDE.md
 
 # OS
 .DS_Store

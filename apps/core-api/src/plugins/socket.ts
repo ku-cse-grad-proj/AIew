@@ -1,3 +1,4 @@
+import { createAdapter } from '@socket.io/redis-adapter'
 import fp from 'fastify-plugin'
 import { Server, Socket } from 'socket.io'
 
@@ -14,6 +15,7 @@ declare module 'socket.io' {
     user: User
     sessionId?: string // 소켓 객체에 세션 ID 저장
     uploadChunks?: Buffer[] // 업로드 중인 청크 데이터
+    ttlRefreshTimer?: ReturnType<typeof setTimeout> | null // TTL 갱신 throttle 타이머
   }
 }
 
@@ -41,6 +43,17 @@ export default fp(
 
     fastify.decorate('io', io)
 
+    // Redis Adapter 설정 (Blue-Green 배포 시 인스턴스 간 Room/이벤트 공유)
+    let pubClient: ReturnType<typeof fastify.redis.duplicate> | undefined
+    let subClient: ReturnType<typeof fastify.redis.duplicate> | undefined
+
+    if (fastify.redis) {
+      pubClient = fastify.redis.duplicate()
+      subClient = fastify.redis.duplicate()
+      io.adapter(createAdapter(pubClient, subClient))
+      fastify.log.info('Socket.IO Redis adapter enabled')
+    }
+
     // 인증 미들웨어
     io.use(async (socket, next) => {
       const token = getAccessTokenFromCookieHeader(
@@ -50,7 +63,7 @@ export default fp(
         return next(new Error('Authentication error: Token not provided.'))
       }
       try {
-        const decoded = fastify.jwt.verify<{ userId: string }>(token)
+        const decoded = fastify.jwt.access.verify(token)
         const user = await fastify.prisma.user.findUnique({
           where: { id: decoded.userId },
         })
@@ -66,8 +79,29 @@ export default fp(
     })
 
     // 연결 핸들러
+    const TTL_REFRESH_INTERVAL_MS = 5 * 60 * 1000 // 5분
+
+    /** TTL 갱신 + throttle 타이머 세팅 (leading-edge) */
+    function scheduleRefreshTtl(socket: Socket) {
+      if (socket.ttlRefreshTimer || !socket.sessionId) return
+
+      fastify.aiClientService.refreshTtl(socket.sessionId).catch((err) => {
+        fastify.log.error(err, `[${socket.sessionId}] TTL refresh failed`)
+      })
+      socket.ttlRefreshTimer = setTimeout(() => {
+        socket.ttlRefreshTimer = null
+      }, TTL_REFRESH_INTERVAL_MS)
+    }
+
     const onConnection = (socket: Socket) => {
       fastify.log.info(`Socket connected: ${socket.id}`)
+
+      // Engine.IO pong 패킷 감지 → 주기적 TTL 갱신
+      socket.conn.on('packet', ({ type }: { type: string }) => {
+        if (type === 'pong') {
+          scheduleRefreshTtl(socket)
+        }
+      })
 
       socket.on('client:join-room', async ({ sessionId }) => {
         try {
@@ -79,6 +113,7 @@ export default fp(
           if (session) {
             socket.sessionId = sessionId // 소켓에 세션 ID 저장
             await socket.join(sessionId)
+            scheduleRefreshTtl(socket) // 즉시 TTL 갱신 (재접속 시 만료 방지)
             fastify.log.info(
               `Socket ${socket.id} joined room: ${sessionId} for user ${socket.user.id}`,
             )
@@ -164,38 +199,34 @@ export default fp(
           // READY 또는 IN_PROGRESS일 때 백그라운드로 메모리 복구
           if (session.status === 'READY' || session.status === 'IN_PROGRESS') {
             const restoreData = {
-              resume_text: session.coverLetterText || '',
-              portfolio_text: session.portfolioText || '',
               steps: session.steps.map((step) => ({
-                question_id: step.aiQuestionId,
-                category: step.type.toLowerCase(),
-                question_text: step.question,
+                aiQuestionId: step.aiQuestionId,
+                type: step.type,
+                question: step.question,
                 criteria: step.criteria,
                 skills: step.skills,
                 rationale: step.rationale,
-                estimated_answer_time_sec: step.estimatedAnswerTimeSec,
-                is_followup: !!step.parentStepId,
-                parent_question_id: step.parentStep?.aiQuestionId ?? null,
-                focus_criteria: null, // DB에 저장되지 않음
+                estimatedAnswerTimeSec: step.estimatedAnswerTimeSec,
+                parentQuestionId: step.parentStep?.aiQuestionId ?? null, // 존재 여부로 꼬리질문 판단
                 answer: step.answer,
-                answer_duration_sec: step.answerDurationSec,
+                answerDurationSec: step.answerDurationSec,
                 evaluation: step.score
                   ? {
-                      question_id: step.aiQuestionId,
-                      category: step.type.toLowerCase(),
-                      answer_duration_sec: step.answerDurationSec ?? 0,
-                      overall_score: step.score,
+                      aiQuestionId: step.aiQuestionId,
+                      type: step.type,
+                      answerDurationSec: step.answerDurationSec ?? 0,
+                      overallScore: step.score,
                       strengths: step.strengths,
                       improvements: step.improvements,
-                      red_flags: step.redFlags,
-                      criterion_scores: step.criterionEvaluations.map((ce) => ({
+                      redFlags: step.redFlags,
+                      criterionScores: step.criterionEvaluations.map((ce) => ({
                         name: ce.name,
                         score: ce.score,
                         reason: ce.reason,
                       })),
                       feedback: step.feedback ?? '',
-                      tail_rationale: null, // DB에 저장되지 않음
-                      tail_decision: 'skip', // 복구 시점에는 이미 결정 완료
+                      tailRationale: null, // DB에 저장되지 않음
+                      tailDecision: 'skip', // 복구 시점에는 이미 결정 완료
                     }
                   : null,
               })),
@@ -451,6 +482,12 @@ export default fp(
       socket.on('disconnect', async () => {
         fastify.log.info(`Socket disconnected: ${socket.id}`)
 
+        // TTL 갱신 타이머 정리
+        if (socket.ttlRefreshTimer) {
+          clearTimeout(socket.ttlRefreshTimer)
+          socket.ttlRefreshTimer = null
+        }
+
         // 업로드 중이던 청크 정리
         if (socket.uploadChunks && socket.uploadChunks.length > 0) {
           fastify.log.warn(
@@ -469,15 +506,16 @@ export default fp(
 
     fastify.io.on('connection', onConnection)
 
-    fastify.addHook('onClose', (instance, done) => {
+    fastify.addHook('onClose', async (instance) => {
       instance.io.close()
-      done()
+      if (pubClient) await pubClient.quit()
+      if (subClient) await subClient.quit()
     })
 
     fastify.log.info('Socket.io plugin loaded')
   },
   {
     name: 'socket',
-    dependencies: ['prisma', 'jwt'],
+    dependencies: ['prisma', 'jwt', 'redis'],
   },
 )
