@@ -20,9 +20,12 @@ export class AuthService {
   /**
    * 사용자 로그아웃 처리 — Redis에서 refresh token 삭제
    */
-  public async logout(userId: string): Promise<AuthLogoutResponse> {
-    await this.fastify.redis.del(`refresh:${userId}`)
-    this.fastify.log.info(`User ${userId} logged out`)
+  public async logout(
+    userId: string,
+    deviceId: string,
+  ): Promise<AuthLogoutResponse> {
+    await this.fastify.redis.del(`refresh:${userId}:${deviceId}`)
+    this.fastify.log.info(`User ${userId} logged out (device: ${deviceId})`)
     return { message: 'Logged out successfully' }
   }
 
@@ -35,12 +38,14 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string; userId: string }> {
     const decoded = this.fastify.jwt.refresh.verify(refreshToken)
 
+    const redisKey = `refresh:${decoded.userId}:${decoded.deviceId}`
+
     // 저장된 jti와 비교
-    const storedJti = await this.fastify.redis.get(`refresh:${decoded.userId}`)
+    const storedJti = await this.fastify.redis.get(redisKey)
 
     if (!storedJti || storedJti !== decoded.jti) {
-      // 재사용 감지 -> 전체 무효화
-      await this.fastify.redis.del(`refresh:${decoded.userId}`)
+      // 재사용 감지 -> 해당 디바이스 무효화
+      await this.fastify.redis.del(redisKey)
       throw this.fastify.httpErrors.unauthorized('Token reuse detected')
     }
 
@@ -53,9 +58,9 @@ export class AuthService {
       throw this.fastify.httpErrors.unauthorized('User not found')
     }
 
-    // 새 토큰 쌍 발급 (rotation) — 내부에서 Redis jti도 교체됨
+    // 새 토큰 쌍 발급 (rotation) — 동일 deviceId 유지
     return {
-      ...(await this.generateTokenPair(user.id)),
+      ...(await this.generateTokenPair(user.id, decoded.deviceId)),
       userId: user.id,
     }
   }
@@ -66,14 +71,24 @@ export class AuthService {
    */
   public async generateTokenPair(
     userId: string,
+    deviceId: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const jti = crypto.randomUUID()
 
-    const accessToken = this.fastify.jwt.access.sign({ userId })
-    const refreshToken = this.fastify.jwt.refresh.sign({ userId, jti })
+    const accessToken = this.fastify.jwt.access.sign({ userId, deviceId })
+    const refreshToken = this.fastify.jwt.refresh.sign({
+      userId,
+      jti,
+      deviceId,
+    })
 
-    // 현재 유효한 refresh token의 jti를 Redis에 저장
-    await this.fastify.redis.set(`refresh:${userId}`, jti, 'EX', REFRESH_TTL)
+    // 현재 유효한 refresh token의 jti를 Redis에 저장 (디바이스별 독립 키)
+    await this.fastify.redis.set(
+      `refresh:${userId}:${deviceId}`,
+      jti,
+      'EX',
+      REFRESH_TTL,
+    )
 
     return { accessToken, refreshToken }
   }
@@ -89,6 +104,7 @@ export class AuthService {
       pic_url: string
       provider: 'GOOGLE' | 'GITHUB'
     },
+    deviceId: string,
   ): Promise<{ accessToken: string; refreshToken: string; userId: string }> {
     // UserService를 통해 사용자 찾기 또는 생성
     const user = await this.fastify.userService.findOrCreateUserByEmail(
@@ -97,10 +113,13 @@ export class AuthService {
     )
 
     // 토큰 쌍 생성
-    const { accessToken, refreshToken } = await this.generateTokenPair(user.id)
+    const { accessToken, refreshToken } = await this.generateTokenPair(
+      user.id,
+      deviceId,
+    )
 
     this.fastify.log.info(
-      `OAuth login successful for user ${user.id} via ${userData.provider}`,
+      `OAuth login successful for user ${user.id} via ${userData.provider} (device: ${deviceId})`,
     )
 
     return { accessToken, refreshToken, userId: user.id }
