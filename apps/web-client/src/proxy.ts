@@ -44,8 +44,7 @@ async function handleAuth(
     pathname == '/' ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/v1/refresh') ||
-    pathname.startsWith('/mock-api') ||
-    pathname === '/healthz'
+    pathname.startsWith('/mock-api')
   ) {
     return NextResponse.next()
   }
