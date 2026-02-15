@@ -202,8 +202,8 @@ services:
     volumes:
       # Nginx 메인 설정 파일
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      # upstream 설정 (심볼릭 링크로 blue/green 전환)
-      - ./nginx/upstream.conf:/etc/nginx/upstream.conf:ro
+      # upstream 설정 (디렉토리 마운트로 reload 시 즉시 반영)
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
       # SSL 인증서 (Cloudflare Origin Certificate)
       - ./nginx/ssl:/etc/nginx/ssl:ro
       # DH 파라미터 (SSL 보안 강화)

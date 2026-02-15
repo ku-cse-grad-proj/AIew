@@ -13,7 +13,7 @@
 # 동작:
 #   1. upstream.conf 파일을 지정된 환경으로 복사
 #   2. Nginx 설정 테스트 (실패 시 롤백)
-#   3. Nginx restart (bind mount inode 변경 반영)
+#   3. Nginx reload (디렉토리 마운트로 기존 연결 유지)
 #
 # =============================================================================
 
@@ -82,9 +82,9 @@ echo -e "${YELLOW}[INFO]${NC} 전환 대상 환경: $ENV"
 # -----------------------------------------------------------------------------
 echo -e "${YELLOW}[SWITCH]${NC} upstream 전환: $ENV"
 
-cp "$UPSTREAM_FILE" "$NGINX_DIR/upstream.conf"
+cp "$UPSTREAM_FILE" "$NGINX_DIR/conf.d/upstream.conf"
 
-echo -e "${GREEN}[OK]${NC} upstream.conf ← upstream-${ENV}.conf"
+echo -e "${GREEN}[OK]${NC} conf.d/upstream.conf ← upstream-${ENV}.conf"
 
 # -----------------------------------------------------------------------------
 # 2. Nginx 설정 테스트
@@ -97,7 +97,7 @@ if ! docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t; then
     # 롤백: 이전 환경으로 복구
     if [ "$CURRENT_ENV" != "unknown" ] && [ "$CURRENT_ENV" != "$ENV" ]; then
         cp "$NGINX_DIR/upstream-${CURRENT_ENV}.conf" "$NGINX_DIR/upstream.conf"
-        echo -e "${YELLOW}[ROLLBACK]${NC} upstream.conf ← upstream-${CURRENT_ENV}.conf"
+        echo -e "${YELLOW}[ROLLBACK]${NC} conf.d/upstream.conf ← upstream-${CURRENT_ENV}.conf"
     fi
     exit 1
 fi
@@ -105,15 +105,15 @@ fi
 echo -e "${GREEN}[OK]${NC} Nginx 설정 검증 통과"
 
 # -----------------------------------------------------------------------------
-# 3. Nginx restart (bind mount 파일 inode 변경 반영 위해 restart 필요)
+# 3. Nginx reload (디렉토리 마운트로 기존 연결 유지하며 설정 반영)
 # -----------------------------------------------------------------------------
-echo -e "${YELLOW}[RESTART]${NC} Nginx restart 중..."
+echo -e "${YELLOW}[RELOAD]${NC} Nginx reload 중..."
 
-docker compose -f "$COMPOSE_FILE" restart nginx
+docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -s reload
 
 # -----------------------------------------------------------------------------
 # 4. 활성 환경 기록
 # -----------------------------------------------------------------------------
 echo "$ENV" > "$ACTIVE_ENV_FILE"
 
-echo -e "${GREEN}[SUCCESS]${NC} Nginx restart 완료. 트래픽이 $ENV 환경으로 전환되었습니다."
+echo -e "${GREEN}[SUCCESS]${NC} Nginx reload 완료. 트래픽이 $ENV 환경으로 전환되었습니다."
