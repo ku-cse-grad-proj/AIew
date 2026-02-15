@@ -61,9 +61,8 @@ const controller: FastifyPluginAsync = async (fastify) => {
       return reply.status(204).send()
     } catch (err) {
       // 토큰이 유효하지 않거나 만료된 경우
+      // 쿠키 삭제는 Next.js 레이어(proxy, privateFetch)에서 처리
       fastify.log.error(err)
-      reply.clearCookie('refreshToken')
-      reply.clearCookie('accessToken')
       return reply.status(401).send({ message: 'Unauthorized' })
     }
   }
