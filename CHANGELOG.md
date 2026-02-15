@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.1](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v2.0.0...aiew-v2.0.1) (2026-02-15)
+
+
+### Bug Fixes
+
+* Redis가 없으면 시작하고 healthcheck 통과까지 대기 ([fa36932](https://github.com/ku-cse-grad-proj/AIew/commit/fa36932f17810c3001de71c93dbc6cc903b04692))
+
+
+### Chores
+
+* release 2026-02-15_20:17 ([87ae26f](https://github.com/ku-cse-grad-proj/AIew/commit/87ae26fe64f3c6937233e2b2fe419b533a40bf93))
+
 ## [2.0.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.5.0...aiew-v2.0.0) (2026-02-15)
 
 
