@@ -1,5 +1,53 @@
 # Changelog
 
+## [2.0.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.5.0...aiew-v2.0.0) (2026-02-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* Socket.io ping을 활용한 Redis 세션 TTL 갱신 ([#191](https://github.com/ku-cse-grad-proj/AIew/issues/191))
+
+### Features
+
+* **ai:** 랭체인 메모리 Redis 연동 ([#185](https://github.com/ku-cse-grad-proj/AIew/issues/185)) ([d704a4d](https://github.com/ku-cse-grad-proj/AIew/commit/d704a4d411f3bb95d4c5b4fd0a72cc4d5699fb9b))
+* **core:** Socket.io Redis Adapter 도입 ([#189](https://github.com/ku-cse-grad-proj/AIew/issues/189)) ([04b5e6b](https://github.com/ku-cse-grad-proj/AIew/commit/04b5e6b09c22b069135c736ac4bbe0c64402a526))
+* JWT 토큰 보안 강화 (RTR) ([#195](https://github.com/ku-cse-grad-proj/AIew/issues/195)) ([7df3ca3](https://github.com/ku-cse-grad-proj/AIew/commit/7df3ca3f39f18feb20f5372714ef92b8e45894a1))
+* Redis 도입 ([#178](https://github.com/ku-cse-grad-proj/AIew/issues/178)) ([ff11bd5](https://github.com/ku-cse-grad-proj/AIew/commit/ff11bd5962b7f4de822f925d212bc2861b9f7aaf))
+* Socket.io ping을 활용한 Redis 세션 TTL 갱신 ([#191](https://github.com/ku-cse-grad-proj/AIew/issues/191)) ([2140777](https://github.com/ku-cse-grad-proj/AIew/commit/214077754605907f8521a0bcf4636cc904ea73b3))
+* **web:** Next.js 서버측 로깅 활성화 ([#194](https://github.com/ku-cse-grad-proj/AIew/issues/194)) ([30331be](https://github.com/ku-cse-grad-proj/AIew/commit/30331be6e1ea4187841ae77e30e193e8502db128))
+* 블루그린배포 도중 실패시 로깅 및 새로운 환경 컨테이너 정리 ([#182](https://github.com/ku-cse-grad-proj/AIew/issues/182)) ([cf19faa](https://github.com/ku-cse-grad-proj/AIew/commit/cf19faa6bedb962637949a46ba296a556767ea43))
+
+
+### Bug Fixes
+
+* CI/로컬 테스트 환경에 Redis 추가 및 스크립트 정리 ([#188](https://github.com/ku-cse-grad-proj/AIew/issues/188)) ([75cdbc2](https://github.com/ku-cse-grad-proj/AIew/commit/75cdbc29e7b47191e7563b7b795c45996a814922))
+* **core:** ajvFilePlugin 타입 이슈 회피 ([735cd1a](https://github.com/ku-cse-grad-proj/AIew/commit/735cd1a83097c67cc30ef8b8daf7f943f6995e2a))
+
+
+### Refactoring
+
+* **ai:** InMemoryChatMessageHistory 기반으로 메모리 레이어 전환 ([#179](https://github.com/ku-cse-grad-proj/AIew/issues/179)) ([eab0497](https://github.com/ku-cse-grad-proj/AIew/commit/eab0497543433ba4648eb3bc2a2dcd7337a28e0b))
+* **core:** 세션 업데이트 시 불필요한 PDF 재파싱 방지 ([#187](https://github.com/ku-cse-grad-proj/AIew/issues/187)) ([a889bec](https://github.com/ku-cse-grad-proj/AIew/commit/a889bec002d998aa15459cfb796fa1889ff4881c))
+* Docker Compose 헬스체크 로그 노이즈 제거 ([#193](https://github.com/ku-cse-grad-proj/AIew/issues/193)) ([f234456](https://github.com/ku-cse-grad-proj/AIew/commit/f2344562e8961790c58539d3845f52c6fd10bdc7))
+* Nginx upstream 설정을 디렉토리 마운트로 변경하여 graceful reload 지원 ([#190](https://github.com/ku-cse-grad-proj/AIew/issues/190)) ([285dd41](https://github.com/ku-cse-grad-proj/AIew/commit/285dd41233faec7a3eda11fcf61c9993f769ce0f))
+* **web:** privateFetch를 서버 전용으로 정리 ([#197](https://github.com/ku-cse-grad-proj/AIew/issues/197)) ([f7a2370](https://github.com/ku-cse-grad-proj/AIew/commit/f7a237005989811e5267cf9582e63c5c60501ac8))
+* 랭체인 메모리 로깅 구조 개선 및 책임 분리 ([#186](https://github.com/ku-cse-grad-proj/AIew/issues/186)) ([08ad377](https://github.com/ku-cse-grad-proj/AIew/commit/08ad3773b1ec4de19c8655a87259f430d42ded98))
+
+
+### Chores
+
+* **deps:** bump @isaacs/brace-expansion to 5.0.1 ([851b1b9](https://github.com/ku-cse-grad-proj/AIew/commit/851b1b9f287a2112ad653a46768fc22d005fa7ea))
+* **deps:** bump @modelcontextprotocol/sdk to 1.26.0 ([b67e981](https://github.com/ku-cse-grad-proj/AIew/commit/b67e98155529e55ecee5017d688d7286f1b9d306))
+* **deps:** bump axios to 1.13.5 ([d2c1d24](https://github.com/ku-cse-grad-proj/AIew/commit/d2c1d24cc077b9f74857d0889a4b04deb7dbe7d8))
+* **deps:** bump fastify to 5.7.3 ([633830b](https://github.com/ku-cse-grad-proj/AIew/commit/633830b7797dea0c080a8427afb36e146178c396))
+* **deps:** bump langchain-core from 1.2.7 to 1.2.11 in /apps/ai-server ([#196](https://github.com/ku-cse-grad-proj/AIew/issues/196)) ([784a502](https://github.com/ku-cse-grad-proj/AIew/commit/784a5021815385c2247f07e4f7f57468f21e6f81))
+* **deps:** bump langsmith from 0.4.38 to 0.6.3 in /apps/ai-server ([#192](https://github.com/ku-cse-grad-proj/AIew/issues/192)) ([0bb34ab](https://github.com/ku-cse-grad-proj/AIew/commit/0bb34abd1a52553c0a54eef73520a1281c89c58c))
+* **deps:** bump lodash, hono, next, baseline-browser-mapping ([#183](https://github.com/ku-cse-grad-proj/AIew/issues/183)) ([ad259a1](https://github.com/ku-cse-grad-proj/AIew/commit/ad259a12b0ca2be12fabccbf2b9deb3d3e698743))
+* **deps:** bump protobuf from 6.33.0 to 6.33.5 in /apps/ai-server ([#184](https://github.com/ku-cse-grad-proj/AIew/issues/184)) ([d9d68d8](https://github.com/ku-cse-grad-proj/AIew/commit/d9d68d82458cb3d776b0333580e0d81b17f737ec))
+* **deps:** bump qs to 6.14.2 for address CVE-2026-2391 ([23511b9](https://github.com/ku-cse-grad-proj/AIew/commit/23511b974bb7813be54e0d8f84c886142b0be2ce))
+* **infra:** 배포 실패시 컨테이너 정리 로직 추가 ([cf19faa](https://github.com/ku-cse-grad-proj/AIew/commit/cf19faa6bedb962637949a46ba296a556767ea43))
+* release 2026-02-15_19:23 ([861e6f9](https://github.com/ku-cse-grad-proj/AIew/commit/861e6f95207f065c61bc194a5e2ce3a5606ddaf6))
+
 ## [1.5.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v1.4.0...aiew-v1.5.0) (2026-01-27)
 
 
