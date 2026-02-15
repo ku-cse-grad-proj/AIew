@@ -55,9 +55,20 @@ describe('Auth - RTR + Logout (/api/v1/refresh, /api/v1/auth/logout)', () => {
     expect(accessCookie!.value).toBeTruthy()
     expect(refreshCookie!.value).toBeTruthy()
 
+    // 새 accessToken에 userId + deviceId가 포함되는지 verify
+    const accessPayload = app.jwt.access.verify(accessCookie!.value)
+    expect(accessPayload.userId).toBe(testUser.id)
+    expect(accessPayload.deviceId).toBe(deviceId)
+
+    // 새 refreshToken에 userId + deviceId + jti가 포함되는지 verify
+    const refreshPayload = app.jwt.refresh.verify(refreshCookie!.value)
+    expect(refreshPayload.userId).toBe(testUser.id)
+    expect(refreshPayload.deviceId).toBe(deviceId)
+    expect(refreshPayload.jti).toBeTruthy()
+
     // Redis에 새 jti가 저장되었는지 확인
     const storedJti = await app.redis.get(`refresh:${testUser.id}:${deviceId}`)
-    expect(storedJti).toBeTruthy()
+    expect(storedJti).toBe(refreshPayload.jti)
   })
 
   it('POST /api/v1/refresh - 토큰 재사용 감지 → 401 + Redis 키 삭제', async () => {
