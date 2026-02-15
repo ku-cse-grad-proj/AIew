@@ -60,7 +60,7 @@ services:
           'CMD',
           'node',
           '-e',
-          "require('http').get('http://localhost:3000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+          "require('http').get('http://localhost:3000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
         ]
       interval: 30s
       timeout: 10s
@@ -95,7 +95,7 @@ services:
           'CMD',
           'python',
           '-c',
-          'import urllib.request; urllib.request.urlopen("http://localhost:8000/")',
+          'import urllib.request; urllib.request.urlopen("http://localhost:8000/healthz")',
         ]
       interval: 30s
       timeout: 10s
@@ -127,7 +127,7 @@ services:
           'CMD',
           'node',
           '-e',
-          "require('http').get('http://localhost:4000/', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+          "require('http').get('http://localhost:4000/healthz', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
         ]
       interval: 30s
       timeout: 10s

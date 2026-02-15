@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     if redis_url:
         try:
             client = redis.from_url(redis_url)
-            pong = await client.ping()
+            pong = await client.ping()  # type: ignore[misc]
             logger.info(f"Redis connected: {pong}")
             await client.aclose()
         except Exception as e:
@@ -48,6 +48,14 @@ app.include_router(followup.router, prefix="/api/v1/followup", tags=["Question"]
 app.include_router(emotion.router, prefix="/api/v1/emotion", tags=["Emotion"])
 
 
-@app.get("/")
-def read_root():
-    return {"message": "AIew API is running"}
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+
+
+class HealthCheckFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "/healthz" not in record.getMessage()
+
+
+logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
