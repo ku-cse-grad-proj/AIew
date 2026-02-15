@@ -67,8 +67,11 @@ async function tryRefresh(req: NextRequest) {
     return response
   }
 
-  // refresh 실패 (refresh token도 만료됨)
-  return NextResponse.redirect(new URL('/login', req.url))
+  // refresh 실패 (토큰 만료 또는 재사용 감지) - 쿠키 삭제 후 로그인으로
+  const response = NextResponse.redirect(new URL('/login', req.url))
+  response.cookies.delete('accessToken')
+  response.cookies.delete('refreshToken')
+  return response
 }
 
 //JWT의 exp의 값이 만료됐는지 확인하는 함수
