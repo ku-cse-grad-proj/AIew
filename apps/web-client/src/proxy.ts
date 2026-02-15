@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+/**
+ * 인증 미들웨어 — 토큰 검증 및 갱신의 유일한 진입점.
+ *
+ * 모든 페이지 요청에 대해:
+ * 1. accessToken 유효 → 통과
+ * 2. accessToken 만료 → refreshToken으로 재발급 (tryRefresh)
+ * 3. refreshToken 없음/만료 → /login 리디렉션
+ *
+ * 토큰 갱신은 이 미들웨어에서만 수행합니다.
+ * privateFetch는 갱신을 시도하지 않으며, 401 시 /login으로 리디렉션합니다.
+ */
 export async function proxy(req: NextRequest) {
   // preflight은 auth 검사 제외
   if (req.method === 'OPTIONS') {
@@ -33,8 +44,7 @@ async function handleAuth(
     pathname == '/' ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/v1/refresh') ||
-    pathname.startsWith('/mock-api') ||
-    pathname === '/healthz'
+    pathname.startsWith('/mock-api')
   ) {
     return NextResponse.next()
   }
