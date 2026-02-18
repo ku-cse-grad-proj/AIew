@@ -167,17 +167,25 @@ if docker ps --format '{{.Names}}' | grep -q "^aiew-nginx$"; then
     cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/conf.d/upstream.conf"
     log_info "conf.d/upstream.conf ← upstream-${NEXT_ENV}.conf"
 
-    # 설정 테스트 (실패 시 롤백)
+    # 설정 테스트
     log_info "Nginx 설정 테스트 중..."
-    if ! docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t; then
-        log_error "Nginx 설정 오류! 롤백합니다."
-        cp "$NGINX_DIR/upstream-${CURRENT_ENV}.conf" "$NGINX_DIR/conf.d/upstream.conf"
-        exit 1
-    fi
+    if docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t 2>/dev/null; then
+        # 설정 테스트 통과 → reload (기존 WebSocket 연결 유지)
+        log_info "Nginx reload 중..."
+        docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -s reload
+    else
+        # nginx.prod.conf가 변경된 경우 여기로 진입
+        # (파일 바인드 마운트는 inode를 추적하므로, git checkout 후 컨테이너가 이전 파일을 참조)
+        # 컨테이너를 재생성하여 새 파일 마운트를 적용
+        log_warning "Nginx 설정 테스트 실패. 파일 마운트 갱신을 위해 컨테이너 재생성..."
+        docker compose -f "$COMPOSE_FILE" up -d --force-recreate nginx
 
-    # Nginx reload (디렉토리 마운트로 기존 WebSocket 연결 유지하며 설정 반영)
-    log_info "Nginx reload 중..."
-    docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -s reload
+        # 재생성 후 설정 검증
+        if ! docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t; then
+            log_error "Nginx 설정 오류! 수동 확인이 필요합니다."
+            exit 1
+        fi
+    fi
 else
     # nginx가 없으면 새로 시작
     cp "$NGINX_DIR/upstream-${NEXT_ENV}.conf" "$NGINX_DIR/conf.d/upstream.conf"
