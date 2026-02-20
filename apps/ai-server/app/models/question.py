@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import List
+from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class UserInfo(BaseModel):
@@ -13,13 +13,17 @@ class UserInfo(BaseModel):
 
 
 class QuestionConstraints(BaseModel):
-    language: str = Field("ko", description="질문 출력 언어: ko")
-    n: int = Field(5, ge=5, le=5, description="메인 질문 개수(고정 5)")
-    timebox_total_sec: int = Field(None, description="면접 총 시간(초)")
+    language: str = Field(default="ko", description="질문 출력 언어: ko")
+    n: int = Field(default=5, ge=5, le=5, description="메인 질문 개수(고정 5)")
+    timebox_total_sec: Optional[int] = Field(
+        default=None, description="면접 총 시간(초)"
+    )
     avoid_question_ids: List[str] = Field(
         default_factory=list, description="이미 출제된 질문 ID 목록(중복 방지)"
     )
-    seed: int = Field(None, description="결정적 생성용 시드(모델 지원 시)")
+    seed: Optional[int] = Field(
+        default=None, description="결정적 생성용 시드(모델 지원 시)"
+    )
 
 
 class QuestionRequest(BaseModel):
@@ -57,21 +61,62 @@ class QuestionType(str, Enum):
 
 
 class QuestionResponse(BaseModel):
-    main_question_id: str = Field(..., description="메인 질문 고유 ID (예: q1~q5)")
+    main_question_id: str = Field(
+        default="", description="메인 질문 고유 ID (예: q1~q5)"
+    )
     category: QuestionType = Field(
         ..., description="질문 유형: behavioral|technical|tailored"
     )
     criteria: List[str] = Field(
-        ..., min_items=1, max_items=5, description="평가 기준 키워드 목록"
+        ..., min_length=1, max_length=5, description="평가 기준 키워드 목록"
     )
     skills: List[str] = Field(
-        default_factory=list, max_items=5, description="측정 역량 태그"
+        default_factory=list, max_length=5, description="측정 역량 태그"
     )
-    rationale: str = Field(..., description="질문 생선 전 근거")
-    question_text: str = Field(..., alias="question", description="질문 본문")
+    rationale: str = Field(..., description="질문 생성 근거")
+    question: str = Field(..., description="질문 본문")
     estimated_answer_time_sec: int = Field(
         180, ge=10, le=600, description="예상 답변 시간(초)"
     )
+
+    @field_validator("estimated_answer_time_sec", mode="before")
+    @classmethod
+    def clamp_time(cls, v: Any) -> Any:
+        if v is None or (isinstance(v, str) and v.lower() in ("none", "null")):
+            return 180
+        try:
+            return max(10, min(600, int(round(float(v)))))
+        except (TypeError, ValueError):
+            return 180
+
+    @field_validator("main_question_id", "rationale", mode="before")
+    @classmethod
+    def clean_string(cls, v: Any) -> Any:
+        if v is None or not isinstance(v, str) or v.lower() in ("none", "null"):
+            return ""
+        return v
+
+    @field_validator("question", mode="before")
+    @classmethod
+    def clean_question(cls, v: Any) -> Any:
+        if (
+            v is None
+            or not isinstance(v, str)
+            or v.strip() == ""
+            or v.lower() in ("none", "null")
+        ):
+            return ""
+        return v.strip()
+
+    @field_validator("criteria", "skills", mode="before")
+    @classmethod
+    def clean_str_list(cls, v: Any) -> Any:
+        if not isinstance(v, list):
+            return ["N/A"]
+        cleaned = [
+            str(item) for item in v if item is not None and isinstance(item, str)
+        ]
+        return cleaned if cleaned else ["N/A"]
 
     model_config = {
         "json_schema_extra": {
@@ -86,3 +131,9 @@ class QuestionResponse(BaseModel):
             }
         }
     }
+
+
+class QuestionListOutput(BaseModel):
+    """LLM 출력 래퍼"""
+
+    main_questions: List[QuestionResponse]

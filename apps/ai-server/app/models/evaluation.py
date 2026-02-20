@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class TailDecision(str, Enum):
@@ -14,15 +14,32 @@ class CriterionScore(BaseModel):
     score: int = Field(..., ge=1, le=5, description="1~5 정수 점수")
     reason: str = Field(..., description="해당 기준 점수 부여 이유")
 
+    @field_validator("score", mode="before")
+    @classmethod
+    def clamp_score(cls, v: Any) -> Any:
+        if v is None or (isinstance(v, str) and v.lower() in ("", "none", "null")):
+            return 1
+        try:
+            return max(1, min(5, int(round(float(v)))))
+        except (TypeError, ValueError):
+            return 1
+
+    @field_validator("name", "reason", mode="before")
+    @classmethod
+    def clean_string(cls, v: Any) -> Any:
+        if not isinstance(v, str) or v.lower() in ("", "none", "null"):
+            return ""
+        return v
+
 
 class AnswerEvaluationResult(BaseModel):
     aiQuestionId: str = Field(..., description="평가 대상 질문 ID (q1~q5)")
     type: str = Field(..., description="behavioral|technical|tailored")
     answerDurationSec: int = Field(..., ge=0, description="사용자 답변 소요 시간(초)")
     overallScore: int = Field(..., ge=1, le=5, description="총평 1~5")
-    strengths: List[str] = Field(default_factory=list, max_items=5)
-    improvements: List[str] = Field(default_factory=list, max_items=5)
-    redFlags: List[str] = Field(default_factory=list, max_items=5)
+    strengths: List[str] = Field(default_factory=list, max_length=5)
+    improvements: List[str] = Field(default_factory=list, max_length=5)
+    redFlags: List[str] = Field(default_factory=list, max_length=5)
     criterionScores: List[CriterionScore] = Field(
         default_factory=list, description="각 기준별 점수"
     )
@@ -31,6 +48,64 @@ class AnswerEvaluationResult(BaseModel):
         None, description="꼬리질문 생성 여부 판단 근거"
     )
     tailDecision: TailDecision = Field(..., description="create|skip")
+
+    @field_validator("overallScore", mode="before")
+    @classmethod
+    def clamp_overall(cls, v: Any) -> Any:
+        if v is None or (isinstance(v, str) and v.lower() in ("", "none", "null")):
+            return 3
+        try:
+            return max(1, min(5, int(round(float(v)))))
+        except (TypeError, ValueError):
+            return 3
+
+    @field_validator("answerDurationSec", mode="before")
+    @classmethod
+    def clamp_duration(cls, v: Any) -> Any:
+        if v is None or (isinstance(v, str) and v.lower() in ("", "none", "null")):
+            return 180
+        try:
+            return max(0, int(round(float(v))))
+        except (TypeError, ValueError):
+            return 180
+
+    @field_validator("strengths", "improvements", "redFlags", mode="before")
+    @classmethod
+    def clean_str_list(cls, v: Any) -> Any:
+        if not isinstance(v, list):
+            return ["N/A"]
+        cleaned = [
+            str(item) for item in v if item is not None and isinstance(item, str)
+        ][:5]
+        return cleaned if cleaned else ["N/A"]
+
+    @field_validator("criterionScores", mode="before")
+    @classmethod
+    def clean_criterion_scores(cls, v: Any) -> Any:
+        if not isinstance(v, list):
+            return []
+        return [item for item in v if isinstance(item, dict)]
+
+    @field_validator("aiQuestionId", "feedback", mode="before")
+    @classmethod
+    def clean_string(cls, v: Any) -> Any:
+        if not isinstance(v, str) or v.lower() in ("", "none", "null"):
+            return ""
+        return v
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def clean_type(cls, v: Any) -> Any:
+        if not isinstance(v, str) or v.lower() in ("", "none", "null"):
+            return ""
+        return v.lower()
+
+    @field_validator("tailDecision", mode="before")
+    @classmethod
+    def normalize_tail_decision(cls, v: Any) -> Any:
+        if isinstance(v, str) and v.strip().lower() in ("create", "skip"):
+            return v.strip().lower()
+        return "skip"
 
     model_config = {
         "json_schema_extra": {
@@ -95,3 +170,9 @@ class SessionEvaluationResult(BaseModel):
             }
         }
     }
+
+
+class SessionFeedbackOutput(BaseModel):
+    """LLM 출력 전용 래퍼 — averageScore는 메모리에서 계산 후 주입"""
+
+    sessionFeedback: str = Field(..., description="1000+자 세션 종합 피드백")
