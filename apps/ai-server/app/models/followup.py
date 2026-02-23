@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class FollowupRequest(BaseModel):
@@ -50,6 +50,45 @@ class FollowupResponse(BaseModel):
     expectedAnswerTimeSec: int = Field(
         180, ge=15, le=180, description="예상 답변 시간(초)"
     )
+
+    @field_validator("expectedAnswerTimeSec", mode="before")
+    @classmethod
+    def clamp_time(cls, v: Any) -> Any:
+        if v is None or (isinstance(v, str) and v.lower() in ("", "none", "null")):
+            return 180
+        try:
+            return max(15, min(180, int(round(float(v)))))
+        except (TypeError, ValueError):
+            return 180
+
+    @field_validator("focusCriteria", mode="before")
+    @classmethod
+    def clean_criteria_list(cls, v: Any) -> Any:
+        if not isinstance(v, list):
+            return ["N/A"]
+        cleaned = [
+            str(item).strip() for item in v if item is not None and str(item).strip()
+        ]
+        return cleaned if cleaned else ["N/A"]
+
+    @field_validator("followupId", "parentQuestionId", "rationale", mode="before")
+    @classmethod
+    def clean_string(cls, v: Any) -> Any:
+        if not isinstance(v, str) or v.lower() in ("", "none", "null"):
+            return ""
+        return v
+
+    @field_validator("question", mode="before")
+    @classmethod
+    def clean_question(cls, v: Any) -> Any:
+        if (
+            v is None
+            or not isinstance(v, str)
+            or v.strip() == ""
+            or v.lower() in ("none", "null")
+        ):
+            return ""
+        return v.strip()
 
     model_config = {
         "json_schema_extra": {
