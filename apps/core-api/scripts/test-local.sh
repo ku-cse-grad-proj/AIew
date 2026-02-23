@@ -40,4 +40,4 @@ echo "Running database migration..."
 DATABASE_URL="$DATABASE_URL" pnpm exec prisma migrate deploy
 
 echo "Running tests..."
-pnpm vitest run --coverage && rimraf coverage
+DATABASE_URL="$DATABASE_URL" pnpm exec vitest run --coverage && rimraf coverage
