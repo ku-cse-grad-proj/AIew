@@ -1,3 +1,5 @@
+import logging
+import time
 from typing import Any, Dict, List, Optional, cast
 
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -13,6 +15,8 @@ from app.models.evaluation import (
 from app.services.memory_logger import MemoryLogger
 from app.utils.extract_evaluation import extract_evaluation
 from app.utils.llm_utils import PROMPT_BASE_DIR, llm, load_prompt_template
+
+logger = logging.getLogger(__name__)
 
 PROMPT_PATH = (PROMPT_BASE_DIR / "evaluation_prompt.txt").resolve()
 SESSION_PROMPT_PATH = (PROMPT_BASE_DIR / "session_evaluation_prompt.txt").resolve()
@@ -144,9 +148,15 @@ class EvaluationService:
             "answer_duration_sec": req.answerDurationSec,
         }
 
+        start = time.perf_counter()
         eval_result = cast(
             AnswerEvaluationResult, chain.invoke(vars, config=run_config or {})
         )
+        duration_ms = round((time.perf_counter() - start) * 1000)
+        logger.info(
+            f"[{self.session_id}] evaluate_answer chain.invoke completed in {duration_ms}ms"
+        )
+
         self.logger.log_answer_evaluated(eval_result.model_dump())
 
         return eval_result
@@ -168,8 +178,13 @@ class EvaluationService:
             "avg_score": avg_score,
         }
 
+        start = time.perf_counter()
         result = cast(
             SessionFeedbackOutput, chain.invoke(vars, config=run_config or {})
+        )
+        duration_ms = round((time.perf_counter() - start) * 1000)
+        logger.info(
+            f"[{self.session_id}] evaluate_session chain.invoke completed in {duration_ms}ms"
         )
 
         float_avg_score = max(1.0, min(5.0, float(avg_score)))
