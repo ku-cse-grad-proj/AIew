@@ -1,0 +1,115 @@
+// =============================================================================
+// Grafana Alloy - 로그 & 메트릭 수집 파이프라인
+// =============================================================================
+//
+// 3개 파이프라인:
+//   1. 로그: Docker 컨테이너 → Grafana Cloud Loki
+//   2. 호스트 메트릭: node_exporter → Grafana Cloud Prometheus
+//   3. 컨테이너 메트릭: cAdvisor → Grafana Cloud Prometheus
+//
+// 모든 인증 정보는 환경변수에서 읽음 (하드코딩 없음)
+// =============================================================================
+
+// =============================================================================
+// 1. 로그 파이프라인
+// =============================================================================
+
+// Docker 소켓으로 모든 컨테이너 auto-discovery
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// 컨테이너명, Compose 서비스명, 프로젝트명을 라벨로 추출
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "project"
+  }
+}
+
+// Docker 컨테이너 로그 수집
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.process.containers.receiver]
+}
+
+// json-file 로그 포맷 파싱
+loki.process "containers" {
+  stage.docker {}
+
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+// Grafana Cloud Loki로 전송
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_LOKI_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_LOKI_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}
+
+// =============================================================================
+// 2. 호스트 메트릭 파이프라인 (node_exporter 내장)
+// =============================================================================
+
+// CPU, 메모리, 디스크, 네트워크 메트릭
+prometheus.exporter.unix "host" {
+  procfs_path = "/host/proc"
+  sysfs_path  = "/host/sys"
+  rootfs_path = "/host"
+}
+
+prometheus.scrape "host" {
+  targets         = prometheus.exporter.unix.host.targets
+  scrape_interval = "60s"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+// =============================================================================
+// 3. 컨테이너 메트릭 파이프라인 (cAdvisor 내장)
+// =============================================================================
+
+// 컨테이너별 CPU, 메모리, 네트워크, 재시작 횟수
+prometheus.exporter.cadvisor "containers" {
+  docker_host      = "unix:///var/run/docker.sock"
+  storage_duration = "5m"
+}
+
+prometheus.scrape "containers" {
+  targets         = prometheus.exporter.cadvisor.containers.targets
+  scrape_interval = "60s"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+// =============================================================================
+// Prometheus Remote Write (호스트 + 컨테이너 메트릭 공용)
+// =============================================================================
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_PROMETHEUS_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_PROMETHEUS_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}

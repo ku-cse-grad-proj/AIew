@@ -127,11 +127,15 @@ docker compose -f "$COMPOSE_FILE" --profile "$NEXT_ENV" build --no-cache
 log_success "빌드 완료"
 
 # -----------------------------------------------------------------------------
-# 3. 인프라 서비스 확인 (Redis)
+# 3. 인프라 서비스 확인 (Redis, Alloy)
 # -----------------------------------------------------------------------------
 log_info "Redis 컨테이너 확인 중..."
 docker compose -f "$COMPOSE_FILE" up -d --wait redis
 log_success "Redis 준비 완료"
+
+log_info "Alloy(모니터링) 컨테이너 확인 중..."
+docker compose -f "$COMPOSE_FILE" up -d alloy
+log_success "Alloy 준비 완료"
 
 # -----------------------------------------------------------------------------
 # 4. 새 환경 시작 (nginx 제외 - 앱 서비스만)
