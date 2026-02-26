@@ -142,6 +142,40 @@ services:
       timeout: 10s
       retries: 3
   # ---------------------------------------------------------------------------
+  # Alloy - 로그 & 메트릭 수집 (항상 실행)
+  # ---------------------------------------------------------------------------
+  alloy:
+    image: grafana/alloy:latest
+    container_name: aiew-alloy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    env_file:
+      - ../.env.production
+    volumes:
+      # 디렉토리 마운트 (파일 마운트는 git checkout 시 inode 변경으로 반영 안 됨)
+      - ./alloy:/etc/alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro,rslave
+      - alloy-data:/var/lib/alloy/data
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+  # ---------------------------------------------------------------------------
   # Blue 환경
   # ---------------------------------------------------------------------------
   # profiles: ["blue"] → --profile blue 옵션으로만 시작됨
@@ -222,6 +256,9 @@ services:
 # 네트워크 정의
 # -----------------------------------------------------------------------------
 # bridge: 기본 네트워크 드라이버, 같은 네트워크의 컨테이너끼리 통신 가능
+
+volumes:
+  alloy-data:
 
 networks:
   frontend:

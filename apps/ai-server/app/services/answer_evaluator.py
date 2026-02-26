@@ -1,22 +1,22 @@
-import json
-from typing import Any, Dict, List, Optional
+import logging
+import time
+from typing import Any, Dict, List, Optional, cast
 
 from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableConfig
 
 from app.models.evaluation import (
     AnswerEvaluationRequest,
     AnswerEvaluationResult,
     SessionEvaluationResult,
+    SessionFeedbackOutput,
 )
 from app.services.memory_logger import MemoryLogger
 from app.utils.extract_evaluation import extract_evaluation
-from app.utils.llm_utils import (
-    PROMPT_BASE_DIR,
-    groq_chat,
-    load_prompt_template,
-    strip_json,
-)
+from app.utils.llm_utils import PROMPT_BASE_DIR, llm, load_prompt_template
+
+logger = logging.getLogger(__name__)
 
 PROMPT_PATH = (PROMPT_BASE_DIR / "evaluation_prompt.txt").resolve()
 SESSION_PROMPT_PATH = (PROMPT_BASE_DIR / "session_evaluation_prompt.txt").resolve()
@@ -119,120 +119,24 @@ class EvaluationService:
 
         return forced
 
-    def _preprocess_parsed_answer(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        key = "overallScore"
-        value = item.get(key)
-        if (
-            value is None
-            or (isinstance(value, str) and value.lower() in ("", "none", "null"))
-            or not isinstance(value, (int, float))
-        ):
-            item[key] = 3
-        else:
-            score = int(round(value))
-            item[key] = max(1, min(5, score))
-
-        key = "answerDurationSec"
-        value = item.get(key)
-        if (
-            value is None
-            or (isinstance(value, str) and value.lower() in ("", "none", "null"))
-            or not isinstance(value, (int, float))
-        ):
-            item[key] = 180
-        else:
-            duration = int(round(value))
-            item[key] = max(0, duration)
-
-        key = "criterionScores"
-        if not isinstance(item.get(key), List):
-            item[key] = ["N/A"]  # default value
-
-        cleaned_scores = []
-        for score_item in item[key]:
-            if not isinstance(score_item, Dict):
-                continue
-
-            score = score_item.get("score")
-            if score is None or (
-                isinstance(score, str) and score.lower() in ("", "none", "null")
-            ):
-                score_item["score"] = 1
-            elif isinstance(score, (int, float)):
-                score_item["score"] = max(1, min(5, int(round(score))))
-            else:
-                score_item["score"] = 1
-
-            for sub_key in ["name", "reason"]:
-                sub_value = score_item.get(sub_key)
-                if not isinstance(sub_value, str) or sub_value.lower() in (
-                    "",
-                    "none",
-                    "null",
-                ):
-                    score_item[sub_key] = ""
-
-            if score_item.get("name") and score_item.get("reason"):
-                cleaned_scores.append(score_item)
-
-        item[key] = cleaned_scores
-
-        for key in ["strengths", "improvements", "redFlags"]:
-            value = item.get(key)
-            if not isinstance(value, List):
-                item[key] = ["N/A"]  # default values
-            elif not all(isinstance(v, str) for v in value):
-                cleaned_list = [str(v) for v in value if v is not None][:5]
-                item[key] = cleaned_list
-                if not cleaned_list:
-                    item[key] = ["N/A"]
-            elif not value:
-                item[key] = ["N/A"]
-
-        for key in ["aiQuestionId", "type", "feedback"]:
-            value = item.get(key)
-            if not isinstance(value, str) or value.lower() in ("", "none", "null"):
-                item[key] = ""
-            elif key == "type":
-                item[key] = item[key].lower()
-
-        key = "tailRationale"
-        tail_decision = item.get("tailDecision", "").strip().lower()
-        if tail_decision not in ("create", "skip"):
-            item["tailDecision"] = "skip"
-        else:
-            item["tailDecision"] = tail_decision
-
-        return item
-
-    def _preprocess_parsed_session(
-        self, item: Dict[str, Any], avg_score: float
-    ) -> Dict[str, Any]:
-        key_avg = "averageScore"
-        item[key_avg] = max(1.0, min(5.0, avg_score))
-
-        key_feedback = "sessionFeedback"
-        value = item.get(key_feedback)
-        if not isinstance(value, str) or value.lower() in ("", "none", "null"):
-            item[key_feedback] = ""
-
-        return item
-
     def evaluate_answer(
         self,
         req: AnswerEvaluationRequest,
+        run_config: Optional[RunnableConfig] = None,
     ) -> AnswerEvaluationResult:
         # 0. '답변 누락 / 실질적 내용 없음' 예외 처리 → LLM 호출 생략
         if self._is_truly_empty_answer(req.answer):
             forced = self._build_forced_empty_result(req)
-            forced = self._preprocess_parsed_answer(forced)
             eval_result = AnswerEvaluationResult.model_validate(forced)
             self.logger.log_answer_evaluated(eval_result.model_dump())
             return eval_result
 
-        # 1. 정상 케이스 → LLM 프롬프트 구성 및 호출
+        # 1. 정상 케이스 → LCEL 체인
         raw_prompt = load_prompt_template(PROMPT_PATH)
-        prompt_template = PromptTemplate.from_template(raw_prompt)
+
+        chain = ChatPromptTemplate.from_messages(
+            [("human", raw_prompt)]
+        ) | llm.with_structured_output(AnswerEvaluationResult, method="json_mode")
 
         vars: Dict[str, Any] = {
             "ai_question_id": req.aiQuestionId,
@@ -244,44 +148,49 @@ class EvaluationService:
             "answer_duration_sec": req.answerDurationSec,
         }
 
-        prompt_text = prompt_template.format(**vars)
-        content = groq_chat(prompt_text, max_tokens=2048)
-        json_text = strip_json(content)
+        start = time.perf_counter()
+        eval_result = cast(
+            AnswerEvaluationResult, chain.invoke(vars, config=run_config or {})
+        )
+        duration_ms = round((time.perf_counter() - start) * 1000)
+        logger.info(
+            f"[{self.session_id}] evaluate_answer chain.invoke completed in {duration_ms}ms"
+        )
 
-        try:
-            parsed = json.loads(json_text)
-        except json.JSONDecodeError:
-            raise ValueError(
-                f"LLM 평가 응답이 JSON 형식이 아닙니다.\n Raw JSON: {json_text}"
-            )
-
-        parsed = self._preprocess_parsed_answer(parsed)
-        eval_result = AnswerEvaluationResult.model_validate(parsed)
         self.logger.log_answer_evaluated(eval_result.model_dump())
 
         return eval_result
 
-    def evaluate_session(self) -> SessionEvaluationResult:
+    def evaluate_session(
+        self,
+        run_config: Optional[RunnableConfig] = None,
+    ) -> SessionEvaluationResult:
         avg_score, conversation_text = extract_evaluation(self.memory)
 
         raw_prompt = load_prompt_template(SESSION_PROMPT_PATH)
-        prompt_template = PromptTemplate.from_template(raw_prompt)
 
-        vars = {"conversation": conversation_text, "avg_score": avg_score}
+        chain = ChatPromptTemplate.from_messages(
+            [("human", raw_prompt)]
+        ) | llm.with_structured_output(SessionFeedbackOutput, method="json_mode")
 
-        prompt_text = prompt_template.format(**vars)
-        content = groq_chat(prompt_text, max_tokens=2048)
-        json_text = strip_json(content)
+        vars: Dict[str, Any] = {
+            "conversation": conversation_text,
+            "avg_score": avg_score,
+        }
 
-        try:
-            parsed = json.loads(json_text)
-        except json.JSONDecodeError:
-            raise ValueError(
-                f"LLM 세션 평가 응답이 JSON 형식이 아닙니다.\n Raw JSON: {json_text}"
-            )
+        start = time.perf_counter()
+        result = cast(
+            SessionFeedbackOutput, chain.invoke(vars, config=run_config or {})
+        )
+        duration_ms = round((time.perf_counter() - start) * 1000)
+        logger.info(
+            f"[{self.session_id}] evaluate_session chain.invoke completed in {duration_ms}ms"
+        )
 
-        float_avg_score = float(avg_score)
-        parsed = self._preprocess_parsed_session(parsed, float_avg_score)
-        eval_result = SessionEvaluationResult.model_validate(parsed)
-
-        return eval_result
+        float_avg_score = max(1.0, min(5.0, float(avg_score)))
+        return SessionEvaluationResult.model_validate(
+            {
+                "averageScore": float_avg_score,
+                "sessionFeedback": result.sessionFeedback,
+            }
+        )

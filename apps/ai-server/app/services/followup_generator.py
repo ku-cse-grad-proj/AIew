@@ -1,18 +1,18 @@
 import json
-from typing import Any, Dict, List
+import logging
+import time
+from typing import Any, Dict, Optional, cast
 
 from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableConfig
 
 from app.models.event_types import EventType
 from app.models.followup import FollowupRequest, FollowupResponse
 from app.services.memory_logger import MemoryLogger
-from app.utils.llm_utils import (
-    PROMPT_BASE_DIR,
-    groq_chat,
-    load_prompt_template,
-    strip_json,
-)
+from app.utils.llm_utils import PROMPT_BASE_DIR, llm, load_prompt_template
+
+logger = logging.getLogger(__name__)
 
 PROMPT_PATH = (PROMPT_BASE_DIR / "followup_prompt.txt").resolve()
 
@@ -37,7 +37,6 @@ class FollowupGeneratorService:
             content = str(getattr(m, "content", ""))
             try:
                 event = json.loads(content)
-                # 타입과 필드로 명확하게 판단
                 if (
                     event.get("type") == EventType.QUESTION_ASKED
                     and event.get("data", {}).get("parentQuestionId") == parent_qid
@@ -47,54 +46,9 @@ class FollowupGeneratorService:
                 continue
         return cnt
 
-    def _preprocess_parsed(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        key_time = "expectedAnswerTimeSec"
-        value = item.get(key_time)
-        if (
-            value is None
-            or (isinstance(value, str) and value.lower() in ("", "null", "none"))
-            or not isinstance(value, (int, float))
-        ):
-            item[key_time] = 180
-        else:
-            time = int(round(value))
-            item[key_time] = max(15, min(180, time))
-
-        key_criteria = "focusCriteria"
-        value = item.get(key_criteria)
-        if not isinstance(value, List):
-            item[key_criteria] = ["N/A"]  # default value
-        elif not all(isinstance(v, str) for v in value):
-            cleaned_list = [
-                str(v).strip() for v in value if v is not None and str(v).strip()
-            ]
-            item[key_criteria] = cleaned_list
-            if not cleaned_list:
-                item[key_criteria] = ["N/A"]
-        elif not value:
-            item[key_criteria] = ["N/A"]
-
-        for key in ["followupId", "parentQuestionId", "rationale"]:
-            value = item.get(key)
-            if not isinstance(value, str) or value.lower() in ("", "null", "none"):
-                item[key] = ""
-
-        # question 필드 처리
-        value = item.get("question")
-        if (
-            isinstance(value, str)
-            and value.strip()
-            and value.lower() not in ("null", "none")
-        ):
-            item["question"] = value.strip()
-        else:
-            item["question"] = ""
-
-        return item
-
     def _normalize_items(
         self,
-        parsed_item: Dict[str, Any],
+        parsed: FollowupResponse,
         req: FollowupRequest,
     ) -> Dict[str, Any]:
         if req.autoSequence:
@@ -103,25 +57,27 @@ class FollowupGeneratorService:
         else:
             idx = req.nextFollowupIndex or 1
 
-        out = {
+        return {
             "followupId": f"{req.aiQuestionId}-fu{idx}",
-            "parentQuestionId": parsed_item.get("parentQuestionId", ""),
-            "focusCriteria": parsed_item.get("focusCriteria", []),
-            "rationale": parsed_item.get("rationale", ""),
-            "question": parsed_item.get("question", ""),
-            "expectedAnswerTimeSec": parsed_item.get("expectedAnswerTimeSec", 180),
+            "parentQuestionId": parsed.parentQuestionId,
+            "focusCriteria": parsed.focusCriteria,
+            "rationale": parsed.rationale,
+            "question": parsed.question,
+            "expectedAnswerTimeSec": parsed.expectedAnswerTimeSec,
         }
-
-        return out
 
     def generate_followups(
         self,
         req: FollowupRequest,
+        run_config: Optional[RunnableConfig] = None,
     ) -> FollowupResponse:
         raw_prompt = load_prompt_template(PROMPT_PATH)
-        prompt_template = PromptTemplate.from_template(raw_prompt)
 
-        vars = {
+        chain = ChatPromptTemplate.from_messages(
+            [("human", raw_prompt)]
+        ) | llm.with_structured_output(FollowupResponse, method="json_mode")
+
+        vars: Dict[str, Any] = {
             "ai_question_id": req.aiQuestionId,
             "type": req.type,
             "question_text": req.question,
@@ -131,23 +87,12 @@ class FollowupGeneratorService:
             "evaluation_summary": req.evaluationSummary or "",
         }
 
-        prompt_text = prompt_template.format(**vars)
-        content = groq_chat(
-            prompt_text,
-            max_tokens=2048,
+        start = time.perf_counter()
+        result = cast(FollowupResponse, chain.invoke(vars, config=run_config or {}))
+        duration_ms = round((time.perf_counter() - start) * 1000)
+        logger.info(
+            f"[{self.session_id}] generate_followups chain.invoke completed in {duration_ms}ms"
         )
-        json_text = strip_json(content)
 
-        try:
-            parsed = json.loads(json_text)
-        except json.JSONDecodeError:
-            raise ValueError(
-                f"LLM 꼬리질문 응답이 JSON 형식이 아닙니다. 오류: \n Raw JSON: {json_text}"
-            )
-
-        parsed = self._preprocess_parsed(parsed)
-        norm = self._normalize_items(parsed, req)
-        followup = FollowupResponse.model_validate(norm)
-
-        # 로깅은 core-api에서 /log/question-asked 호출로 처리
-        return followup
+        norm = self._normalize_items(result, req)
+        return FollowupResponse.model_validate(norm)
