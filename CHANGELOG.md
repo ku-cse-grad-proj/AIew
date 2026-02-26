@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.1.0](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v2.0.1...aiew-v2.1.0) (2026-02-26)
+
+
+### Features
+
+* Grafana Cloud + Alloy를 통한 Observability 구축 ([#201](https://github.com/ku-cse-grad-proj/AIew/issues/201)) ([62a64bb](https://github.com/ku-cse-grad-proj/AIew/commit/62a64bb0a7b84f375fc1dc5bb05b52376a30e5fe))
+
+
+### Bug Fixes
+
+* Nginx upstream DNS 동적 resolve로 전환 ([#200](https://github.com/ku-cse-grad-proj/AIew/issues/200)) ([4640fd3](https://github.com/ku-cse-grad-proj/AIew/commit/4640fd364f42abe1c075d0e73a4f6c2583f4ec9c))
+
+
+### Refactoring
+
+* **ai:** LLM 호출을 LCEL 체인으로 전환 ([#202](https://github.com/ku-cse-grad-proj/AIew/issues/202)) ([2acffca](https://github.com/ku-cse-grad-proj/AIew/commit/2acffcaf69dce39390b4b5e8941fc014739c1206))
+* 면접 세션 파이프라인 병목 분석 및 개선 ([#204](https://github.com/ku-cse-grad-proj/AIew/issues/204)) ([31e394e](https://github.com/ku-cse-grad-proj/AIew/commit/31e394ee25dcadb3decf14ee05cd392b03bea747))
+
+
+### Chores
+
+* Dependabot 보안 알림 패치 적용 ([#203](https://github.com/ku-cse-grad-proj/AIew/issues/203)) ([0c5087a](https://github.com/ku-cse-grad-proj/AIew/commit/0c5087ac83da6d9371a32c348226b173d3fc8f84))
+* **deps:** bump ajv & fast-xml-parser up ([24c7f7c](https://github.com/ku-cse-grad-proj/AIew/commit/24c7f7c6e1ff6c0e2808b77630b16263a8016a5f))
+* release 2026-02-26_13:53 ([a1c9e0d](https://github.com/ku-cse-grad-proj/AIew/commit/a1c9e0dc2662c173471f1de9462d30a4c5416c83))
+
 ## [2.0.1](https://github.com/ku-cse-grad-proj/AIew/compare/aiew-v2.0.0...aiew-v2.0.1) (2026-02-15)
 
 
