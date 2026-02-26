@@ -24,6 +24,7 @@ import {
   TailDecision,
 } from '@/types/ai.types'
 import { FileActions, InterviewRequestBody } from '@/types/interview.types'
+import { createPerfTimer } from '@/utils/perf-timer'
 
 interface FilePayload {
   buffer: Buffer
@@ -112,6 +113,7 @@ export class InterviewService {
     existingTexts?: { resume_text: string; portfolio_text: string },
   ) {
     const { prisma, log } = this.fastify
+    const timer = createPerfTimer()
     try {
       log.info(`[${sessionId}] Starting background processing...`)
 
@@ -124,10 +126,10 @@ export class InterviewService {
         parsedTexts = existingTexts
       } else if (files) {
         const fileUrls = await this.uploadFilesToR2(sessionId, files)
-        log.info(`[${sessionId}] Files uploaded successfully.`)
+        timer.lap('r2Upload')
 
         parsedTexts = await this.parsePdfFiles(files)
-        log.info(`[${sessionId}] PDFs parsed successfully.`)
+        timer.lap('pdfParse')
 
         await prisma.interviewSession.update({
           where: { id: sessionId },
@@ -149,14 +151,18 @@ export class InterviewService {
         questionRequestData,
         sessionId,
       )
-      log.info(`[${sessionId}] Questions generated successfully.`)
+      timer.lap('questionGen')
       await this.saveQuestionsAndNotifyClient(sessionId, generatedQuestions)
+      timer.lap('saveNotify')
 
       // 성공 시 상태를 READY로 변경
       await prisma.interviewSession.update({
         where: { id: sessionId },
         data: { status: 'READY' },
       })
+      log.info(
+        `[${sessionId}] processInterview completed | perf: ${JSON.stringify(timer.summary())}`,
+      )
     } catch (error) {
       log.error({ error }, `[${sessionId}] Error during background processing`)
       // 실패 시 상태를 FAILED로 변경
@@ -223,6 +229,7 @@ export class InterviewService {
     endAt: Date,
   ) {
     const { prisma, log, io } = this.fastify
+    const timer = createPerfTimer()
     log.info(`[${sessionId}] Start processing answer for step ${stepId}...`)
     try {
       // 첫 답변 제출 시 IN_PROGRESS로 상태 변경 및 현재 인덱스 가져오기
@@ -249,6 +256,7 @@ export class InterviewService {
           answerEndedAt: endAt,
         },
       })
+      timer.lap('saveAnswer')
 
       // 질문과 답변을 랭체인 메모리에 추가
       // 꼬리질문인 경우 aiQuestionId에서 부모 ID 추출 (q1-fu1 → q1)
@@ -259,6 +267,7 @@ export class InterviewService {
         this.formatStepToQuestionAsked(currentStep, parentAiQuestionId),
         sessionId,
       )
+      timer.lap('memQ')
 
       await this.aiClient.logAnswerReceived(
         {
@@ -268,6 +277,7 @@ export class InterviewService {
         },
         sessionId,
       )
+      timer.lap('memA')
 
       const evaluationResult = await this.requestAnswerEvaluation(
         currentStep,
@@ -275,7 +285,9 @@ export class InterviewService {
         duration,
         sessionId,
       )
+      timer.lap('eval')
       await this.saveEvaluationResult(stepId, evaluationResult)
+      timer.lap('saveEval')
 
       if (evaluationResult.tailDecision === TailDecision.CREATE) {
         // 꼬리질문의 '뿌리'가 되는 메인 질문의 ID를 찾음
@@ -304,6 +316,7 @@ export class InterviewService {
       } else {
         await this.handleNextMainQuestion(sessionId)
       }
+      timer.lap('next')
     } catch (error) {
       log.error(
         { error },
@@ -314,7 +327,9 @@ export class InterviewService {
         message: 'Failed to process your answer.',
       })
     }
-    log.info(`[${sessionId}] Finished processing answer for step ${stepId}.`)
+    log.info(
+      `[${sessionId}] processUserAnswer completed | perf: ${JSON.stringify(timer.summary())}`,
+    )
   }
 
   /**
@@ -966,6 +981,7 @@ export class InterviewService {
     evaluation: AnswerEvaluationResult,
   ) {
     const { prisma, log, io, ttsService } = this.fastify
+    const timer = createPerfTimer()
 
     // 꼬리질문의 '뿌리'가 되는 메인 질문을 찾음
     const rootQuestionStep = parentStep.parentStepId
@@ -993,6 +1009,7 @@ export class InterviewService {
     } satisfies FollowupRequest
     const followupResult: FollowUp =
       await this.aiClient.generateFollowUpQuestion(request, sessionId)
+    timer.lap('followupGen')
 
     const newFollowupStep = await prisma.interviewStep.create({
       data: {
@@ -1007,6 +1024,7 @@ export class InterviewService {
         estimatedAnswerTimeSec: followupResult.expectedAnswerTimeSec,
       },
     })
+    timer.lap('saveStep')
 
     await this.aiClient.logQuestionAsked(
       this.formatStepToQuestionAsked(
@@ -1015,7 +1033,7 @@ export class InterviewService {
       ),
       sessionId,
     )
-    log.info(`[${sessionId}] Next question logged to AI memory.`)
+    timer.lap('memLog')
 
     // STT 토큰 및 오디오 생성
     const session = await prisma.interviewSession.findUnique({
@@ -1026,9 +1044,9 @@ export class InterviewService {
       throw new Error(`[${sessionId}] Session not found to generate STT token.`)
     }
     const sttToken = await this.generateSttToken(sessionId, session.userId)
-    console.time('tts')
+    timer.lap('stt')
     const audioBase64 = await ttsService.generate(newFollowupStep.question)
-    console.timeEnd('tts')
+    timer.lap('tts')
 
     io.to(sessionId).emit('server:next-question', {
       step: newFollowupStep,
@@ -1036,10 +1054,14 @@ export class InterviewService {
       audioBase64,
       sttToken: sttToken.data.value,
     })
+    log.info(
+      `[${sessionId}] handleFollowup completed | perf: ${JSON.stringify(timer.summary())}`,
+    )
   }
 
   private async handleNextMainQuestion(sessionId: string) {
     const { prisma, log, io, ttsService } = this.fastify
+    const timer = createPerfTimer()
     const session = await prisma.interviewSession.findUnique({
       where: { id: sessionId },
       select: { currentQuestionIndex: true, userId: true },
@@ -1063,6 +1085,7 @@ export class InterviewService {
       // 백그라운드에서 세션 평가 및 DB 업데이트 진행
       try {
         const sessionEvaluation = await this.aiClient.evaluateSession(sessionId)
+        timer.lap('sessionEval')
 
         // 평균 점수 계산 (DB 레벨 aggregate 사용)
         const result = await prisma.interviewStep.aggregate({
@@ -1078,6 +1101,7 @@ export class InterviewService {
         const averageScore = result._avg.score
           ? Math.round(result._avg.score * 10) / 10
           : null
+        timer.lap('aggregate')
 
         await prisma.interviewSession.update({
           where: { id: sessionId },
@@ -1087,12 +1111,12 @@ export class InterviewService {
             averageScore,
           },
         })
-        log.info(`[${sessionId}] Session evaluation saved successfully.`)
+        timer.lap('saveSession')
 
         // 최종 평가 후 메모리 초기화
         try {
           await this.aiClient.resetMemory(sessionId)
-          log.info(`[${sessionId}] AI memory reset successfully.`)
+          timer.lap('resetMem')
         } catch (memError) {
           log.error({ memError }, `[${sessionId}] Failed to reset AI memory`)
         }
@@ -1109,6 +1133,9 @@ export class InterviewService {
       }
       // 프론트에 세션 평가가 종료되었음을 알림
       io.to(sessionId).emit('server:evaluation-finished', { sessionId })
+      log.info(
+        `[${sessionId}] handleNextMain (finish) completed | perf: ${JSON.stringify(timer.summary())}`,
+      )
     } else {
       log.info(
         `[${sessionId}] Moving to next main question index: ${nextIndex}`,
@@ -1117,18 +1144,19 @@ export class InterviewService {
         where: { id: sessionId },
         data: { currentQuestionIndex: nextIndex },
       })
+      timer.lap('updateIdx')
       const nextStep = mainQuestions[nextIndex]
       await this.aiClient.logQuestionAsked(
         this.formatStepToQuestionAsked(nextStep),
         sessionId,
       )
-      log.info(`[${sessionId}] Next question logged to AI memory.`)
+      timer.lap('memLog')
 
       // STT 토큰 및 오디오 생성
       const sttToken = await this.generateSttToken(sessionId, session.userId)
-      console.time('tts')
+      timer.lap('stt')
       const audioBase64 = await ttsService.generate(nextStep.question)
-      console.timeEnd('tts')
+      timer.lap('tts')
 
       io.to(sessionId).emit('server:next-question', {
         step: nextStep,
@@ -1136,6 +1164,9 @@ export class InterviewService {
         audioBase64,
         sttToken: sttToken.data.value,
       })
+      log.info(
+        `[${sessionId}] handleNextMain (next) completed | perf: ${JSON.stringify(timer.summary())}`,
+      )
     }
   }
 }

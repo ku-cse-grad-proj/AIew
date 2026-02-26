@@ -1,3 +1,4 @@
+import asyncio
 import os
 import tempfile
 
@@ -35,7 +36,9 @@ async def upload_video(
         if not file.filename:
             file.filename = ""
 
-        results = service.process_and_persist(tmp_path, file.filename)
+        results = await asyncio.to_thread(
+            service.process_and_persist, tmp_path, file.filename
+        )
 
         return EmotionGroupResult(
             file_name=file.filename,

@@ -1,4 +1,6 @@
 import json
+import logging
+import time
 from typing import Any, Dict, Optional, cast
 
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -9,6 +11,8 @@ from app.models.event_types import EventType
 from app.models.followup import FollowupRequest, FollowupResponse
 from app.services.memory_logger import MemoryLogger
 from app.utils.llm_utils import PROMPT_BASE_DIR, llm, load_prompt_template
+
+logger = logging.getLogger(__name__)
 
 PROMPT_PATH = (PROMPT_BASE_DIR / "followup_prompt.txt").resolve()
 
@@ -83,7 +87,12 @@ class FollowupGeneratorService:
             "evaluation_summary": req.evaluationSummary or "",
         }
 
+        start = time.perf_counter()
         result = cast(FollowupResponse, chain.invoke(vars, config=run_config or {}))
+        duration_ms = round((time.perf_counter() - start) * 1000)
+        logger.info(
+            f"[{self.session_id}] generate_followups chain.invoke completed in {duration_ms}ms"
+        )
 
         norm = self._normalize_items(result, req)
         return FollowupResponse.model_validate(norm)

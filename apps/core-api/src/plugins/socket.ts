@@ -3,6 +3,7 @@ import fp from 'fastify-plugin'
 import { Server, Socket } from 'socket.io'
 
 import { InterviewStep, User } from '@/generated/prisma/client'
+import { createPerfTimer } from '@/utils/perf-timer'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -273,16 +274,17 @@ export default fp(
           }
 
           if (currentQuestion) {
+            const readyTimer = createPerfTimer()
             const sttToken = await fastify.interviewService.generateSttToken(
               sessionId,
               socket.user.id,
             )
+            readyTimer.lap('stt')
 
-            console.time('tts')
             const audioBase64 = await fastify.ttsService.generate(
               currentQuestion.question,
             )
-            console.timeEnd('tts')
+            readyTimer.lap('tts')
 
             socket.emit('server:next-question', {
               step: currentQuestion,
@@ -290,6 +292,9 @@ export default fp(
               audioBase64,
               sttToken: sttToken.data.value,
             })
+            fastify.log.info(
+              `[${sessionId}] client:ready completed | perf: ${JSON.stringify(readyTimer.summary())}`,
+            )
           }
           // 다른 상태(COMPLETED, FAILED 등)에서는 아무것도 보내지 않음
         } catch (error) {
@@ -372,6 +377,7 @@ export default fp(
               throw new Error('Session ID not found in socket context.')
             }
 
+            const uploadTimer = createPerfTimer()
             fastify.log.info(
               `[${socket.sessionId}] Starting emotion analysis for step ${p.stepId}...`,
             )
@@ -379,6 +385,7 @@ export default fp(
               file,
               socket.sessionId,
             )
+            uploadTimer.lap('emotion')
 
             // DB에 감정 분석 결과 저장
             await fastify.prisma.emotionAnalysis.create({
@@ -400,9 +407,10 @@ export default fp(
                 },
               },
             })
+            uploadTimer.lap('saveEmotion')
 
             fastify.log.info(
-              `[${socket.sessionId}] Emotion analysis completed and saved for step ${p.stepId}.`,
+              `[${socket.sessionId}] upload-finish completed for step ${p.stepId} | perf: ${JSON.stringify(uploadTimer.summary())}`,
             )
           } catch (error) {
             fastify.log.error(
