@@ -8,6 +8,7 @@ from app.models.evaluation import (
 )
 from app.services.answer_evaluator import EvaluationService
 from app.services.memory_logger import MemoryManager
+from app.utils.langfuse_handler import build_langfuse_config
 
 router = APIRouter()
 
@@ -24,8 +25,9 @@ def evaluate_answer(
     memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> AnswerEvaluationResult:
     service = EvaluationService(memory=memory, session_id=x_session_id)
+    run_config = build_langfuse_config(session_id=x_session_id, tags=["answer-eval"])
 
-    return service.evaluate_answer(req)
+    return service.evaluate_answer(req, run_config=run_config)
 
 
 @router.post(
@@ -39,5 +41,6 @@ def evaluate_session(
     memory: BaseChatMessageHistory = Depends(MemoryManager.MemoryDep),
 ) -> SessionEvaluationResult:
     service = EvaluationService(memory=memory, session_id=x_session_id)
+    run_config = build_langfuse_config(session_id=x_session_id, tags=["session-eval"])
 
-    return service.evaluate_session()
+    return service.evaluate_session(run_config=run_config)

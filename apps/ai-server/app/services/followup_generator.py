@@ -1,6 +1,5 @@
 import json
 import logging
-import time
 from typing import Any, Dict, Optional, cast
 
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -87,12 +86,7 @@ class FollowupGeneratorService:
             "evaluation_summary": req.evaluationSummary or "",
         }
 
-        start = time.perf_counter()
         result = cast(FollowupResponse, chain.invoke(vars, config=run_config or {}))
-        duration_ms = round((time.perf_counter() - start) * 1000)
-        logger.info(
-            f"[{self.session_id}] generate_followups chain.invoke completed in {duration_ms}ms"
-        )
 
         norm = self._normalize_items(result, req)
         return FollowupResponse.model_validate(norm)
