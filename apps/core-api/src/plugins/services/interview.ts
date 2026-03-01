@@ -259,15 +259,14 @@ export class InterviewService {
       timer.lap('saveAnswer')
 
       // 질문과 답변을 랭체인 메모리에 추가
-      // 꼬리질문인 경우 aiQuestionId에서 부모 ID 추출 (q1-fu1 → q1)
-      const parentAiQuestionId = currentStep.parentStepId
-        ? currentStep.aiQuestionId.split('-')[0]
-        : undefined
-      await this.aiClient.logQuestionAsked(
-        this.formatStepToQuestionAsked(currentStep, parentAiQuestionId),
-        sessionId,
-      )
-      timer.lap('memQ')
+      // 꼬리질문은 handleFollowupQuestion()에서 이미 기록됨 → 메인 질문만 기록
+      if (!currentStep.parentStepId) {
+        await this.aiClient.logQuestionAsked(
+          this.formatStepToQuestionAsked(currentStep),
+          sessionId,
+        )
+        timer.lap('memQ')
+      }
 
       await this.aiClient.logAnswerReceived(
         {
