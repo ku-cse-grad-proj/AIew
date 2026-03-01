@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
 from fastapi import FastAPI
+from langfuse import Langfuse
 
 from app.api.v1.endpoints import (
     emotion,
@@ -35,6 +36,7 @@ async def lifespan(app: FastAPI):
 
     yield
     # Shutdown
+    Langfuse().shutdown()
 
 
 app = FastAPI(title="AIew", version="1.0.0", lifespan=lifespan)
