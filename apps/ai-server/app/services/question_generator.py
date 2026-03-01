@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import Any, Dict, List, Optional, cast
 
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -85,12 +84,7 @@ class QuestionGeneratorService:
             "seed": constraints.seed if constraints.seed is not None else "null",
         }
 
-        start = time.perf_counter()
         result = cast(QuestionListOutput, chain.invoke(vars, config=run_config or {}))
-        duration_ms = round((time.perf_counter() - start) * 1000)
-        logger.info(
-            f"[{self.session_id}] generate_questions chain.invoke completed in {duration_ms}ms"
-        )
 
         norm = self._normalize_items(result.main_questions)
         final = self._dedupe_and_enforce(norm, constraints.avoid_question_ids)
