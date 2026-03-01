@@ -40,7 +40,9 @@ class FollowupRequest(BaseModel):
 
 
 class FollowupResponse(BaseModel):
-    followupId: str = Field(..., description="꼬리질문 ID (예: q1-fu1)")
+    followupId: Optional[str] = Field(
+        None, description="꼬리질문 ID (서비스 레벨에서 채번)"
+    )
     parentQuestionId: str = Field(..., description="부모 메인 질문 ID")
     focusCriteria: List[str] = Field(
         default_factory=list, description="파고들 포커스 기준"
@@ -71,7 +73,7 @@ class FollowupResponse(BaseModel):
         ]
         return cleaned if cleaned else ["N/A"]
 
-    @field_validator("followupId", "parentQuestionId", "rationale", mode="before")
+    @field_validator("parentQuestionId", "rationale", mode="before")
     @classmethod
     def clean_string(cls, v: Any) -> Any:
         if not isinstance(v, str) or v.lower() in ("", "none", "null"):
@@ -93,7 +95,6 @@ class FollowupResponse(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
-                "followupId": "q3-fu1",
                 "parentQuestionId": "q3",
                 "focusCriteria": ["성능 개선", "캐싱 전략"],
                 "rationale": "사용자가 API 성능 최적화에 대해 구체적인 기술과 방법론을 언급했으나, 캐싱 전략과 네트워크 최적화에 대한 상세한 설명이 부족했습니다. 따라서 이 꼬리질문을 통해 해당 부분을 집중적으로 파고들어 사용자의 깊은 이해도를 평가하고자 합니다.",
