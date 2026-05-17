@@ -39,6 +39,36 @@ const testMachine = interviewMachine.provide({
   },
 })
 
+/**
+ * wire contract 검증용 머신 빌더.
+ *
+ * 기존 testMachine 은 socketActor 를 noop 으로 대체해 머신의 state 전이만
+ * 검증한다. 하지만 PR #208 f9c9792 가 노출한 한계 — 머신이 socketActor 로
+ * sendTo 한 메시지의 payload 키/타입이 빠져 있어도 unit test 는 통과하고
+ * 실 서버에서 throw 한 점 — 을 회귀로 잡으려면 머신이 actor 로 보낸 메시지
+ * 자체를 캡처해 검증해야 한다.
+ *
+ * 패턴: socketActor 를 fromCallback 으로 대체하되 receive 콜백 안에서
+ * vi.fn() spy 를 호출 → spy.mock.calls 로 머신이 sendTo 한 메시지를 검사.
+ */
+function buildSpyMachine() {
+  const socketActorSpy = vi.fn()
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const spyMachine = interviewMachine.provide({
+    actors: {
+      socketActor: fromCallback(({ receive }) => {
+        receive((event) => socketActorSpy(event))
+        return () => {}
+      }) as any,
+      sttActor: noopCallbackActor as any,
+      audioActor: noopPromiseActor as any,
+      elapsedTickActor: noopCallbackActor as any,
+    },
+  })
+  return { spyMachine, socketActorSpy }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+}
+
 const baseInput: InterviewInput = {
   sessionId: 'test-session',
   url: 'http://mock',
@@ -453,6 +483,152 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
       // (Phase 2.2 컴포넌트 단계에서 실제 listener leak 검증 추가 예정)
       // 본 단계에서는 actor lifecycle 분리 검증으로 충분
       expect(cleanupSpy).toBeDefined()
+    })
+  })
+
+  // ─── wire contract — socketActor 메시지 ───────────────────────────────
+  //
+  // 머신이 socketActor 로 sendTo 한 메시지의 payload 시그니처를 직접 검증.
+  // f9c9792 가 fix 한 startAt/endAt 누락 회귀를 잡기 위한 안전망 (spec §5.3).
+  // 기존 12개 시나리오는 state 전이만 보았기에 wire contract 위반이 회귀에
+  // 안 잡혔던 점을 해결.
+
+  describe('wire contract — socketActor 메시지', () => {
+    /** spy 머신을 stepFinished 까지 진행시켜 SUBMIT_ANSWER 가 발화되도록 한다 */
+    function advanceSpyToStepFinished(
+      actor: ReturnType<typeof createActor<typeof testMachine>>,
+    ) {
+      actor.send({
+        type: 'CONNECT',
+        payload: { elapsedSec: 0, questions: [] },
+      })
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+      actor.send({ type: 'AUDIO_PLAYED' })
+      actor.send({ type: 'STT_READY' })
+      actor.send({ type: 'START_ANSWER' })
+      actor.send({ type: 'TRANSCRIBE' })
+      actor.send({ type: 'STT_FINISH', sentences: '답변 텍스트' })
+      actor.send({ type: 'FINISH_ANSWER' })
+    }
+
+    it('SUBMIT_ANSWER 페이로드는 5필드(stepId/answer/duration/startAt/endAt) 모두 포함', () => {
+      const { spyMachine, socketActorSpy } = buildSpyMachine()
+      const actor = createActor(spyMachine, { input: baseInput }).start()
+
+      advanceSpyToStepFinished(actor)
+
+      // stepFinished 진입 → entry: submitAnswerToSocket 발화
+      expect(actor.getSnapshot().matches({ session: 'stepFinished' })).toBe(
+        true,
+      )
+
+      const submitCall = socketActorSpy.mock.calls.find(
+        ([event]) => event?.type === 'SUBMIT_ANSWER',
+      )
+      expect(submitCall).toBeDefined()
+      const [submitEvent] = submitCall!
+      expect(submitEvent).toEqual(
+        expect.objectContaining({
+          type: 'SUBMIT_ANSWER',
+          payload: expect.objectContaining({
+            stepId: expect.any(String),
+            answer: expect.any(String),
+            duration: expect.any(Number),
+            // f9c9792 회귀 안전망 — 두 필드가 누락되면 서버에서
+            // ANSWER_PROCESSING_FAILED 로 throw.
+            startAt: expect.any(Number),
+            endAt: expect.any(Number),
+          }),
+        }),
+      )
+
+      // payload 값 sanity — answer 와 stepId 가 context 와 일치
+      const payload = (submitEvent as { payload: Record<string, unknown> })
+        .payload
+      expect(payload.stepId).toBe('step-1')
+      expect(payload.answer).toBe('답변 텍스트')
+      // startAt/endAt 은 Date.now() — number 타입으로 들어가야. (fake timer 환경
+      // 에서는 둘 다 같은 mock 시각이 될 수 있으므로 값 비교가 아닌 타입/필드
+      // 존재만 검증. 핵심은 5개 키가 모두 payload 에 들어 있다는 점.)
+      expect(typeof payload.startAt).toBe('number')
+      expect(typeof payload.endAt).toBe('number')
+      // f9c9792 이전 머신 코드는 payload 에 startAt/endAt 키 자체가 없어
+      // 두 값이 undefined → 서버에서 new Date(undefined) → Invalid Date.
+      // 본 테스트는 그 회귀를 잡는 것이 목적.
+      expect(payload).toHaveProperty('startAt')
+      expect(payload).toHaveProperty('endAt')
+    })
+
+    it('TICK_ELAPSED 수신 시 socketActor 에 elapsedSec 함께 forward', () => {
+      const { spyMachine, socketActorSpy } = buildSpyMachine()
+      const actor = createActor(spyMachine, { input: baseInput }).start()
+
+      actor.send({
+        type: 'CONNECT',
+        payload: { elapsedSec: 0, questions: [] },
+      })
+
+      // elapsedTickActor 가 1초마다 보낸다고 가정 — 직접 send 로 시뮬레이션
+      actor.send({ type: 'TICK_ELAPSED' })
+
+      const tickCall = socketActorSpy.mock.calls.find(
+        ([event]) => event?.type === 'TICK_ELAPSED',
+      )
+      expect(tickCall).toBeDefined()
+      const [tickEvent] = tickCall!
+      expect(tickEvent).toEqual(
+        expect.objectContaining({
+          type: 'TICK_ELAPSED',
+          elapsedSec: expect.any(Number),
+        }),
+      )
+      // incrementElapsed action 이 forwardTickToSocket 보다 먼저 실행되므로
+      // forward 시점의 context.elapsedSec 은 최소 1.
+      expect(
+        (tickEvent as { elapsedSec: number }).elapsedSec,
+      ).toBeGreaterThanOrEqual(1)
+    })
+
+    it('SUBMIT_ANSWER 는 매 답변마다 정확히 1회 forward (중복 발화 없음)', () => {
+      const { spyMachine, socketActorSpy } = buildSpyMachine()
+      const actor = createActor(spyMachine, { input: baseInput }).start()
+
+      // 1번째 답변 — stepFinished 진입까지
+      advanceSpyToStepFinished(actor)
+
+      // 같은 stepId 의 QUESTION_READY 가 또 와도 isNewStep guard 가 차단 →
+      // 새 SUBMIT_ANSWER 발화 안 함
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+
+      // 2번째 step — stepFinished 까지 진행
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion2, questions: sampleBundles },
+      })
+      actor.send({ type: 'AUDIO_PLAYED' })
+      actor.send({ type: 'STT_READY' })
+      actor.send({ type: 'START_ANSWER' })
+      actor.send({ type: 'TRANSCRIBE' })
+      actor.send({ type: 'STT_FINISH', sentences: '답변 2' })
+      actor.send({ type: 'FINISH_ANSWER' })
+
+      const submitCalls = socketActorSpy.mock.calls.filter(
+        ([event]) => event?.type === 'SUBMIT_ANSWER',
+      )
+      // 2개 답변 → 정확히 2회
+      expect(submitCalls).toHaveLength(2)
+      expect(
+        (submitCalls[0][0] as { payload: { stepId: string } }).payload.stepId,
+      ).toBe('step-1')
+      expect(
+        (submitCalls[1][0] as { payload: { stepId: string } }).payload.stepId,
+      ).toBe('step-2')
     })
   })
 })
