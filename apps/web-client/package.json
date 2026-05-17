@@ -66,7 +66,6 @@
     "eslint-plugin-storybook": "^10.1.11",
     "jsdom": "^27.2.0",
     "playwright": "^1.57.0",
-    "socket.io": "^4.8.1",
     "storybook": "^10.1.11",
     "style-dictionary": "^5.1.1",
     "tailwindcss": "^4.1.11",
