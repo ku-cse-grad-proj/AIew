@@ -1,4 +1,4 @@
-import { assign, setup, stateIn } from 'xstate'
+import { assign, sendTo, setup, stateIn } from 'xstate'
 
 import type {
   CurrentQuestion,
@@ -95,6 +95,29 @@ export const interviewMachine = setup({
       if (event.type !== 'SERVER_ERROR') return {}
       return { error: event.payload }
     }),
+    incrementElapsed: assign(({ context }) => ({
+      elapsedSec: context.elapsedSec + 1,
+    })),
+    forwardTickToSocket: sendTo('socketActor', ({ context }) => ({
+      type: 'TICK_ELAPSED' as const,
+      elapsedSec: context.elapsedSec,
+    })),
+    forwardStartAnswerToStt: sendTo('sttActor', { type: 'START_ANSWER' }),
+    forwardFinishAnswerToStt: sendTo('sttActor', { type: 'FINISH_ANSWER' }),
+    submitAnswerToSocket: sendTo('socketActor', ({ context }) => ({
+      type: 'SUBMIT_ANSWER' as const,
+      payload: {
+        stepId: context.currentQuestion.stepId,
+        answer: context.answer.sentences,
+        duration: Math.max(
+          0,
+          Math.floor((context.answer.endAt - context.answer.startAt) / 1000),
+        ),
+      },
+    })),
+    callRevalidate: ({ context }) => {
+      context.revalidate?.(context.sessionId)
+    },
   },
 }).createMachine({
   id: 'interview',
@@ -113,17 +136,34 @@ export const interviewMachine = setup({
     error: null,
     redirectAfterMs: 3000,
     preReportReady: false,
+    revalidate: input.revalidate,
   }),
+  invoke: [
+    {
+      id: 'socketActor',
+      src: 'socketActor',
+      input: ({ context }) => ({
+        sessionId: context.sessionId,
+        url: context.url,
+      }),
+    },
+    {
+      id: 'elapsedTickActor',
+      src: 'elapsedTickActor',
+    },
+  ],
   on: {
     SERVER_ERROR: {
       target: '#error',
       actions: 'assignError',
     },
+    TICK_ELAPSED: {
+      actions: ['incrementElapsed', 'forwardTickToSocket'],
+    },
   },
   initial: 'session',
   states: {
     session: {
-      // TODO(Phase 2.2): invoke socketActor, elapsedTickActor 컴포넌트 단계에서
       initial: 'notConnected',
       states: {
         notConnected: {
@@ -151,16 +191,31 @@ export const interviewMachine = setup({
         },
         step: {
           id: 'step',
-          // TODO(Phase 2.2): invoke sttActor, audioActor 컴포넌트 단계에서
           initial: 'questionPlaying',
+          invoke: {
+            id: 'sttActor',
+            src: 'sttActor',
+            input: ({ context }) => ({
+              sttToken: context.currentQuestion.sttToken,
+            }),
+          },
           on: {
             REDO_ANSWER: {
               target: '.ready',
-              actions: 'redoAnswer',
+              actions: ['redoAnswer', 'forwardFinishAnswerToStt'],
             },
           },
           states: {
             questionPlaying: {
+              invoke: {
+                id: 'audioActor',
+                src: 'audioActor',
+                input: ({ context }) => ({
+                  audioBase64: context.currentQuestion.audioBase64 ?? '',
+                }),
+                onDone: { target: 'idle' },
+                onError: { target: 'idle' },
+              },
               on: {
                 AUDIO_PLAYED: { target: 'idle' },
               },
@@ -175,7 +230,7 @@ export const interviewMachine = setup({
               on: {
                 START_ANSWER: {
                   target: 'answering',
-                  actions: 'assignStartAt',
+                  actions: ['assignStartAt', 'forwardStartAnswerToStt'],
                 },
               },
             },
@@ -216,11 +271,17 @@ export const interviewMachine = setup({
                           {
                             guard: 'sttIsTranscribed',
                             target: ['done', '#stt.done'],
-                            actions: 'assignEndAt',
+                            actions: [
+                              'assignEndAt',
+                              'forwardFinishAnswerToStt',
+                            ],
                           },
                           {
                             target: ['sttWaiting', '#stt.done'],
-                            actions: 'assignEndAt',
+                            actions: [
+                              'assignEndAt',
+                              'forwardFinishAnswerToStt',
+                            ],
                           },
                         ],
                       },
@@ -251,8 +312,19 @@ export const interviewMachine = setup({
         },
         stepFinished: {
           id: 'stepFinished',
-          // TODO(Phase 2.2): entry sendTo socketActor SUBMIT_ANSWER
+          // 답변 제출은 socketActor 에 위임. 서버가 다음 next-question 을 push 할
+          // 때까지 본 상태에 머무름. QUESTION_READY 도착 시 새 step 으로 자동 전이.
+          entry: 'submitAnswerToSocket',
           on: {
+            QUESTION_READY: {
+              guard: 'isNewStep',
+              target: 'step',
+              actions: 'assignQuestionReady',
+            },
+            FINISH_INTERVIEW: { target: '#interviewFinished' },
+            REPORT_READY: {
+              actions: 'markPreReportReady',
+            },
             SUBMIT_FINISH: { target: '#connected' },
           },
         },
@@ -261,7 +333,7 @@ export const interviewMachine = setup({
     interviewFinished: {
       id: 'interviewFinished',
       initial: 'waitingReport',
-      // TODO(Phase 2.2): entry revalidate(sessionId)
+      entry: 'callRevalidate',
       states: {
         waitingReport: {
           always: [

@@ -1,15 +1,13 @@
 'use client'
 
-import { useShallow } from 'zustand/shallow'
-
-import { useInterviewStore } from '@/app/lib/socket/interviewStore'
+import { InterviewContext } from '../../_machine/interviewContext'
 
 export default function QuestionList() {
-  const { questions, currentQuestion } = useInterviewStore(
-    useShallow((state) => ({
-      questions: state.questions,
-      currentQuestion: state.current?.text,
-    })),
+  const questions = InterviewContext.useSelector(
+    (state) => state.context.questions,
+  )
+  const currentText = InterviewContext.useSelector(
+    (state) => state.context.currentQuestion.text,
   )
   return (
     <div className="w-full h-full p-8 overflow-y-auto">
@@ -18,9 +16,7 @@ export default function QuestionList() {
           {/* main 질문 */}
           <h4
             className={
-              q.main === currentQuestion
-                ? 'font-medium'
-                : 'text-neutral-subtext'
+              q.main === currentText ? 'font-medium' : 'text-neutral-subtext'
             }
           >
             Q{i + 1}. {q.main}
@@ -32,7 +28,7 @@ export default function QuestionList() {
                 <li
                   key={j}
                   className={
-                    f === currentQuestion
+                    f === currentText
                       ? 'font-medium p-4'
                       : 'text-neutral-subtext p-4'
                   }

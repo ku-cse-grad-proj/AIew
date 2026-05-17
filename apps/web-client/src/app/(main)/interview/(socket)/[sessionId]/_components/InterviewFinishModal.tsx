@@ -2,21 +2,45 @@
 
 import { LoaderCircle } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+
+import { InterviewContext } from '../_machine/interviewContext'
 
 import Modal from './Modal'
 
-import useInterviewFinish from '@/app/hooks/useInterviewFinish'
 import { ButtonLink } from '@/components/ButtonLink/ButtonLink'
 
 export default function InterviewFinishModal({
-  sessionId,
   status,
 }: {
   sessionId: string
   status: string
 }) {
-  const { finished, reportReady, remainingSeconds } =
-    useInterviewFinish(sessionId)
+  const finished = InterviewContext.useSelector((state) =>
+    state.matches('interviewFinished'),
+  )
+  const reportReady = InterviewContext.useSelector(
+    (state) =>
+      state.matches({ interviewFinished: 'reportReady' }) ||
+      state.matches({ interviewFinished: 'redirecting' }),
+  )
+
+  // 3초 카운트다운 — 머신이 reportReady 진입 시 시작
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null)
+  useEffect(() => {
+    if (!reportReady) {
+      setRemainingSeconds(null)
+      return
+    }
+    setRemainingSeconds(3)
+    const interval = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev === null) return prev
+        return prev > 1 ? prev - 1 : 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [reportReady])
 
   //완료된 인터뷰에 접근시 뒤로 돌아가게 유도
   if (status === 'COMPLETED' && !finished && !reportReady) {

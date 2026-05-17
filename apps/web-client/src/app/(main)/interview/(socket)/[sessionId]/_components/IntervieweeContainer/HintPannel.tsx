@@ -2,8 +2,9 @@
 
 import type { ReactNode } from 'react'
 
+import { InterviewContext } from '../../_machine/interviewContext'
+
 import Cancel from '@/../public/icons/cancel.svg'
-import { useInterviewStore } from '@/app/lib/socket/interviewStore'
 
 const Entry = ({ children }: { children: ReactNode }) => {
   return <div className="w-full flex">{children}</div>
@@ -38,7 +39,9 @@ export default function HintPannel({
   className?: string
   onClick?: () => void
 }) {
-  const current = useInterviewStore((state) => state.current)
+  const current = InterviewContext.useSelector(
+    (state) => state.context.currentQuestion,
+  )
 
   return (
     <div

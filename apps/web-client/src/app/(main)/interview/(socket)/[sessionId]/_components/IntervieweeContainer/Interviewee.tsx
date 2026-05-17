@@ -1,32 +1,39 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { env } from 'next-runtime-env'
 import { useEffect, useRef } from 'react'
-import { useShallow } from 'zustand/shallow'
+import { io, type Socket } from 'socket.io-client'
 
-import { useAnswerStore } from '@/app/lib/answerStore'
-import { interviewSocket } from '@/app/lib/socket/interviewSocket'
+import { InterviewContext } from '../../_machine/interviewContext'
 
+/**
+ * Phase 2.2 — answerStore 의 stepId/startAt/endAt 을 머신 context 로부터 구독.
+ *
+ * 비디오 업로드용 socket 은 면접 머신과 별개의 채널로 단순 emit 만 수행.
+ * (옛 코드는 interviewSocket 싱글톤 사용. Phase 2.2 단계에서는 zustand store
+ * 의존을 제거하고 자체 socket 인스턴스로 emit. socket 분리는 별 PR에서 통합.)
+ */
 export default function Interviewee() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const recordRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const uploadSocketRef = useRef<Socket | null>(null)
   const router = useRouter()
 
-  //TODO:: redo일 때 어떻게 할지 고민할 것
-  const { stepId, startAt, endAt } = useAnswerStore(
-    useShallow((state) => ({
-      stepId: state.stepId,
-      startAt: state.startAt,
-      endAt: state.endAt,
-      isRedo: state.isRedo,
-    })),
+  const stepId = InterviewContext.useSelector(
+    (state) => state.context.currentQuestion.stepId,
+  )
+  const startAt = InterviewContext.useSelector(
+    (state) => state.context.answer.startAt,
+  )
+  const endAt = InterviewContext.useSelector(
+    (state) => state.context.answer.endAt,
   )
 
   useEffect(() => {
     const setupStream = async () => {
-      //브라우저가 장치를 접근하지 못할 때
       if (!navigator.mediaDevices?.getUserMedia) {
         alert(
           '해당 브라우저는 카메라/마이크를 지원하지 않아 interview를 진행할 수 없습니다',
@@ -38,7 +45,6 @@ export default function Interviewee() {
       if (streamRef.current) return
 
       try {
-        //화면에 보이는 곳은 30frame으로 송출
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             width: { ideal: 1280 },
@@ -47,7 +53,6 @@ export default function Interviewee() {
           },
         })
         streamRef.current = stream
-        //video component와 연결
         if (videoRef.current) {
           videoRef.current.srcObject = stream
           await videoRef.current.play().catch(() => {})
@@ -75,6 +80,11 @@ export default function Interviewee() {
 
     setupStream()
 
+    const url = env('NEXT_PUBLIC_SOCKET_URL') ?? ''
+    if (url) {
+      uploadSocketRef.current = io(url, { withCredentials: true })
+    }
+
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop())
@@ -83,8 +93,10 @@ export default function Interviewee() {
       if (videoRef.current) {
         videoRef.current.srcObject = null
       }
+      uploadSocketRef.current?.disconnect()
+      uploadSocketRef.current = null
     }
-  }, [])
+  }, [router])
 
   async function startRec() {
     if (!streamRef.current) {
@@ -92,16 +104,15 @@ export default function Interviewee() {
       return
     }
 
-    //기존 stream을 복제해 1frame로 변환
     const v = streamRef.current.getVideoTracks()[0]
     const recVideo = v.clone()
     await recVideo.applyConstraints({
       width: 1280,
       height: 720,
       frameRate: { ideal: 1, max: 1 },
-    }) // 또는 1fps
+    })
     const recStream = new MediaStream([recVideo])
-    const rec = new MediaRecorder(recStream) //브라우저 default 값으로 mimeType 설정
+    const rec = new MediaRecorder(recStream)
 
     let index = 0
 
@@ -109,7 +120,7 @@ export default function Interviewee() {
       if (e.data && e.data.size > 0) {
         chunksRef.current.push(e.data)
         const arrayBuffer = await e.data.arrayBuffer()
-        interviewSocket.emit('client:upload-chunk', {
+        uploadSocketRef.current?.emit('client:upload-chunk', {
           stepId,
           chunk: arrayBuffer,
           index: index++,
@@ -117,22 +128,12 @@ export default function Interviewee() {
       }
     }
 
-    rec.onstop = async () => {
+    rec.onstop = () => {
       try {
-        interviewSocket.emit('client:upload-finish', {
+        uploadSocketRef.current?.emit('client:upload-finish', {
           stepId,
           type: rec.mimeType,
         })
-
-        //file download
-        // const url = URL.createObjectURL(file)
-        // const a = document.createElement('a')
-        // a.href = url
-        // a.download = filename
-        // a.style.display = 'none'
-        // document.body.appendChild(a)
-        // a.click()
-
         chunksRef.current = []
       } catch (e) {
         console.error(e)
@@ -140,7 +141,6 @@ export default function Interviewee() {
     }
 
     recordRef.current = rec
-
     rec.start(1000)
   }
 
@@ -161,6 +161,7 @@ export default function Interviewee() {
     }
     handleRecording()
   }, [startAt, endAt])
+
   return (
     <video
       ref={videoRef}

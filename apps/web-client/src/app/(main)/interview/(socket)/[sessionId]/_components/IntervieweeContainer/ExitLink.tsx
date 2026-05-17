@@ -1,14 +1,17 @@
 'use client'
 import Link from 'next/link'
 
+import { InterviewContext } from '../../_machine/interviewContext'
+
 import Exit from '@/../public/icons/exit.svg'
-import { useInterviewStore } from '@/app/lib/socket/interviewStore'
 
 export default function ExitLink() {
-  const finished = useInterviewStore((state) => state.finished)
+  const finished = InterviewContext.useSelector((state) =>
+    state.matches('interviewFinished'),
+  )
   return (
     <Link
-      className={`w-full flex items-center justify-center gap-10 py-12 rounded-[10px] 
+      className={`w-full flex items-center justify-center gap-10 py-12 rounded-[10px]
         ${finished ? 'bg-primary text-neutral-card' : 'outline outline-1 outline-neutral-subtext text-neutral-subtext'}`}
       href={'/interview'}
       onNavigate={(e) => {

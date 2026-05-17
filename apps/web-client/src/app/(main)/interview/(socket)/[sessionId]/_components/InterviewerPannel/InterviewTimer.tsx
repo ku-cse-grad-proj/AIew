@@ -1,39 +1,43 @@
 'use client'
 import Image from 'next/image'
-import { useEffect, useRef } from 'react'
-import { useShallow } from 'zustand/shallow'
+import { useEffect, useRef, useState } from 'react'
 
-import { useInterviewStore } from '@/app/lib/socket/interviewStore'
+import { InterviewContext } from '../../_machine/interviewContext'
 
+/**
+ * Phase 2.2 — Zustand 기반 elapsedSec setter 제거.
+ *
+ * - 서버에서 받은 `elapsedSec` (CONNECT 시점 갱신) 을 기준으로 화면 표시.
+ * - 0.5 초 마다 view-only 로 다시 그림.
+ * - 서버 동기화는 머신의 `elapsedTickActor` 가 1초 주기로 처리하므로 본 컴포넌트는
+ *   순수 표시 로직만 담당.
+ */
 export default function InterviewTimer() {
-  const { elapsedSec, setElapsedSec } = useInterviewStore(
-    useShallow((state) => ({
-      elapsedSec: state.elapsedSec,
-      setElapsedSec: state.setElapsedSec,
-    })),
+  const elapsedSec = InterviewContext.useSelector(
+    (state) => state.context.elapsedSec,
   )
 
-  // 타이머 시작 시점
-  const startAtRef = useRef(elapsedSec ?? 0)
+  // 시작 시점 보정 — 서버에서 받은 elapsedSec 가 갱신될 때 reset
+  const startAtRef = useRef(Date.now() - elapsedSec * 1000)
+  const [displayed, setDisplayed] = useState(elapsedSec)
 
-  // 서버로부터 elapsedSec가 업데이트되면 타이머 시작 시점 보정
   useEffect(() => {
     startAtRef.current = Date.now() - elapsedSec * 1000
+    setDisplayed(elapsedSec)
   }, [elapsedSec])
 
-  // 0.5초마다 경과 시간 갱신
   useEffect(() => {
     const interval = setInterval(() => {
-      setElapsedSec(Math.floor((Date.now() - startAtRef.current) / 1000))
+      setDisplayed(Math.floor((Date.now() - startAtRef.current) / 1000))
     }, 500)
     return () => {
       clearInterval(interval)
     }
-  }, [setElapsedSec])
+  }, [])
 
-  const min = String(Math.floor(elapsedSec / 60)).padStart(2, '0')
-  const sec = String(elapsedSec % 60).padStart(2, '0')
-  const hour = String(Math.floor(elapsedSec / 3600)).padStart(2, '0')
+  const min = String(Math.floor(displayed / 60)).padStart(2, '0')
+  const sec = String(displayed % 60).padStart(2, '0')
+  const hour = String(Math.floor(displayed / 3600)).padStart(2, '0')
 
   return (
     <div className="px-10 py-6 inline-flex items-center gap-4 rounded-[10px] bg-neutral-background">

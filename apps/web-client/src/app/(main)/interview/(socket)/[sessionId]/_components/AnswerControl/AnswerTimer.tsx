@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from 'react'
 
-import { useAnswerStore } from '@/app/lib/answerStore'
+import { InterviewContext } from '../../_machine/interviewContext'
 
 export default function AnswerTimer() {
-  const startAt = useAnswerStore((state) => state.startAt)
+  const startAt = InterviewContext.useSelector(
+    (state) => state.context.answer.startAt,
+  )
   const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
-    if (!startAt) return
+    if (!startAt) {
+      setElapsed(0)
+      return
+    }
 
-    //500ms마다 경과 시간 업데이트
+    setElapsed(Math.floor((Date.now() - startAt) / 1000))
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - startAt) / 1000))
     }, 500)

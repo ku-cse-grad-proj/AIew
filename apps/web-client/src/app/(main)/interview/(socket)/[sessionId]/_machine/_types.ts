@@ -32,6 +32,8 @@ export type InterviewContext = {
   redirectAfterMs: number
   /** evaluation-finished 가 interview-finished 보다 먼저 도착 시 보관 */
   preReportReady: boolean
+  /** Next.js cache invalidation 콜백 — input 으로 받아 context 에 보관 */
+  revalidate: (sessionId: string) => void
 }
 
 export type InterviewInput = {

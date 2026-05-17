@@ -10,10 +10,34 @@
  * 자소서: "12가지 비정상 시나리오를 포함한 통합 테스트를 설계"
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createActor } from 'xstate'
+import { createActor, fromCallback, fromPromise } from 'xstate'
 
 import type { CurrentQuestion, InterviewInput, QuestionBundle } from '../_types'
 import { interviewMachine } from '../interviewMachine'
+
+/**
+ * 머신 단위 테스트용 no-op actor 들. 본 테스트는 머신의 전이/guard/action
+ * 만 검증하므로 실제 socket/RTC/Audio/setInterval 부수효과를 제거한다.
+ * Phase 2.2 — 컴포넌트 단계에서 실제 actor 가 연결된 후에도 본 unit test 는
+ * mock actor 로 머신의 순수 로직만 검증.
+ */
+const noopCallbackActor = fromCallback(() => () => {})
+const noopPromiseActor = fromPromise(async () => {})
+
+const testMachine = interviewMachine.provide({
+  actors: {
+    // setup() 에서 등록된 정확한 타입과 다른 mock actor 를 provide 하기 위해 cast.
+    // 머신 unit test 는 실제 actor 의 side-effect 가 아닌 머신 전이/guard/action 만 검증.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    socketActor: noopCallbackActor as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sttActor: noopCallbackActor as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    audioActor: noopPromiseActor as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    elapsedTickActor: noopCallbackActor as any,
+  },
+})
 
 const baseInput: InterviewInput = {
   sessionId: 'test-session',
@@ -43,7 +67,7 @@ const sampleQuestion2: CurrentQuestion = {
 const sampleBundles: QuestionBundle[] = [{ main: 'Q1', followUps: [] }]
 
 function startActor(input: InterviewInput = baseInput) {
-  const actor = createActor(interviewMachine, { input }).start()
+  const actor = createActor(testMachine, { input }).start()
   return actor
 }
 
