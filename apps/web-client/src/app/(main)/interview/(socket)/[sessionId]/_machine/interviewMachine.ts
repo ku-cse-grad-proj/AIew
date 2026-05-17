@@ -226,6 +226,17 @@ export const interviewMachine = setup({
             STT_READY: {
               actions: 'markSttReady',
             },
+            // UX 개선 — STT 가 준비되면 audio 재생 종료를 기다리지 않고 바로
+            // 답변 시작 가능. questionPlaying / idle / ready 어느 sub-state 에
+            // 있든 sttReady=true 면 START_ANSWER 가 answering 으로 직행.
+            // step exit 시 invoke 된 audioActor 가 자동 cleanup 되어 audio 가
+            // 중단됨. (옛 흐름 — audio 끝까지 듣고 ready 에서 START — 도 그대로
+            // 작동: ready 진입 후 START_ANSWER 시 동일하게 본 핸들러가 처리.)
+            START_ANSWER: {
+              guard: 'isSttReady',
+              target: '.answering',
+              actions: ['assignStartAt', 'forwardStartAnswerToStt'],
+            },
           },
           states: {
             questionPlaying: {
@@ -246,17 +257,17 @@ export const interviewMachine = setup({
               // STT_READY 가 questionPlaying 도중 이미 도착했다면 즉시 ready.
               always: [{ guard: 'isSttReady', target: 'ready' }],
               on: {
-                STT_READY: { target: 'ready' },
+                // child 핸들러가 outer (step.on.STT_READY) 를 override 하므로
+                // markSttReady 도 함께 실행해 context.sttReady=true 보장.
+                // (step level 의 on.START_ANSWER guard isSttReady 가 의존.)
+                STT_READY: { target: 'ready', actions: 'markSttReady' },
               },
             },
             ready: {
               tags: ['answerButtonClickable'],
-              on: {
-                START_ANSWER: {
-                  target: 'answering',
-                  actions: ['assignStartAt', 'forwardStartAnswerToStt'],
-                },
-              },
+              // START_ANSWER 는 step level 의 on 으로 통합됨 (sttReady=true 일 때
+              // 어느 sub-state 에서든 answering 진입). ready 진입 후 클릭한
+              // 옛 흐름도 동일하게 처리.
             },
             answering: {
               id: 'answering',

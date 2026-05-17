@@ -486,6 +486,86 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
     })
   })
 
+  // ─── UX — STT_READY 즉시 활성화 ───────────────────────────────────────
+  //
+  // 사용자 결정 (spec 변경): TTS audio 재생 종료를 기다리지 않고 STT 준비
+  // 즉시 마이크 활성화. step level 의 on.START_ANSWER (guard: isSttReady) 가
+  // questionPlaying / idle / ready 어느 sub-state 에서든 answering 진입을
+  // 허용한다.
+
+  describe('UX — STT_READY 즉시 활성화', () => {
+    it('questionPlaying 중 STT_READY 도착 후 START_ANSWER 즉시 answering 진입', () => {
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+      // questionPlaying 에 머무름 (audio 재생 중)
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+      ).toBe(true)
+
+      // STT_READY 도착 — flag 만 set, state 유지
+      actor.send({ type: 'STT_READY' })
+      expect(actor.getSnapshot().context.sttReady).toBe(true)
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+      ).toBe(true)
+
+      // 사용자가 audio 듣는 도중 답변 시작
+      actor.send({ type: 'START_ANSWER' })
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'answering' } }),
+      ).toBe(true)
+      // startAt 기록됨
+      expect(actor.getSnapshot().context.answer.startAt).toBeGreaterThan(0)
+    })
+
+    it('questionPlaying 중 sttReady=false 일 때 START_ANSWER 무시', () => {
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+      ).toBe(true)
+      expect(actor.getSnapshot().context.sttReady).toBe(false)
+
+      // STT_READY 없이 START_ANSWER — guard isSttReady 가 차단
+      actor.send({ type: 'START_ANSWER' })
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+      ).toBe(true)
+      // startAt 기록 안 됨
+      expect(actor.getSnapshot().context.answer.startAt).toBe(0)
+    })
+
+    it('AUDIO_PLAYED 도착해도 sttReady=true 면 ready 거쳐 정상 답변 시작 (회귀)', () => {
+      // 옛 흐름 — audio 끝까지 듣고 ready 에서 START_ANSWER — 그대로 작동
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+      actor.send({ type: 'STT_READY' })
+      actor.send({ type: 'AUDIO_PLAYED' })
+      // idle → always (isSttReady) → ready
+      expect(actor.getSnapshot().matches({ session: { step: 'ready' } })).toBe(
+        true,
+      )
+
+      actor.send({ type: 'START_ANSWER' })
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'answering' } }),
+      ).toBe(true)
+      expect(actor.getSnapshot().context.answer.startAt).toBeGreaterThan(0)
+    })
+  })
+
   // ─── wire contract — socketActor 메시지 ───────────────────────────────
   //
   // 머신이 socketActor 로 sendTo 한 메시지의 payload 시그니처를 직접 검증.

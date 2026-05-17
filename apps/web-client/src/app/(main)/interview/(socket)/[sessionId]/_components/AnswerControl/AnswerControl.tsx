@@ -10,12 +10,14 @@ import RedoButton from './RedoButton'
  * Phase 2.2 — useAnswerControl hook 폐기. 머신이 답변 제어를 직접 보유.
  *
  * 클릭 동작:
- * - ready 상태에서 클릭 → START_ANSWER
+ * - sttReady 일 때 클릭 → START_ANSWER (questionPlaying/idle/ready 어디서든)
  * - answering 상태에서 클릭 → FINISH_ANSWER
  * - 다시 답변 클릭 → REDO_ANSWER (answering 도중 사용 가능)
  *
  * 버튼 활성화 조건:
- * - 머신이 `step.ready` 또는 `step.answering` 일 때만 클릭 가능.
+ * - UX 개선: TTS audio 재생 종료를 기다리지 않고 STT 가 준비되는 즉시
+ *   마이크 활성화. context.sttReady 가 true 면 답변 시작 가능.
+ * - answering 중에는 답변 종료 버튼으로 동작.
  */
 export default function AnswerControl({ className }: { className?: string }) {
   const actor = InterviewContext.useActorRef()
@@ -23,8 +25,14 @@ export default function AnswerControl({ className }: { className?: string }) {
   const isAnswering = InterviewContext.useSelector((state) =>
     state.matches({ session: { step: 'answering' } }),
   )
-  const isReady = InterviewContext.useSelector((state) =>
-    state.matches({ session: { step: 'ready' } }),
+  // step sub-state (questionPlaying/idle/ready) 어디든 sttReady=true 면 활성화.
+  // 머신 step level 의 START_ANSWER 핸들러가 guard isSttReady 로 answering 진입.
+  const isReady = InterviewContext.useSelector(
+    (state) =>
+      state.context.sttReady &&
+      (state.matches({ session: { step: 'questionPlaying' } }) ||
+        state.matches({ session: { step: 'idle' } }) ||
+        state.matches({ session: { step: 'ready' } })),
   )
   const startAt = InterviewContext.useSelector(
     (state) => state.context.answer.startAt,
