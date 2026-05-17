@@ -1,0 +1,293 @@
+import { assign, setup, stateIn } from 'xstate'
+
+import type {
+  CurrentQuestion,
+  InterviewContext,
+  InterviewEvent,
+  InterviewInput,
+  QuestionBundle,
+} from './_types'
+import { audioActor } from './actors/audioActor'
+import { elapsedTickActor } from './actors/elapsedTickActor'
+import { socketActor } from './actors/socketActor'
+import { sttActor } from './actors/sttActor'
+
+/**
+ * AIEW-237 interviewMachine
+ *
+ * spec: docs/AIEW-237-interview-machine-design.md
+ *
+ * - 면접 진행 화면의 모든 상태 흐름을 단일 hierarchical FSM 으로 모델링
+ * - 3개 외부 비동기 인스턴스 (Socket.IO / RTCPeerConnection / HTMLAudioElement) 를
+ *   invoked actor 로 포섭
+ * - 12가지 비정상 시나리오 (§5.1) 를 구조적으로 차단
+ */
+
+const INITIAL_CURRENT_QUESTION: CurrentQuestion = {
+  stepId: '',
+  text: undefined,
+  audioBase64: undefined,
+  isFollowUp: false,
+  order: 0,
+  type: '기술',
+  criteria: [],
+  rationale: '',
+  sttToken: '',
+}
+
+export const interviewMachine = setup({
+  types: {
+    context: {} as InterviewContext,
+    input: {} as InterviewInput,
+    events: {} as InterviewEvent,
+  },
+  actors: {
+    socketActor,
+    sttActor,
+    audioActor,
+    elapsedTickActor,
+  },
+  guards: {
+    /** 동일 stepId 인 QUESTION_READY 중복 수신 차단 */
+    isNewStep: ({ context, event }) => {
+      if (event.type !== 'QUESTION_READY') return true
+      return event.payload.current.stepId !== context.currentQuestion.stepId
+    },
+    /** REPORT_READY 가 FINISH_INTERVIEW 보다 먼저 도착했는가 */
+    hasPreReportReady: ({ context }) => context.preReportReady,
+    /** stt 가 transcribed 상태 (FINISH_ANSWER 시 sttWaiting 우회) */
+    sttIsTranscribed: stateIn({
+      session: { step: { answering: { stt: 'transcribed' } } },
+    }),
+  },
+  actions: {
+    assignConnect: assign(({ event }) => {
+      if (event.type !== 'CONNECT') return {}
+      return {
+        elapsedSec: event.payload.elapsedSec,
+        questions: event.payload.questions,
+      }
+    }),
+    assignQuestionReady: assign(({ event }) => {
+      if (event.type !== 'QUESTION_READY') return {}
+      return {
+        currentQuestion: event.payload.current,
+        questions: event.payload.questions,
+      }
+    }),
+    assignStartAt: assign(({ context }) => ({
+      answer: { ...context.answer, startAt: Date.now() },
+    })),
+    assignSentences: assign(({ context, event }) => {
+      if (event.type !== 'STT_FINISH') return {}
+      return {
+        answer: { ...context.answer, sentences: event.sentences },
+      }
+    }),
+    assignEndAt: assign(({ context }) => ({
+      answer: { ...context.answer, endAt: Date.now() },
+    })),
+    markPreReportReady: assign({ preReportReady: () => true }),
+    redoAnswer: assign(({ context }) => ({
+      answer: { ...context.answer, sentences: '', isRedo: true },
+    })),
+    assignError: assign(({ event }) => {
+      if (event.type !== 'SERVER_ERROR') return {}
+      return { error: event.payload }
+    }),
+  },
+}).createMachine({
+  id: 'interview',
+  context: ({ input }) => ({
+    sessionId: input.sessionId,
+    url: input.url,
+    elapsedSec: 0,
+    questions: [] as QuestionBundle[],
+    currentQuestion: { ...INITIAL_CURRENT_QUESTION },
+    answer: {
+      startAt: 0,
+      endAt: 0,
+      sentences: '',
+      isRedo: false,
+    },
+    error: null,
+    redirectAfterMs: 3000,
+    preReportReady: false,
+  }),
+  on: {
+    SERVER_ERROR: {
+      target: '#error',
+      actions: 'assignError',
+    },
+  },
+  initial: 'session',
+  states: {
+    session: {
+      // TODO(Phase 2.2): invoke socketActor, elapsedTickActor 컴포넌트 단계에서
+      initial: 'notConnected',
+      states: {
+        notConnected: {
+          tags: ['notConnected'],
+          on: {
+            CONNECT: {
+              target: 'connected',
+              actions: 'assignConnect',
+            },
+          },
+        },
+        connected: {
+          id: 'connected',
+          on: {
+            QUESTION_READY: {
+              guard: 'isNewStep',
+              target: 'step',
+              actions: 'assignQuestionReady',
+            },
+            FINISH_INTERVIEW: { target: '#interviewFinished' },
+            REPORT_READY: {
+              actions: 'markPreReportReady',
+            },
+          },
+        },
+        step: {
+          id: 'step',
+          // TODO(Phase 2.2): invoke sttActor, audioActor 컴포넌트 단계에서
+          initial: 'questionPlaying',
+          on: {
+            REDO_ANSWER: {
+              target: '.ready',
+              actions: 'redoAnswer',
+            },
+          },
+          states: {
+            questionPlaying: {
+              on: {
+                AUDIO_PLAYED: { target: 'idle' },
+              },
+            },
+            idle: {
+              on: {
+                STT_READY: { target: 'ready' },
+              },
+            },
+            ready: {
+              tags: ['answerButtonClickable'],
+              on: {
+                START_ANSWER: {
+                  target: 'answering',
+                  actions: 'assignStartAt',
+                },
+              },
+            },
+            answering: {
+              id: 'answering',
+              tags: ['answering'],
+              type: 'parallel',
+              states: {
+                stt: {
+                  id: 'stt',
+                  initial: 'transcribed',
+                  states: {
+                    transcribed: {
+                      on: {
+                        TRANSCRIBE: { target: 'transcribing' },
+                      },
+                    },
+                    transcribing: {
+                      on: {
+                        STT_FINISH: {
+                          target: 'transcribed',
+                          actions: 'assignSentences',
+                        },
+                      },
+                    },
+                    done: { type: 'final' },
+                  },
+                },
+                finishing: {
+                  initial: 'idle',
+                  states: {
+                    idle: {
+                      on: {
+                        // multi-target: finishing 이동 + stt 도 동시 done.
+                        // parallel onDone 은 두 region 모두 final 일 때 트리거되므로
+                        // stt 가 transcribing 이어도 명시적으로 done 으로 보내야 함.
+                        FINISH_ANSWER: [
+                          {
+                            guard: 'sttIsTranscribed',
+                            target: ['done', '#stt.done'],
+                            actions: 'assignEndAt',
+                          },
+                          {
+                            target: ['sttWaiting', '#stt.done'],
+                            actions: 'assignEndAt',
+                          },
+                        ],
+                      },
+                    },
+                    sttWaiting: {
+                      on: {
+                        STT_FINISH: {
+                          target: 'done',
+                          actions: 'assignSentences',
+                        },
+                      },
+                      after: {
+                        10000: { target: 'done' },
+                      },
+                    },
+                    done: { type: 'final' },
+                  },
+                },
+              },
+              // parallel 의 stt 영역도 자동 done 으로 보내야 onDone 트리거
+              // → finishing.done 진입 시 stt 도 강제 done
+              onDone: { target: '#stepFinished' },
+            },
+          },
+          // Note: answering parallel 의 onDone 은 두 region 모두 final 일 때 트리거.
+          // stt 가 done 으로 못 가면 onDone 안 됨. 본 머신은 finishing 의 done 진입과
+          // 동시에 stt 도 done 으로 강제 전이가 필요. always transition 으로 구현.
+        },
+        stepFinished: {
+          id: 'stepFinished',
+          // TODO(Phase 2.2): entry sendTo socketActor SUBMIT_ANSWER
+          on: {
+            SUBMIT_FINISH: { target: '#connected' },
+          },
+        },
+      },
+    },
+    interviewFinished: {
+      id: 'interviewFinished',
+      initial: 'waitingReport',
+      // TODO(Phase 2.2): entry revalidate(sessionId)
+      states: {
+        waitingReport: {
+          always: [
+            {
+              guard: 'hasPreReportReady',
+              target: 'reportReady',
+            },
+          ],
+          on: {
+            REPORT_READY: { target: 'reportReady' },
+          },
+        },
+        reportReady: {
+          after: {
+            // redirectAfterMs (context 에서 가져오나 v5 after 는 정적 키)
+            3000: { target: 'redirecting' },
+          },
+        },
+        redirecting: {
+          type: 'final',
+        },
+      },
+    },
+    error: {
+      id: 'error',
+      type: 'final',
+    },
+  },
+})
