@@ -372,6 +372,65 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
       expect(s.context.questions[1].followUps).toEqual(['follow up'])
     })
 
+    it('#11b STT_READY 가 audio 재생보다 먼저 도착해도 ready 로 진입 (race 흡수)', () => {
+      // 회귀: DataChannel 'open' 이 audio 재생보다 빨라 STT_READY 가
+      // step.questionPlaying 에서 발화하면, 옛 머신은 자식 idle 에만 핸들러가
+      // 있어 이벤트가 drop 되고 idle 에서 영구 대기 → 마이크 버튼이 활성화
+      // 되지 않는 버그가 있었음. step.on.STT_READY (sttReady flag) + idle.always
+      // 패턴으로 race 흡수.
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+      // questionPlaying 에 머무는 동안 STT_READY 가 먼저 도착
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+      ).toBe(true)
+      actor.send({ type: 'STT_READY' })
+      // sttReady flag 가 set 되었지만 아직 questionPlaying
+      expect(actor.getSnapshot().context.sttReady).toBe(true)
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+      ).toBe(true)
+
+      // audio 재생 종료 → idle 진입 즉시 always transition 으로 ready
+      actor.send({ type: 'AUDIO_PLAYED' })
+      expect(actor.getSnapshot().matches({ session: { step: 'ready' } })).toBe(
+        true,
+      )
+    })
+
+    it('#11c 다음 question 진입 시 sttReady flag 가 초기화된다', () => {
+      // race flag 가 다음 step 으로 잘못 누수되지 않는지 검증
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+      actor.send({ type: 'STT_READY' })
+      actor.send({ type: 'AUDIO_PLAYED' })
+      expect(actor.getSnapshot().matches({ session: { step: 'ready' } })).toBe(
+        true,
+      )
+      expect(actor.getSnapshot().context.sttReady).toBe(true)
+
+      // 다음 question 진입 — flag 가 false 로 리셋되어야
+      actor.send({ type: 'START_ANSWER' })
+      actor.send({ type: 'FINISH_ANSWER' })
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion2, questions: sampleBundles },
+      })
+      expect(actor.getSnapshot().context.sttReady).toBe(false)
+      // 새 step.questionPlaying 에 있고 ready 로 자동 진입하지 않음
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+      ).toBe(true)
+    })
+
     it('#12 StrictMode 이중 마운트 — actor stop/start 반복해도 listener 누수 없음 (cleanup 호출)', () => {
       // mock cleanup spy
       const cleanupSpy = vi.fn()

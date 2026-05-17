@@ -59,6 +59,8 @@ export const interviewMachine = setup({
     sttIsTranscribed: stateIn({
       session: { step: { answering: { stt: 'transcribed' } } },
     }),
+    /** STT_READY 가 audio 재생 도중 도착한 경우 idle 진입 즉시 ready 로 직행 */
+    isSttReady: ({ context }) => context.sttReady,
   },
   actions: {
     assignConnect: assign(({ event }) => {
@@ -73,8 +75,13 @@ export const interviewMachine = setup({
       return {
         currentQuestion: event.payload.current,
         questions: event.payload.questions,
+        // 새 step 진입 시 sttReady race flag 초기화 — 이전 step 의 STT_READY
+        // 잔재가 다음 step.idle 에서 잘못 트리거되지 않도록.
+        sttReady: false,
       }
     }),
+    markSttReady: assign({ sttReady: () => true }),
+    resetSttReady: assign({ sttReady: () => false }),
     assignStartAt: assign(({ context }) => ({
       answer: { ...context.answer, startAt: Date.now() },
     })),
@@ -136,6 +143,7 @@ export const interviewMachine = setup({
     error: null,
     redirectAfterMs: 3000,
     preReportReady: false,
+    sttReady: false,
     revalidate: input.revalidate,
   }),
   invoke: [
@@ -204,6 +212,13 @@ export const interviewMachine = setup({
               target: '.ready',
               actions: ['redoAnswer', 'forwardFinishAnswerToStt'],
             },
+            // STT_READY 는 step 어느 하위 상태에서 받든 sttReady flag 만 set.
+            // idle 의 always transition 이 flag 를 보고 ready 로 자동 전이.
+            // (questionPlaying 도중 도착하는 race 를 흡수 — DataChannel 'open'
+            // 이 audio 재생보다 빨라서 STT_READY 가 drop 되던 버그 fix.)
+            STT_READY: {
+              actions: 'markSttReady',
+            },
           },
           states: {
             questionPlaying: {
@@ -221,6 +236,8 @@ export const interviewMachine = setup({
               },
             },
             idle: {
+              // STT_READY 가 questionPlaying 도중 이미 도착했다면 즉시 ready.
+              always: [{ guard: 'isSttReady', target: 'ready' }],
               on: {
                 STT_READY: { target: 'ready' },
               },
