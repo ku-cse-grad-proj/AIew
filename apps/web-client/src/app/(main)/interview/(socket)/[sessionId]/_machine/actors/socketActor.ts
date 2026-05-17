@@ -46,7 +46,18 @@ export type SocketActorMessage =
   | { type: 'ACCESS_INTERVIEW' }
   | {
       type: 'SUBMIT_ANSWER'
-      payload: { stepId: string; answer: string; duration: number }
+      payload: {
+        stepId: string
+        answer: string
+        duration: number
+        /**
+         * 답변 시작/종료 시각 (Date.now()). 서버는 prisma.interviewStep.update
+         * 시 new Date(startAt)/new Date(endAt) 로 변환해 DateTime 컬럼에 기록.
+         * 누락 시 Invalid Date → Prisma throw → ANSWER_PROCESSING_FAILED.
+         */
+        startAt: number
+        endAt: number
+      }
     }
   | { type: 'TICK_ELAPSED'; elapsedSec: number }
 

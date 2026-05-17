@@ -120,6 +120,13 @@ export const interviewMachine = setup({
           0,
           Math.floor((context.answer.endAt - context.answer.startAt) / 1000),
         ),
+        // 서버는 prisma.interviewStep.update 시 answerStartedAt/answerEndedAt
+        // (DateTime?) 컬럼에 new Date(payload.startAt)/new Date(payload.endAt) 를
+        // 그대로 기록한다. undefined 가 들어오면 Invalid Date 가 되어 Prisma 가
+        // throw → server:error ANSWER_PROCESSING_FAILED 로 응답하므로 반드시 함께
+        // 전송해야 한다. (옛 Zustand useAnswerControl 의 payload 와 동일 시그니처)
+        startAt: context.answer.startAt,
+        endAt: context.answer.endAt,
       },
     })),
     callRevalidate: ({ context }) => {
