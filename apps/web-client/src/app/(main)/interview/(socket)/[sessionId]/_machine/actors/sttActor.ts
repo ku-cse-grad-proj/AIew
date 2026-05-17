@@ -41,10 +41,15 @@ export const sttActor = fromCallback<
   let lastestItemId = ''
   let canStopSession = true
   let sentencesAcc = ''
-  let cancelled = false
+  // React 19 / Next.js dev 이중 effect 로 actor 가 두 번 invoke 되는 경우,
+  // 첫 번째 actor 의 비동기 SDP 협상이 cleanup 이후에 완료되면 stale
+  // RTCPeerConnection / MediaStream 이 살아남는다. disposed 플래그로 cleanup
+  // 이후의 SDP 후처리 / DataChannel 콜백 / sendBack 을 전면 차단.
+  // (socketActor.ts:66 의 disposed 패턴과 동일.)
+  let disposed = false
 
   const cleanup = () => {
-    cancelled = true
+    disposed = true
     try {
       if (dc) dc.close()
     } catch {}
@@ -88,7 +93,7 @@ export const sttActor = fromCallback<
       const newPc = new RTCPeerConnection()
       const ms = await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      if (cancelled) {
+      if (disposed) {
         ms.getTracks().forEach((t) => {
           try {
             t.stop()
@@ -106,38 +111,13 @@ export const sttActor = fromCallback<
 
       const newDc = newPc.createDataChannel('oai-events')
 
-      const offer = await newPc.createOffer()
-      await newPc.setLocalDescription(offer)
-
-      const baseUrl = 'https://api.openai.com/v1/realtime/calls'
-      const sdpResponse = await fetch(`${baseUrl}`, {
-        method: 'POST',
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${sttToken}`,
-          'Content-Type': 'application/sdp',
-        },
-      })
-      const sdp = await sdpResponse.text()
-      const answer: RTCSessionDescriptionInit = {
-        type: 'answer' as const,
-        sdp,
-      }
-      await newPc.setRemoteDescription(answer)
-
-      if (cancelled) {
-        try {
-          newPc.close()
-        } catch {}
-        ms.getTracks().forEach((t) => {
-          try {
-            t.stop()
-          } catch {}
-        })
-        return
-      }
-
+      // DataChannel listener 는 SDP 협상 시작 전(=createDataChannel 직후)에
+      // 등록해야 한다. setRemoteDescription 이후 ICE/DTLS 가 빠르게 완료되면
+      // 'open' 이벤트가 listener 등록 시점보다 먼저 발생할 수 있고, 그 경우
+      // STT_READY 가 영원히 머신에 전달되지 않아 마이크 버튼이 활성화되지
+      // 않는다. (옛 sttStore 의 회귀 케이스.)
       newDc.addEventListener('message', (e) => {
+        if (disposed) return
         let event: RealtimeEvent
         try {
           event = JSON.parse(e.data) as RealtimeEvent
@@ -164,13 +144,41 @@ export const sttActor = fromCallback<
       })
 
       newDc.addEventListener('open', () => {
+        if (disposed) return
         sendBack({ type: 'STT_READY' })
       })
 
+      // 협상 시작 전에 closure 에 ref 보관 → cleanup 이 중간에 호출되면
+      // 정상적으로 close 가 호출되도록.
       pc = newPc
       mediaStream = ms
       dc = newDc
+
+      const offer = await newPc.createOffer()
+      if (disposed) return
+      await newPc.setLocalDescription(offer)
+      if (disposed) return
+
+      const baseUrl = 'https://api.openai.com/v1/realtime/calls'
+      const sdpResponse = await fetch(`${baseUrl}`, {
+        method: 'POST',
+        body: offer.sdp,
+        headers: {
+          Authorization: `Bearer ${sttToken}`,
+          'Content-Type': 'application/sdp',
+        },
+      })
+      const sdp = await sdpResponse.text()
+      if (disposed) return
+      const answer: RTCSessionDescriptionInit = {
+        type: 'answer' as const,
+        sdp,
+      }
+      await newPc.setRemoteDescription(answer)
+      // setRemoteDescription 이후 ICE/DTLS 가 비동기 시작되며, DataChannel
+      // 'open' 이벤트는 위에 이미 등록된 listener 가 받는다.
     } catch (e) {
+      if (disposed) return
       const message = e instanceof Error ? e.message : 'STT 연결에 실패했습니다'
       sendBack({ type: 'STT_ERROR', message })
     }
