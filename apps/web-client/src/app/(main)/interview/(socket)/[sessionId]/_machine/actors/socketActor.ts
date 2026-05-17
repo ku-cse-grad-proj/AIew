@@ -59,9 +59,19 @@ export const socketActor = fromCallback<
   // closure 보관 — 옛 store 의 모듈 전역 격리
   const questions: QuestionBundle[] = []
 
+  // React 19 / Next.js dev 모드의 이중 effect 로 actor 가 두 번 invoke 되는
+  // 경우, io() 핸드셰이크가 cleanup 이후 도착해 orphan socket 이 서버에
+  // join 되지 않은 채 남는 문제를 차단. disposed 플래그로 cleanup 이후의
+  // connect 콜백을 무시.
+  let disposed = false
+
   const socket: Socket = io(url, { withCredentials: true })
 
   socket.on('connect', () => {
+    if (disposed) {
+      socket.disconnect()
+      return
+    }
     socket.emit('client:join-room', { sessionId })
   })
 
@@ -187,7 +197,11 @@ export const socketActor = fromCallback<
   })
 
   return () => {
+    disposed = true
     socket.removeAllListeners()
     socket.disconnect()
+    // io() 핸드셰이크 도중에 cleanup 되는 케이스 대비. close() 는 underlying
+    // engine.io 트랜스포트를 강제 종료해 서버 측 orphan 연결을 방지.
+    socket.close()
   }
 })
