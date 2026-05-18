@@ -249,7 +249,7 @@ export const interviewMachine = setup({
             },
             FINISH_INTERVIEW: { target: '#interviewFinished' },
             REPORT_READY: {
-              actions: 'markPreReportReady',
+              actions: ['markPreReportReady', 'callRevalidate'],
             },
           },
         },
@@ -438,7 +438,7 @@ export const interviewMachine = setup({
             },
             FINISH_INTERVIEW: { target: '#interviewFinished' },
             REPORT_READY: {
-              actions: 'markPreReportReady',
+              actions: ['markPreReportReady', 'callRevalidate'],
             },
             SUBMIT_FINISH: { target: '#connected' },
           },
@@ -458,7 +458,10 @@ export const interviewMachine = setup({
             },
           ],
           on: {
-            REPORT_READY: { target: 'reportReady' },
+            REPORT_READY: {
+              target: 'reportReady',
+              actions: 'callRevalidate',
+            },
           },
         },
         reportReady: {
