@@ -21,6 +21,26 @@ import { sttActor } from './actors/sttActor'
  * - 3개 외부 비동기 인스턴스 (Socket.IO / RTCPeerConnection / HTMLAudioElement) 를
  *   invoked actor 로 포섭
  * - 12가지 비정상 시나리오 (§5.1) 를 구조적으로 차단
+ *
+ * step 구조 (AIEW-237 parallel 재설계)
+ *   step
+ *     ├─ preparing (parallel: audio × stt)
+ *     │   ├─ audio: playing → played(final)         — TTS 재생
+ *     │   └─ stt:   connecting → ready(final)       — DataChannel open
+ *     │   onDone (audio.played ∧ stt.ready) → preparedReady
+ *     ├─ preparedReady (tag answerButtonClickable)  — 정상 흐름의 답변 시작점
+ *     └─ answering (parallel: stt × finishing)      — 사용자 답변 진행
+ *
+ *   step level
+ *     on.START_ANSWER (guard isSttReady) → .answering
+ *       — preparing 도중에도 sttReady=true 면 즉시 answering 진입,
+ *         preparing exit 시 audioActor 자동 cleanup → TTS 중단
+ *     invoke sttActor                              — 한 step 동안 1회 invoke
+ *
+ * audio 와 stt 가 본질적으로 독립적인 시간축이라는 도메인 사실을 parallel
+ * statechart 의미론에 1:1 매핑. 이전 sequential 흐름
+ * (questionPlaying → idle → ready) 에서 context.sttReady flag + idle.always
+ * 가드로 흡수하던 race 가 구조에서 자연스럽게 해소됨.
  */
 
 const INITIAL_CURRENT_QUESTION: CurrentQuestion = {
@@ -206,7 +226,7 @@ export const interviewMachine = setup({
         },
         step: {
           id: 'step',
-          initial: 'questionPlaying',
+          initial: 'preparing',
           invoke: {
             id: 'sttActor',
             src: 'sttActor',
@@ -216,22 +236,15 @@ export const interviewMachine = setup({
           },
           on: {
             REDO_ANSWER: {
-              target: '.ready',
+              target: '.preparedReady',
               actions: ['redoAnswer', 'forwardFinishAnswerToStt'],
             },
-            // STT_READY 는 step 어느 하위 상태에서 받든 sttReady flag 만 set.
-            // idle 의 always transition 이 flag 를 보고 ready 로 자동 전이.
-            // (questionPlaying 도중 도착하는 race 를 흡수 — DataChannel 'open'
-            // 이 audio 재생보다 빨라서 STT_READY 가 drop 되던 버그 fix.)
-            STT_READY: {
-              actions: 'markSttReady',
-            },
             // UX 개선 — STT 가 준비되면 audio 재생 종료를 기다리지 않고 바로
-            // 답변 시작 가능. questionPlaying / idle / ready 어느 sub-state 에
-            // 있든 sttReady=true 면 START_ANSWER 가 answering 으로 직행.
-            // step exit 시 invoke 된 audioActor 가 자동 cleanup 되어 audio 가
-            // 중단됨. (옛 흐름 — audio 끝까지 듣고 ready 에서 START — 도 그대로
-            // 작동: ready 진입 후 START_ANSWER 시 동일하게 본 핸들러가 처리.)
+            // 답변 시작 가능. preparing 도중에 START_ANSWER 가 도착하면 step
+            // 의 sub-state 가 answering 으로 전이 → preparing exit 시 invoke 된
+            // audioActor 가 자동 cleanup (사용자 답변과 TTS audio 겹침 방지).
+            // sttActor 는 step level 에 있어 preparing → answering 이행에도
+            // 살아남아 음성 수신 계속 가능.
             START_ANSWER: {
               guard: 'isSttReady',
               target: '.answering',
@@ -239,35 +252,65 @@ export const interviewMachine = setup({
             },
           },
           states: {
-            questionPlaying: {
-              invoke: {
-                id: 'audioActor',
-                src: 'audioActor',
-                input: ({ context }) => ({
-                  audioBase64: context.currentQuestion.audioBase64 ?? '',
-                }),
-                onDone: { target: 'idle' },
-                onError: { target: 'idle' },
-              },
-              on: {
-                AUDIO_PLAYED: { target: 'idle' },
+            // ─── preparing (parallel: audio × stt) ──────────────────────
+            //
+            // audio 재생과 STT 연결은 본질적으로 독립적 비동기 작업이라는
+            // 도메인 사실을 머신 구조에서 명시적으로 표현. 각 region 이
+            // 독립 final 도달 시 onDone 으로 preparedReady 진입.
+            //
+            // - audio.playing → audioActor invoke (TTS 재생)
+            //   AUDIO_PLAYED 또는 onDone(Error) → audio.played(final)
+            // - stt.connecting → STT_READY 수신 시 stt.ready(final),
+            //   markSttReady 로 context.sttReady=true 설정 (step level
+            //   on.START_ANSWER guard 가 의존).
+            preparing: {
+              type: 'parallel',
+              onDone: { target: 'preparedReady' },
+              states: {
+                audio: {
+                  initial: 'playing',
+                  states: {
+                    playing: {
+                      invoke: {
+                        id: 'audioActor',
+                        src: 'audioActor',
+                        input: ({ context }) => ({
+                          audioBase64:
+                            context.currentQuestion.audioBase64 ?? '',
+                        }),
+                        onDone: { target: 'played' },
+                        onError: { target: 'played' },
+                      },
+                      on: {
+                        AUDIO_PLAYED: { target: 'played' },
+                      },
+                    },
+                    played: { type: 'final' },
+                  },
+                },
+                stt: {
+                  initial: 'connecting',
+                  states: {
+                    connecting: {
+                      on: {
+                        // STT_READY 수신 시 sttReady flag set + ready 진입.
+                        // step level on.START_ANSWER 가 isSttReady guard 에
+                        // 의존하므로 markSttReady 도 함께 실행.
+                        STT_READY: {
+                          target: 'ready',
+                          actions: 'markSttReady',
+                        },
+                      },
+                    },
+                    ready: { type: 'final' },
+                  },
+                },
               },
             },
-            idle: {
-              // STT_READY 가 questionPlaying 도중 이미 도착했다면 즉시 ready.
-              always: [{ guard: 'isSttReady', target: 'ready' }],
-              on: {
-                // child 핸들러가 outer (step.on.STT_READY) 를 override 하므로
-                // markSttReady 도 함께 실행해 context.sttReady=true 보장.
-                // (step level 의 on.START_ANSWER guard isSttReady 가 의존.)
-                STT_READY: { target: 'ready', actions: 'markSttReady' },
-              },
-            },
-            ready: {
+            preparedReady: {
               tags: ['answerButtonClickable'],
-              // START_ANSWER 는 step level 의 on 으로 통합됨 (sttReady=true 일 때
-              // 어느 sub-state 에서든 answering 진입). ready 진입 후 클릭한
-              // 옛 흐름도 동일하게 처리.
+              // START_ANSWER 는 step level 의 on 으로 통합 (sttReady=true 일 때
+              // preparing / preparedReady 어느 sub-state 에서든 answering 진입).
             },
             answering: {
               id: 'answering',

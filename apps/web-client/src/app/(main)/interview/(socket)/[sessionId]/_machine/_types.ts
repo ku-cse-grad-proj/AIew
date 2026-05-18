@@ -33,9 +33,11 @@ export type InterviewContext = {
   /** evaluation-finished 가 interview-finished 보다 먼저 도착 시 보관 */
   preReportReady: boolean
   /**
-   * sttActor 의 STT_READY 가 audio 재생보다 먼저 도착하는 race 를 흡수.
-   * step 진입 시 false 로 초기화, STT_READY 수신 시 true. idle 진입 시
-   * true 면 즉시 ready 로 진행 (always transition).
+   * STT DataChannel open 완료 여부.
+   * - 새 step 진입 시 false 로 초기화 (assignQuestionReady).
+   * - step.preparing.stt.connecting 에서 STT_READY 수신 시 true (markSttReady).
+   * - step level on.START_ANSWER guard isSttReady 가 의존 — preparing 도중에도
+   *   sttReady=true 면 audio 재생 종료를 기다리지 않고 answering 진입 가능.
    */
   sttReady: boolean
   /** Next.js cache invalidation 콜백 — input 으로 받아 context 에 보관 */

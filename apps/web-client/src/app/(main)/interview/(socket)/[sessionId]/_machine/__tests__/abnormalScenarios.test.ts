@@ -109,13 +109,15 @@ function advanceToConnected(actor: ReturnType<typeof startActor>) {
   })
 }
 
-/** session.connected → step.ready 정상 흐름 */
+/** session.connected → step.preparedReady 정상 흐름 (audio + stt 모두 ready) */
 function advanceToStepReady(actor: ReturnType<typeof startActor>) {
   advanceToConnected(actor)
   actor.send({
     type: 'QUESTION_READY',
     payload: { current: sampleQuestion, questions: sampleBundles },
   })
+  // parallel 의 두 region 을 각각 final 로 — 순서 무관 (#audio-first / #stt-first
+  // 모두 동일하게 preparedReady 도달).
   actor.send({ type: 'AUDIO_PLAYED' })
   actor.send({ type: 'STT_READY' })
 }
@@ -185,17 +187,17 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
     it('#3 STT_FINISH 가 START_ANSWER 전 도착하면 무시 (sentences 변화 없음)', () => {
       const actor = startActor()
       advanceToStepReady(actor)
-      expect(actor.getSnapshot().matches({ session: { step: 'ready' } })).toBe(
-        true,
-      )
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'preparedReady' } }),
+      ).toBe(true)
 
       // 부적절한 타이밍에 STT_FINISH
       actor.send({ type: 'STT_FINISH', sentences: 'should be ignored' })
 
-      // step.ready 유지, sentences 그대로
-      expect(actor.getSnapshot().matches({ session: { step: 'ready' } })).toBe(
-        true,
-      )
+      // step.preparedReady 유지, sentences 그대로
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'preparedReady' } }),
+      ).toBe(true)
       expect(actor.getSnapshot().context.answer.sentences).toBe('')
     })
   })
@@ -402,34 +404,42 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
       expect(s.context.questions[1].followUps).toEqual(['follow up'])
     })
 
-    it('#11b STT_READY 가 audio 재생보다 먼저 도착해도 ready 로 진입 (race 흡수)', () => {
-      // 회귀: DataChannel 'open' 이 audio 재생보다 빨라 STT_READY 가
-      // step.questionPlaying 에서 발화하면, 옛 머신은 자식 idle 에만 핸들러가
-      // 있어 이벤트가 drop 되고 idle 에서 영구 대기 → 마이크 버튼이 활성화
-      // 되지 않는 버그가 있었음. step.on.STT_READY (sttReady flag) + idle.always
-      // 패턴으로 race 흡수.
+    it('#11b STT_READY 가 audio 재생보다 먼저 도착해도 preparedReady 로 진입 (race 흡수)', () => {
+      // AIEW-237 parallel 재설계 — audio.playing 과 stt.connecting 이 독립
+      // region 이므로 어느 쪽이 먼저 final 에 도달해도 preparing.onDone 트리거.
+      // (옛 sequential 흐름의 questionPlaying.STT_READY drop race 가 구조에서
+      //  자연스럽게 해소.)
       const actor = startActor()
       advanceToConnected(actor)
       actor.send({
         type: 'QUESTION_READY',
         payload: { current: sampleQuestion, questions: sampleBundles },
       })
-      // questionPlaying 에 머무는 동안 STT_READY 가 먼저 도착
+      // preparing.audio.playing 에 머무는 동안 STT_READY 가 먼저 도착
       expect(
-        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing' } } },
+        }),
       ).toBe(true)
       actor.send({ type: 'STT_READY' })
-      // sttReady flag 가 set 되었지만 아직 questionPlaying
+      // stt 만 final, audio 는 아직 playing → preparedReady 아직 X
       expect(actor.getSnapshot().context.sttReady).toBe(true)
       expect(
-        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { stt: 'ready' } } },
+        }),
+      ).toBe(true)
+      expect(
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing' } } },
+        }),
       ).toBe(true)
 
-      // audio 재생 종료 → idle 진입 즉시 always transition 으로 ready
+      // audio 재생 종료 → 두 region 모두 final → preparing.onDone → preparedReady
       actor.send({ type: 'AUDIO_PLAYED' })
-      expect(actor.getSnapshot().matches({ session: { step: 'ready' } })).toBe(
-        true,
-      )
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'preparedReady' } }),
+      ).toBe(true)
     })
 
     it('#11c 다음 question 진입 시 sttReady flag 가 초기화된다', () => {
@@ -442,9 +452,9 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
       })
       actor.send({ type: 'STT_READY' })
       actor.send({ type: 'AUDIO_PLAYED' })
-      expect(actor.getSnapshot().matches({ session: { step: 'ready' } })).toBe(
-        true,
-      )
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'preparedReady' } }),
+      ).toBe(true)
       expect(actor.getSnapshot().context.sttReady).toBe(true)
 
       // 다음 question 진입 — flag 가 false 로 리셋되어야
@@ -455,9 +465,11 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
         payload: { current: sampleQuestion2, questions: sampleBundles },
       })
       expect(actor.getSnapshot().context.sttReady).toBe(false)
-      // 새 step.questionPlaying 에 있고 ready 로 자동 진입하지 않음
+      // 새 step.preparing.audio.playing 에 있고 preparedReady 로 자동 진입하지 않음
       expect(
-        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing' } } },
+        }),
       ).toBe(true)
     })
 
@@ -494,26 +506,30 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
   // 허용한다.
 
   describe('UX — STT_READY 즉시 활성화', () => {
-    it('questionPlaying 중 STT_READY 도착 후 START_ANSWER 즉시 answering 진입', () => {
+    it('preparing 중 STT_READY 도착 후 START_ANSWER 즉시 answering 진입 (audio cleanup)', () => {
       const actor = startActor()
       advanceToConnected(actor)
       actor.send({
         type: 'QUESTION_READY',
         payload: { current: sampleQuestion, questions: sampleBundles },
       })
-      // questionPlaying 에 머무름 (audio 재생 중)
+      // preparing.audio.playing 에 머무름 (audio 재생 중)
       expect(
-        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing' } } },
+        }),
       ).toBe(true)
 
-      // STT_READY 도착 — flag 만 set, state 유지
+      // STT_READY 도착 — stt region 은 ready(final), audio 는 아직 playing
       actor.send({ type: 'STT_READY' })
       expect(actor.getSnapshot().context.sttReady).toBe(true)
       expect(
-        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing', stt: 'ready' } } },
+        }),
       ).toBe(true)
 
-      // 사용자가 audio 듣는 도중 답변 시작
+      // 사용자가 audio 듣는 도중 답변 시작 — preparing exit 시 audioActor 자동 cleanup
       actor.send({ type: 'START_ANSWER' })
       expect(
         actor.getSnapshot().matches({ session: { step: 'answering' } }),
@@ -522,7 +538,7 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
       expect(actor.getSnapshot().context.answer.startAt).toBeGreaterThan(0)
     })
 
-    it('questionPlaying 중 sttReady=false 일 때 START_ANSWER 무시', () => {
+    it('preparing 중 sttReady=false 일 때 START_ANSWER 무시', () => {
       const actor = startActor()
       advanceToConnected(actor)
       actor.send({
@@ -530,21 +546,25 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
         payload: { current: sampleQuestion, questions: sampleBundles },
       })
       expect(
-        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing' } } },
+        }),
       ).toBe(true)
       expect(actor.getSnapshot().context.sttReady).toBe(false)
 
       // STT_READY 없이 START_ANSWER — guard isSttReady 가 차단
       actor.send({ type: 'START_ANSWER' })
       expect(
-        actor.getSnapshot().matches({ session: { step: 'questionPlaying' } }),
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing' } } },
+        }),
       ).toBe(true)
       // startAt 기록 안 됨
       expect(actor.getSnapshot().context.answer.startAt).toBe(0)
     })
 
-    it('AUDIO_PLAYED 도착해도 sttReady=true 면 ready 거쳐 정상 답변 시작 (회귀)', () => {
-      // 옛 흐름 — audio 끝까지 듣고 ready 에서 START_ANSWER — 그대로 작동
+    it('AUDIO_PLAYED 도착해도 sttReady=true 면 preparedReady 거쳐 정상 답변 시작 (회귀)', () => {
+      // 옛 흐름 — audio 끝까지 듣고 preparedReady 에서 START_ANSWER — 그대로 작동
       const actor = startActor()
       advanceToConnected(actor)
       actor.send({
@@ -553,16 +573,132 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
       })
       actor.send({ type: 'STT_READY' })
       actor.send({ type: 'AUDIO_PLAYED' })
-      // idle → always (isSttReady) → ready
-      expect(actor.getSnapshot().matches({ session: { step: 'ready' } })).toBe(
-        true,
-      )
+      // parallel 의 두 region 모두 final → preparing.onDone → preparedReady
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'preparedReady' } }),
+      ).toBe(true)
 
       actor.send({ type: 'START_ANSWER' })
       expect(
         actor.getSnapshot().matches({ session: { step: 'answering' } }),
       ).toBe(true)
       expect(actor.getSnapshot().context.answer.startAt).toBeGreaterThan(0)
+    })
+  })
+
+  // ─── parallel 재설계 — audio × stt 독립 진행 ────────────────────────
+  //
+  // AIEW-237 step.preparing 을 parallel state 로 모델링.
+  // audio 재생과 STT 연결이 독립 시간축이라는 도메인 사실을 머신 구조에서
+  // 명시적으로 표현. 도착 순서 4가지 조합을 검증.
+
+  describe('parallel — audio × stt 도착 순서 4종', () => {
+    it('audio.played 가 먼저 도착 → STT_READY → preparedReady', () => {
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+
+      // audio 만 먼저 final
+      actor.send({ type: 'AUDIO_PLAYED' })
+      expect(
+        actor.getSnapshot().matches({
+          session: {
+            step: { preparing: { audio: 'played', stt: 'connecting' } },
+          },
+        }),
+      ).toBe(true)
+      expect(actor.getSnapshot().context.sttReady).toBe(false)
+
+      // stt final 도달 → 두 region 모두 final → preparing.onDone
+      actor.send({ type: 'STT_READY' })
+      expect(actor.getSnapshot().context.sttReady).toBe(true)
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'preparedReady' } }),
+      ).toBe(true)
+    })
+
+    it('STT_READY 가 먼저 도착 → AUDIO_PLAYED → preparedReady', () => {
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+
+      // stt 만 먼저 final, audio 는 playing
+      actor.send({ type: 'STT_READY' })
+      expect(actor.getSnapshot().context.sttReady).toBe(true)
+      expect(
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing', stt: 'ready' } } },
+        }),
+      ).toBe(true)
+
+      // audio final 도달 → preparedReady
+      actor.send({ type: 'AUDIO_PLAYED' })
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'preparedReady' } }),
+      ).toBe(true)
+    })
+
+    it('audio 진행 중 sttReady=true 면 START_ANSWER → answering (audioActor cleanup)', () => {
+      // preparing exit 시 audioActor 가 자동 cleanup → TTS audio 중단.
+      // 사용자 답변과 TTS 가 겹치지 않도록 spec 결정.
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+      actor.send({ type: 'STT_READY' })
+      // audio 는 아직 playing — preparing 안에 머무름
+      expect(
+        actor.getSnapshot().matches({
+          session: { step: { preparing: { audio: 'playing', stt: 'ready' } } },
+        }),
+      ).toBe(true)
+
+      actor.send({ type: 'START_ANSWER' })
+      // step.answering 으로 직행, preparing exit
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'answering' } }),
+      ).toBe(true)
+      // audioActor 가 cleanup 되었는지는 invoke 가 step.preparing.audio 안에
+      // 있었으므로 preparing exit 자체가 자동 cleanup 을 의미. (XState 의
+      // invoke lifecycle: invoke 선언 상태가 exit 되면 actor 가 stop.)
+    })
+
+    it('STT 미준비 + audio.played → preparedReady 미진입 (stt 미 final)', () => {
+      const actor = startActor()
+      advanceToConnected(actor)
+      actor.send({
+        type: 'QUESTION_READY',
+        payload: { current: sampleQuestion, questions: sampleBundles },
+      })
+
+      // audio 만 final
+      actor.send({ type: 'AUDIO_PLAYED' })
+      // stt 는 여전히 connecting → preparing.onDone 트리거 X
+      expect(
+        actor.getSnapshot().matches({
+          session: {
+            step: { preparing: { audio: 'played', stt: 'connecting' } },
+          },
+        }),
+      ).toBe(true)
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'preparedReady' } }),
+      ).toBe(false)
+      expect(actor.getSnapshot().context.sttReady).toBe(false)
+
+      // 이 상태에서 START_ANSWER 보내도 guard 차단 (sttReady=false)
+      actor.send({ type: 'START_ANSWER' })
+      expect(
+        actor.getSnapshot().matches({ session: { step: 'answering' } }),
+      ).toBe(false)
     })
   })
 
