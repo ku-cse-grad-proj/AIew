@@ -26,8 +26,22 @@ import RedoButton from './RedoButton'
 export default function AnswerControl({ className }: { className?: string }) {
   const actor = InterviewContext.useActorRef()
 
+  // "사용자가 실제로 마이크 입력 중" — finishing 의 idle 인 동안만 true.
+  // finishing.sttWaiting 또는 stt.transcribing 중인 finishing 진입 직후 부터는
+  // 사용자가 답변을 마친 상태이므로 false 로 떨어져 버튼/펄스 즉시 해제된다.
   const isAnswering = InterviewContext.useSelector((state) =>
-    state.matches({ session: { step: 'answering' } }),
+    state.matches({
+      session: { step: { answering: { finishing: 'idle' } } },
+    }),
+  )
+  // 답변 종료 클릭 후 STT 마무리(transcription completed) 대기 구간.
+  // 머신의 answering.finishing.sttWaiting 과 1:1 매핑되어 마이크 버튼 disabled
+  // + "답변 처리 중..." 텍스트를 즉시 표시한다. (사용자 체감 "버튼 동작 안 함"
+  // 방지.)
+  const isFinishing = InterviewContext.useSelector((state) =>
+    state.matches({
+      session: { step: { answering: { finishing: 'sttWaiting' } } },
+    }),
   )
   // step 안에 있고 answering 이 아니며 sttReady=true 인 경우 답변 시작 가능.
   // (preparing.audio 가 playing 이든 preparedReady 든 무관 — 머신 step level
@@ -72,6 +86,16 @@ export default function AnswerControl({ className }: { className?: string }) {
         <div className="w-full h-full flex items-center justify-between">
           <RedoButton onClick={handleRedo} />
           <AnswerTimer />
+        </div>
+      )}
+      {isFinishing && (
+        <div
+          className="w-full h-full flex items-center justify-center"
+          aria-live="polite"
+        >
+          <span className="text-neutral-subtext font-medium">
+            답변 처리 중...
+          </span>
         </div>
       )}
       <AnswerButton
