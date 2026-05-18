@@ -16,6 +16,8 @@ export type CurrentQuestion = {
 
 export type ServerError = { code: string; message: string }
 
+export type CameraErrorReason = 'permission' | 'not-found' | 'unknown'
+
 export type InterviewContext = {
   sessionId: string
   url: string
@@ -32,6 +34,12 @@ export type InterviewContext = {
   redirectAfterMs: number
   /** evaluation-finished 가 interview-finished 보다 먼저 도착 시 보관 */
   preReportReady: boolean
+  /**
+   * cameraActor 가 sendBack 한 카메라 에러. Interviewee.tsx 가 selector 로
+   * 구독해 alert + router.back 처리. 머신 흐름 자체에는 영향 주지 않음
+   * (UX-level error). null 이면 정상 또는 미진입.
+   */
+  cameraError: CameraErrorReason | null
   /**
    * STT DataChannel open 완료 여부.
    * - 새 step 진입 시 false 로 초기화 (assignQuestionReady).
@@ -73,3 +81,5 @@ export type InterviewEvent =
   | { type: 'REPORT_READY' }
   | { type: 'TICK_ELAPSED' }
   | { type: 'SERVER_ERROR'; payload: ServerError }
+  | { type: 'CAMERA_READY' }
+  | { type: 'CAMERA_ERROR'; reason: CameraErrorReason }

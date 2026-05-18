@@ -8,6 +8,7 @@ import type {
   QuestionBundle,
 } from './_types'
 import { audioActor } from './actors/audioActor'
+import { cameraActor } from './actors/cameraActor'
 import { elapsedTickActor } from './actors/elapsedTickActor'
 import { socketActor } from './actors/socketActor'
 import { sttActor } from './actors/sttActor'
@@ -18,8 +19,10 @@ import { sttActor } from './actors/sttActor'
  * spec: docs/AIEW-237-interview-machine-design.md
  *
  * - 면접 진행 화면의 모든 상태 흐름을 단일 hierarchical FSM 으로 모델링
- * - 3개 외부 비동기 인스턴스 (Socket.IO / RTCPeerConnection / HTMLAudioElement) 를
- *   invoked actor 로 포섭
+ * - 핵심 3개 외부 비동기 인스턴스 (Socket.IO / RTCPeerConnection / HTMLAudioElement)
+ *   를 invoked actor 로 포섭. AIEW-237 후속으로 카메라 MediaStream /
+ *   MediaRecorder 까지 cameraActor 로 흡수 (옛 Interviewee.tsx useEffect 의
+ *   carmera leak race 가 actor lifecycle 로 자동 해소).
  * - 12가지 비정상 시나리오 (§5.1) 를 구조적으로 차단
  *
  * step 구조 (AIEW-237 parallel 재설계)
@@ -66,6 +69,7 @@ export const interviewMachine = setup({
     sttActor,
     audioActor,
     elapsedTickActor,
+    cameraActor,
   },
   guards: {
     /** 동일 stepId 인 QUESTION_READY 중복 수신 차단 */
@@ -122,6 +126,10 @@ export const interviewMachine = setup({
       if (event.type !== 'SERVER_ERROR') return {}
       return { error: event.payload }
     }),
+    assignCameraError: assign(({ event }) => {
+      if (event.type !== 'CAMERA_ERROR') return {}
+      return { cameraError: event.reason }
+    }),
     incrementElapsed: assign(({ context }) => ({
       elapsedSec: context.elapsedSec + 1,
     })),
@@ -171,6 +179,7 @@ export const interviewMachine = setup({
     redirectAfterMs: 3000,
     preReportReady: false,
     sttReady: false,
+    cameraError: null,
     revalidate: input.revalidate,
   }),
   invoke: [
@@ -186,6 +195,16 @@ export const interviewMachine = setup({
       id: 'elapsedTickActor',
       src: 'elapsedTickActor',
     },
+    {
+      // 카메라 stream / cloned video track / MediaRecorder / 비디오 업로드용
+      // socket lifecycle 을 머신 안으로 포섭. interviewFinished 진입 시
+      // 머신이 사라지므로 actor cleanup 이 자동 트리거되어 카메라 indicator
+      // 누수가 구조적으로 차단된다. (옛 Interviewee.tsx useEffect cleanup
+      // 의 c2aa07f disposed 패턴이 actor lifecycle 로 대체.)
+      id: 'cameraActor',
+      src: 'cameraActor',
+      input: ({ context }) => ({ uploadUrl: context.url }),
+    },
   ],
   on: {
     SERVER_ERROR: {
@@ -195,6 +214,13 @@ export const interviewMachine = setup({
     TICK_ELAPSED: {
       actions: ['incrementElapsed', 'forwardTickToSocket'],
     },
+    // cameraActor → 머신 이벤트. CAMERA_ERROR 는 context.cameraError 에 기록만
+    // 하고 머신 흐름에는 영향 없음 (UX-level error). CAMERA_READY 는 현재 머신
+    // 흐름과 무관하나 후속 ticket 에서 step.preparing 의 region 으로 편입 가능.
+    CAMERA_ERROR: {
+      actions: 'assignCameraError',
+    },
+    CAMERA_READY: {},
   },
   initial: 'session',
   states: {
