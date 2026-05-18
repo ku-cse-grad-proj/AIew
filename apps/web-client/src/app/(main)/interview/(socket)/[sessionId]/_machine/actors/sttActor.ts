@@ -191,26 +191,19 @@ export const sttActor = fromCallback<
       return
     }
     if (event.type === 'FINISH_ANSWER') {
-      // Chrome 마이크 indicator 는 track 의 readyState='live' 일 때 ON 이고
-      // enabled 플래그와 무관하다. 사용자가 "답변 종료" 를 클릭한 의도는
-      // "녹음 즉시 중단" 이므로 enabled=false 만으로는 부족하고 track.stop()
-      // 까지 호출해 readyState='ended' 로 만들어야 indicator 가 즉시 사라진다.
+      // STT 전사 완료까지 기다리기 위해 track.stop() 은 호출하지 않는다.
+      // enabled=false 로 마이크 입력은 즉시 차단되며, RTCPeerConnection /
+      // DataChannel / track 의 readyState='live' 는 유지되어 OpenAI Realtime
+      // 서버가 buffer 에 남은 audio 의 transcription 을 정상적으로 push.
       //
-      // OpenAI Realtime API 는 server VAD 로 input_audio_buffer 를 서버 측에서
-      // 관리하며 transcription 결과를 DataChannel 로 push 한다. track 을 stop
-      // 해도 RTCPeerConnection / DataChannel 자체는 살아있으므로 transcribing
-      // 중이던 마지막 segment 의 `conversation.item.input_audio_transcription
-      // .completed` event 는 그대로 수신되어 sttWaiting → done 으로 정상 전이.
-      // (sttWaiting 의 10s after fallback 으로도 stuck 은 방지.)
-      if (track) {
-        track.enabled = false
-        try {
-          track.stop()
-        } catch {}
-        try {
-          mediaStream?.removeTrack?.(track)
-        } catch {}
-      }
+      // 실제 track.stop() / pc.close() 는 sttActor 의 cleanup 에서 수행되며,
+      // cleanup 은 step 종료 시점 (= answering.parallel onDone =
+      // finishing.done ∧ stt.done = STT_FINISH 도착 후) 에 트리거되므로
+      // 마지막 transcription 결과를 누락하지 않는다. Chrome 마이크 indicator
+      // 도 그 시점에 OFF — 사용자 입장에서는 "처리 중..." 표시 동안 indicator
+      // 가 잠시 켜진 상태가 자연스러우며 "전사 완료까지 기다린다" 는 의도와
+      // 일치한다.
+      if (track) track.enabled = false
       return
     }
   })

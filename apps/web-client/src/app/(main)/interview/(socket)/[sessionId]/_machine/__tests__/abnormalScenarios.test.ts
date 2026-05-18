@@ -235,7 +235,7 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
       expect(actor.getSnapshot().context.answer.sentences).toBe('최종 답변')
     })
 
-    it('#5 FINISH_ANSWER + STT transcribing → 10s timeout — 마지막 sentences 유지', () => {
+    it('#5 FINISH_ANSWER + STT transcribing → 30s timeout — 마지막 sentences 유지', () => {
       const actor = startActor()
       advanceToAnswering(actor)
 
@@ -258,10 +258,16 @@ describe('interviewMachine — 12개 비정상 시나리오', () => {
         }),
       ).toBe(true)
 
-      // 10초 timeout
+      // 10초 시점에는 아직 sttWaiting (transcription 도착 대기)
       vi.advanceTimersByTime(10000)
+      expect(
+        actor.getSnapshot().matches({
+          session: { step: { answering: { finishing: 'sttWaiting' } } },
+        }),
+      ).toBe(true)
 
-      // stepFinished 진입, sentences 는 마지막 transcribed 값 유지
+      // 추가 20초 후 30초 timeout — stepFinished 진입
+      vi.advanceTimersByTime(20000)
       expect(actor.getSnapshot().matches({ session: 'stepFinished' })).toBe(
         true,
       )

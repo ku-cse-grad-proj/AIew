@@ -397,8 +397,16 @@ export const interviewMachine = setup({
                           actions: 'assignSentences',
                         },
                       },
+                      // OpenAI Realtime transcription 의 마지막 segment 가
+                      // 도착하기까지 네트워크/서버 latency 가 변동적이며 긴
+                      // 답변의 경우 5~10s 가 빈번하다. 10s timeout 은 정상
+                      // 답변에서도 잘려 누락 sentences 로 stepFinished 진입
+                      // 가능. fallback 은 유지하되 30s 로 보수적 확장.
+                      // sttActor cleanup 은 step exit 시 (즉 stepFinished 진입
+                      // 시점 = onDone 트리거 후) 발생하므로 본 timeout 은
+                      // STT_FINISH 가 영원히 안 오는 극단적 race 만 방어.
                       after: {
-                        10000: { target: 'done' },
+                        30000: { target: 'done' },
                       },
                     },
                     done: { type: 'final' },
