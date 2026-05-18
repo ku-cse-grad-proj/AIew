@@ -40,6 +40,13 @@ import type { InterviewEvent } from '../_types'
 export type CameraActorInput = {
   /** 비디오 chunk upload 용 socket URL. 빈 문자열이면 upload 비활성. */
   uploadUrl: string
+  /**
+   * upload socket 의 room join 용 sessionId. server 측 finalize 핸들러가
+   * `socket.sessionId` 를 사용해 PII redact / 감정 분석 결과를 매핑한다.
+   * 누락 시 server 로그가 `[undefined]` prefix + `Session ID not found in
+   * socket context` 에 의해 finalize 가 throw.
+   */
+  sessionId: string
 }
 
 export type CameraActorMessage =
@@ -52,7 +59,7 @@ export const cameraActor = fromCallback<
   InterviewEvent | CameraActorMessage,
   CameraActorInput
 >(({ input, sendBack, receive }) => {
-  const { uploadUrl } = input
+  const { uploadUrl, sessionId } = input
 
   // closure 상태 — Interviewee.tsx 의 useRef 들을 모두 흡수
   let stream: MediaStream | null = null
@@ -63,8 +70,18 @@ export const cameraActor = fromCallback<
   let disposed = false
 
   // upload socket 은 actor lifecycle 와 동일 — 한 면접 세션 동안 1개.
+  // server 측은 socket 단위로 sessionId 를 보관 (socket.sessionId) 하므로
+  // 별도 socket 인스턴스인 본 uploadSocket 도 connect 직후 client:join-room 을
+  // emit 해야 finalize 단계에서 sessionId 가 채워진다.
   if (uploadUrl) {
     uploadSocket = io(uploadUrl, { withCredentials: true })
+    uploadSocket.on('connect', () => {
+      if (disposed) {
+        uploadSocket?.disconnect()
+        return
+      }
+      uploadSocket?.emit('client:join-room', { sessionId })
+    })
   }
 
   /**

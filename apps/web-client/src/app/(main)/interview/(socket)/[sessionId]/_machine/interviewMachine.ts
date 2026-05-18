@@ -203,7 +203,10 @@ export const interviewMachine = setup({
       // 의 c2aa07f disposed 패턴이 actor lifecycle 로 대체.)
       id: 'cameraActor',
       src: 'cameraActor',
-      input: ({ context }) => ({ uploadUrl: context.url }),
+      input: ({ context }) => ({
+        uploadUrl: context.url,
+        sessionId: context.sessionId,
+      }),
     },
   ],
   on: {
