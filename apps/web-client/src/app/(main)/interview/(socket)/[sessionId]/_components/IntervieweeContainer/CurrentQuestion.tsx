@@ -1,11 +1,17 @@
 'use client'
 import Image from 'next/image'
 
+import { InterviewContext } from '../../_machine/interviewContext'
+
 import { FollowUpTag, MainTag } from './QuestionTags'
 
-import { useInterviewStore } from '@/app/lib/socket/interviewStore'
 export default function CurrentQuestion({ onClick }: { onClick: () => void }) {
-  const current = useInterviewStore((state) => state.current)
+  const order = InterviewContext.useSelector(
+    (state) => state.context.currentQuestion.order,
+  )
+  const isFollowUp = InterviewContext.useSelector(
+    (state) => state.context.currentQuestion.isFollowUp,
+  )
 
   return (
     <h3>
@@ -16,9 +22,9 @@ export default function CurrentQuestion({ onClick }: { onClick: () => void }) {
       >
         <span className="inline-flex items-center gap-8">
           <strong className="text-[20px] font-medium">
-            Question {current ? current.order : 1}
+            Question {order > 0 ? order : 1}
           </strong>
-          {current?.isFollowUp ? <FollowUpTag /> : <MainTag />}
+          {isFollowUp ? <FollowUpTag /> : <MainTag />}
         </span>
         <Image
           src={'/icons/toggle_false.svg'}

@@ -1,5 +1,7 @@
 'use client'
 
+import { InterviewContext } from '../../_machine/interviewContext'
+
 import CurrentQuestion from './CurrentQuestion'
 import ExitLink from './ExitLink'
 import HintArea from './HintArea'
@@ -7,14 +9,14 @@ import Interviewee from './Interviewee'
 import IntervieweeSection from './IntervieweeSection'
 import IntervieweeTranscript from './IntervieweeTranscript'
 
-import { useSttStore } from '@/app/lib/socket/sttStore'
-
 type Props = React.HTMLProps<HTMLDivElement> & {
   onClick: () => void
 }
 
 export default function IntervieweePannel({ onClick, ...props }: Props) {
-  const sentences = useSttStore((state) => state.sentences)
+  const sentences = InterviewContext.useSelector(
+    (state) => state.context.answer.sentences,
+  )
   return (
     <IntervieweeSection {...props}>
       <CurrentQuestion onClick={onClick} />
